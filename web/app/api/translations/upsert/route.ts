@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import type { TranslationItem } from "../../../../lib/types";
@@ -19,14 +19,18 @@ const readTranslations = async (): Promise<TranslationItem[]> => {
 };
 
 export async function POST(request: Request) {
+  if (process.env.READ_ONLY_MODE === "1") {
+    return NextResponse.json(
+      { message: "읽기 전용 모드에서는 저장할 수 없습니다." },
+      { status: 403 }
+    );
+  }
+
   let payload: TranslationItem | null = null;
   try {
     payload = (await request.json()) as TranslationItem;
   } catch {
-    return NextResponse.json(
-      { message: "invalid json" },
-      { status: 400 }
-    );
+    return NextResponse.json({ message: "invalid json" }, { status: 400 });
   }
 
   if (!payload?.entryId) {

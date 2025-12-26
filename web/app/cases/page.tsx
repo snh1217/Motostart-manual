@@ -47,6 +47,7 @@ export default async function CasesPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const model = resolvedSearchParams?.model ?? "all";
   const system = resolvedSearchParams?.system ?? "all";
+  const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
   const cases = await loadCases();
   const modelOptions = Array.from(new Set(cases.map((item) => item.model))).sort();
@@ -64,6 +65,11 @@ export default async function CasesPage({
         <p className="text-slate-600">
           CSV/XLSX 양식으로 사례를 업로드하고 확인할 수 있습니다.
         </p>
+        {isReadOnly ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+            읽기 전용 모드입니다. 업로드 및 저장 기능이 비활성화됩니다.
+          </div>
+        ) : null}
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -93,7 +99,7 @@ export default async function CasesPage({
           CSV 또는 XLSX 파일을 업로드하세요.
         </p>
         <div className="mt-4">
-          <UploadForm />
+          <UploadForm readOnly={isReadOnly} />
         </div>
       </section>
 

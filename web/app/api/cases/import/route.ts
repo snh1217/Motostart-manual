@@ -55,6 +55,13 @@ const readExistingCases = async (filePath: string): Promise<CaseRow[]> => {
 };
 
 export async function POST(request: Request) {
+  if (process.env.READ_ONLY_MODE === "1") {
+    return NextResponse.json(
+      { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
+      { status: 403 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
 

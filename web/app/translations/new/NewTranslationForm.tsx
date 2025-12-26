@@ -7,9 +7,15 @@ type Props = {
   entryId: string;
   title: string;
   returnTo: string;
+  readOnly?: boolean;
 };
 
-export default function NewTranslationForm({ entryId, title, returnTo }: Props) {
+export default function NewTranslationForm({
+  entryId,
+  title,
+  returnTo,
+  readOnly = false,
+}: Props) {
   const [titleKo, setTitleKo] = useState("");
   const [summaryKo, setSummaryKo] = useState("");
   const [textKo, setTextKo] = useState("");
@@ -29,6 +35,12 @@ export default function NewTranslationForm({ entryId, title, returnTo }: Props) 
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (readOnly) {
+      setStatus("error");
+      setMessage("읽기 전용 모드에서는 저장할 수 없습니다.");
+      return;
+    }
 
     if (!entryId) {
       setStatus("error");
@@ -68,6 +80,11 @@ export default function NewTranslationForm({ entryId, title, returnTo }: Props) 
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {readOnly ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+          읽기 전용 모드입니다. 번역 저장이 비활성화됩니다.
+        </div>
+      ) : null}
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <div className="text-xs text-slate-500">메뉴얼 ID</div>
         <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -97,6 +114,7 @@ export default function NewTranslationForm({ entryId, title, returnTo }: Props) 
           onChange={(event) => setTitleKo(event.target.value)}
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           placeholder="예: 좌측 크랭크케이스 커버 및 CVT"
+          disabled={readOnly}
         />
       </div>
 
@@ -111,6 +129,7 @@ export default function NewTranslationForm({ entryId, title, returnTo }: Props) 
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           rows={3}
           placeholder="요약 내용을 입력하세요."
+          disabled={readOnly}
         />
       </div>
 
@@ -125,13 +144,14 @@ export default function NewTranslationForm({ entryId, title, returnTo }: Props) 
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           rows={8}
           placeholder="본문 내용을 입력하세요."
+          disabled={readOnly}
         />
       </div>
 
       <div className="flex flex-wrap items-center gap-3">
         <button
           type="submit"
-          disabled={status === "saving"}
+          disabled={status === "saving" || readOnly}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           {status === "saving" ? "저장 중..." : "저장"}

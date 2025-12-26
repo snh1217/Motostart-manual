@@ -1,0 +1,33 @@
+[
+  {
+    "id": "spec-368g-torque-001",
+    "model": "368G",
+    "category": "torque",
+    "item": "드레인볼트 토크",
+    "value": "25 N·m",
+    "note": "알루미늄 와셔 포함"
+  },
+  {
+    "id": "spec-368g-oil-001",
+    "model": "368G",
+    "category": "oil",
+    "item": "엔진오일량",
+    "value": "1.6 L",
+    "note": "필터 교환 시 1.7 L"
+  },
+  {
+    "id": "spec-350d-torque-001",
+    "model": "350D",
+    "category": "torque",
+    "item": "드레인볼트 토크",
+    "value": "23 N·m"
+  },
+  {
+    "id": "spec-125m-oil-001",
+    "model": "125M",
+    "category": "oil",
+    "item": "엔진오일량",
+    "value": "1.0 L",
+    "note": "점검 시량"
+  }
+]

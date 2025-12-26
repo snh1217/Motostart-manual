@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { promises as fs } from "fs";
 import path from "path";
 import UploadForm from "./UploadForm";
@@ -23,6 +23,7 @@ export default async function TranslationsPage({
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = resolvedSearchParams?.q ?? "";
+  const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
   const translations = await loadTranslations();
   const filtered = translations.filter((item) => {
@@ -41,6 +42,11 @@ export default async function TranslationsPage({
         <p className="text-slate-600">
           번역 템플릿 업로드로 한글 요약/본문을 관리합니다.
         </p>
+        {isReadOnly ? (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
+            읽기 전용 모드입니다. 업로드 및 저장 기능이 비활성화됩니다.
+          </div>
+        ) : null}
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -67,7 +73,7 @@ export default async function TranslationsPage({
           번역 CSV/XLSX 파일을 업로드하세요.
         </p>
         <div className="mt-4">
-          <UploadForm />
+          <UploadForm readOnly={isReadOnly} />
         </div>
       </section>
 
@@ -76,7 +82,7 @@ export default async function TranslationsPage({
           <input
             name="q"
             defaultValue={query}
-            placeholder="메뉴얼ID 또는 한글제목 검색"
+            placeholder="메뉴얼 ID 또는 한글 제목 검색"
             className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           />
           <button
@@ -85,20 +91,26 @@ export default async function TranslationsPage({
           >
             검색
           </button>
-          <Link
-            href="/translations/new"
-            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
-          >
-            새 번역
-          </Link>
+          {isReadOnly ? (
+            <span className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400">
+              새 번역
+            </span>
+          ) : (
+            <Link
+              href="/translations/new"
+              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+            >
+              새 번역
+            </Link>
+          )}
         </form>
 
         <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-100 text-slate-600">
               <tr>
-                <th className="px-4 py-3 font-semibold">메뉴얼ID</th>
-                <th className="px-4 py-3 font-semibold">한글제목</th>
+                <th className="px-4 py-3 font-semibold">메뉴얼 ID</th>
+                <th className="px-4 py-3 font-semibold">한글 제목</th>
                 <th className="px-4 py-3 font-semibold">업데이트</th>
               </tr>
             </thead>
@@ -120,7 +132,7 @@ export default async function TranslationsPage({
               ) : (
                 <tr>
                   <td className="px-4 py-6 text-center text-slate-500" colSpan={3}>
-                    표시할 번역이 없습니다.
+                    등록된 번역이 없습니다.
                   </td>
                 </tr>
               )}

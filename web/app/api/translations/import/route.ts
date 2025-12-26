@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -15,13 +15,13 @@ const normalizeHeader = (header: string): string => {
 
 const headerMap: Record<string, keyof TranslationItem> = {
   entryid: "entryId",
-  메뉴얼id: "entryId",
-  메뉴얼아이디: "entryId",
-  한글제목: "title_ko",
+  "메뉴얼id": "entryId",
+  "메뉴얼아이디": "entryId",
+  "한글제목": "title_ko",
   titleko: "title_ko",
-  한글요약: "summary_ko",
+  "한글요약": "summary_ko",
   summaryko: "summary_ko",
-  한글본문: "text_ko",
+  "한글본문": "text_ko",
   textko: "text_ko",
 };
 
@@ -78,6 +78,13 @@ const readTranslations = async (): Promise<TranslationItem[]> => {
 };
 
 export async function POST(request: Request) {
+  if (process.env.READ_ONLY_MODE === "1") {
+    return NextResponse.json(
+      { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
+      { status: 403 }
+    );
+  }
+
   const formData = await request.formData();
   const file = formData.get("file");
 
@@ -110,9 +117,7 @@ export async function POST(request: Request) {
   }
 
   const existing = await readTranslations();
-  const translationMap = new Map(
-    existing.map((item) => [item.entryId, item])
-  );
+  const translationMap = new Map(existing.map((item) => [item.entryId, item]));
 
   let imported = 0;
   let updated = 0;

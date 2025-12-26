@@ -9,6 +9,7 @@ export default async function NewTranslationPage({
   const entryId = resolvedParams?.entryId ?? "";
   const title = resolvedParams?.title ?? "";
   const returnTo = resolvedParams?.returnTo ?? "/translations";
+  const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
   return (
     <section className="space-y-6">
@@ -17,7 +18,12 @@ export default async function NewTranslationPage({
         <p className="text-slate-600">PDF를 보면서 빠르게 메모를 남기세요.</p>
       </header>
 
-      <NewTranslationForm entryId={entryId} title={title} returnTo={returnTo} />
+      <NewTranslationForm
+        entryId={entryId}
+        title={title}
+        returnTo={returnTo}
+        readOnly={isReadOnly}
+      />
     </section>
   );
 }

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 
@@ -7,7 +7,11 @@ type UploadResult = {
   total: number;
 };
 
-export default function UploadForm() {
+type UploadFormProps = {
+  readOnly?: boolean;
+};
+
+export default function UploadForm({ readOnly = false }: UploadFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
@@ -17,9 +21,15 @@ export default function UploadForm() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (readOnly) {
+      setStatus("error");
+      setMessage("읽기 전용 모드에서는 업로드할 수 없습니다.");
+      return;
+    }
+
     if (!file) {
       setStatus("error");
-      setMessage("파일을 선택해주세요.");
+      setMessage("파일을 선택해 주세요.");
       return;
     }
 
@@ -49,7 +59,9 @@ export default function UploadForm() {
     } catch (error) {
       setStatus("error");
       setMessage(
-        error instanceof Error ? error.message : "업로드 중 오류가 발생했습니다."
+        error instanceof Error
+          ? error.message
+          : "업로드 중 오류가 발생했습니다."
       );
     }
   };
@@ -62,10 +74,11 @@ export default function UploadForm() {
           accept=".csv,.xlsx"
           onChange={(event) => setFile(event.target.files?.[0] ?? null)}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+          disabled={readOnly}
         />
         <button
           type="submit"
-          disabled={status === "loading"}
+          disabled={status === "loading" || readOnly}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
           {status === "loading" ? "업로드 중..." : "업로드"}
