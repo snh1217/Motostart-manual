@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import type { TranslationItem } from "../../../../lib/types";
+import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
+import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
 
 const normalizeHeader = (header: string): string => {
   return header
@@ -77,11 +79,26 @@ const readTranslations = async (): Promise<TranslationItem[]> => {
   }
 };
 
+const inferModel = (entryId: string): string => {
+  const upper = entryId.toUpperCase();
+  if (upper.includes("350D")) return "350D";
+  if (upper.includes("368G")) return "368G";
+  if (upper.includes("125M")) return "125M";
+  return "UNKNOWN";
+};
+
 export async function POST(request: Request) {
-  if (process.env.READ_ONLY_MODE === "1") {
+  if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
       { status: 403 }
+    );
+  }
+
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json(
+      { error: "관리자 토큰이 필요합니다." },
+      { status: 401 }
     );
   }
 
@@ -116,13 +133,47 @@ export async function POST(request: Request) {
     );
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (hasSupabaseConfig && supabaseAdmin) {
+    const payload = rows
+      .filter((row) => row.entryId)
+      .map((row) => ({
+        model: inferModel(row.entryId),
+        entry_id: row.entryId,
+        title_ko: row.title_ko || null,
+        summary_ko: row.summary_ko || null,
+        text_ko: row.text_ko || null,
+      }));
+
+    if (payload.length) {
+      const { error } = await supabaseAdmin.from("translations").upsert(payload, {
+        onConflict: "model,entry_id",
+      });
+      if (error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      imported: payload.length,
+      updated: 0,
+      skipped: rows.length - payload.length,
+      total: payload.length,
+    });
+  }
+
   const existing = await readTranslations();
-  const translationMap = new Map(existing.map((item) => [item.entryId, item]));
+  const translationMap = new Map(
+    existing.map((item) => [item.entryId, item])
+  );
 
   let imported = 0;
   let updated = 0;
   let skipped = 0;
-  const today = new Date().toISOString().slice(0, 10);
 
   rows.forEach((row) => {
     if (!row.entryId) {

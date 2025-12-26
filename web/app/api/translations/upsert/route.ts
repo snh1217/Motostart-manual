@@ -2,6 +2,8 @@
 import path from "path";
 import { NextResponse } from "next/server";
 import type { TranslationItem } from "../../../../lib/types";
+import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
+import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,17 +20,32 @@ const readTranslations = async (): Promise<TranslationItem[]> => {
   }
 };
 
+const inferModel = (entryId: string): string => {
+  const upper = entryId.toUpperCase();
+  if (upper.includes("350D")) return "350D";
+  if (upper.includes("368G")) return "368G";
+  if (upper.includes("125M")) return "125M";
+  return "UNKNOWN";
+};
+
 export async function POST(request: Request) {
-  if (process.env.READ_ONLY_MODE === "1") {
+  if (isReadOnlyMode()) {
     return NextResponse.json(
       { message: "읽기 전용 모드에서는 저장할 수 없습니다." },
       { status: 403 }
     );
   }
 
-  let payload: TranslationItem | null = null;
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json(
+      { message: "관리자 토큰이 필요합니다." },
+      { status: 401 }
+    );
+  }
+
+  let payload: (TranslationItem & { model?: string }) | null = null;
   try {
-    payload = (await request.json()) as TranslationItem;
+    payload = (await request.json()) as TranslationItem & { model?: string };
   } catch {
     return NextResponse.json({ message: "invalid json" }, { status: 400 });
   }
@@ -40,10 +57,36 @@ export async function POST(request: Request) {
     );
   }
 
+  const today = new Date().toISOString().slice(0, 10);
+  const model = payload.model ?? inferModel(payload.entryId);
+
+  if (hasSupabaseConfig && supabaseAdmin) {
+    const { error } = await supabaseAdmin
+      .from("translations")
+      .upsert(
+        {
+          model,
+          entry_id: payload.entryId,
+          title_ko: payload.title_ko ?? null,
+          summary_ko: payload.summary_ko ?? null,
+          text_ko: payload.text_ko ?? null,
+        },
+        { onConflict: "model,entry_id" }
+      );
+
+    if (error) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ ok: true, updated: true });
+  }
+
   try {
     const existing = await readTranslations();
     const index = existing.findIndex((item) => item.entryId === payload?.entryId);
-    const today = new Date().toISOString().slice(0, 10);
     const nextItem: TranslationItem = {
       entryId: payload.entryId,
       title_ko: payload.title_ko?.trim() || undefined,

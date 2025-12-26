@@ -2,6 +2,8 @@
 import path from "path";
 import { NextResponse } from "next/server";
 import { parseCsv, parseXlsx } from "../../../../lib/importers";
+import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
+import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
 
 type CaseRow = {
   id: string;
@@ -55,10 +57,17 @@ const readExistingCases = async (filePath: string): Promise<CaseRow[]> => {
 };
 
 export async function POST(request: Request) {
-  if (process.env.READ_ONLY_MODE === "1") {
+  if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
       { status: 403 }
+    );
+  }
+
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json(
+      { error: "관리자 토큰이 필요합니다." },
+      { status: 401 }
     );
   }
 
@@ -93,14 +102,40 @@ export async function POST(request: Request) {
     );
   }
 
-  const casesPath = path.resolve(process.cwd(), "data", "cases.json");
-  const existingCases = await readExistingCases(casesPath);
-
   const importedCases: CaseRow[] = [];
   rows.forEach((row, index) => {
     const caseRow = buildCaseRow(row, index);
     if (caseRow) importedCases.push(caseRow);
   });
+
+  if (hasSupabaseConfig && supabaseAdmin) {
+    const payload = importedCases.map((item) => ({
+      model: item.model,
+      system: item.system,
+      symptom: item.symptom,
+      action: item.action,
+    }));
+
+    if (payload.length) {
+      const { error } = await supabaseAdmin.from("cases").insert(payload);
+      if (error) {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    return NextResponse.json({
+      imported: payload.length,
+      total: payload.length,
+      models: Array.from(new Set(payload.map((item) => item.model))),
+      systems: Array.from(new Set(payload.map((item) => item.system))),
+    });
+  }
+
+  const casesPath = path.resolve(process.cwd(), "data", "cases.json");
+  const existingCases = await readExistingCases(casesPath);
 
   const combined = [...existingCases, ...importedCases];
   await fs.mkdir(path.dirname(casesPath), { recursive: true });

@@ -6,11 +6,13 @@
     "predev": "node scripts/generate_templates.mjs",
     "dev": "next dev",
     "gen:templates": "node scripts/generate_templates.mjs",
+    "migrate:db": "node scripts/migrate_to_supabase.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
     "next": "16.1.1",
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.4.5",

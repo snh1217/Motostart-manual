@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import UploadForm from "./UploadForm";
@@ -21,7 +22,25 @@ const systemLabels: Record<string, string> = {
   electrical: "전장",
 };
 
+const buildApiUrl = async (query: string) => {
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const proto = headerList.get("x-forwarded-proto") ?? "http";
+  return host ? `${proto}://${host}/api/cases?${query}` : `/api/cases?${query}`;
+};
+
 const loadCases = async (): Promise<CaseRow[]> => {
+  try {
+    const apiUrl = await buildApiUrl("model=all");
+    const response = await fetch(apiUrl, { cache: "no-store" });
+    if (response.ok) {
+      const data = (await response.json()) as { items?: CaseRow[] };
+      return data.items ?? [];
+    }
+  } catch {
+    // fall back to file
+  }
+
   try {
     const casesPath = path.resolve(process.cwd(), "data", "cases.json");
     const raw = await fs.readFile(casesPath, "utf8");

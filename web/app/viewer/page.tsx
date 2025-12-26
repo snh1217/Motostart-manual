@@ -1,5 +1,37 @@
-import Link from "next/link";
+﻿import Link from "next/link";
+import { headers } from "next/headers";
 import { getTranslationByEntryId } from "../../lib/translation";
+import type { TranslationItem } from "../../lib/types";
+
+const buildApiUrl = async (query: string) => {
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const proto = headerList.get("x-forwarded-proto") ?? "http";
+  return host ? `${proto}://${host}/api/translations?${query}` : `/api/translations?${query}`;
+};
+
+const inferModel = (entryId: string) => {
+  const upper = entryId.toUpperCase();
+  if (upper.includes("350D")) return "350D";
+  if (upper.includes("368G")) return "368G";
+  if (upper.includes("125M")) return "125M";
+  return "UNKNOWN";
+};
+
+const loadTranslation = async (entryId: string, model?: string) => {
+  try {
+    const params = new URLSearchParams();
+    params.set("entryId", entryId);
+    if (model) params.set("model", model);
+    const apiUrl = await buildApiUrl(params.toString());
+    const response = await fetch(apiUrl, { cache: "no-store" });
+    if (!response.ok) return null;
+    const data = (await response.json()) as { items?: TranslationItem[] };
+    return data.items?.[0] ?? null;
+  } catch {
+    return null;
+  }
+};
 
 export default async function ViewerPage({
   searchParams,
@@ -9,6 +41,7 @@ export default async function ViewerPage({
     file?: string;
     title?: string;
     page?: string;
+    model?: string;
   }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
@@ -16,11 +49,15 @@ export default async function ViewerPage({
   const file = resolvedSearchParams?.file ?? "";
   const title = resolvedSearchParams?.title ?? "매뉴얼";
   const page = resolvedSearchParams?.page;
+  const model = resolvedSearchParams?.model ?? (entryId ? inferModel(entryId) : undefined);
 
   const pageHash = page ? `#page=${page}` : "";
   const src = file ? `/manuals/splits/${file}${pageHash}` : "";
 
-  const translation = entryId ? await getTranslationByEntryId(entryId) : null;
+  const translation = entryId
+    ? (await loadTranslation(entryId, model)) ?? (await getTranslationByEntryId(entryId))
+    : null;
+
   const returnTo = entryId && file
     ? `/viewer?entryId=${encodeURIComponent(entryId)}&file=${encodeURIComponent(file)}&title=${encodeURIComponent(title)}&page=${encodeURIComponent(page ?? "")}`
     : "/viewer";
@@ -42,7 +79,7 @@ export default async function ViewerPage({
             rel="noreferrer"
             className="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 transition hover:border-slate-300"
           >
-            원본 새 탭
+            원본 보기
           </a>
         ) : null}
       </div>
@@ -92,7 +129,7 @@ export default async function ViewerPage({
                 <div>
                   <p className="font-semibold">번역 없음</p>
                   <p className="mt-2">
-                    번역 요청/추가가 필요합니다. 아래 버튼으로 바로 추가하세요.
+                    번역 요청/추가가 필요하다면 아래 버튼으로 바로 입력하세요.
                   </p>
                   <div className="mt-4">
                     <Link
@@ -100,7 +137,7 @@ export default async function ViewerPage({
                         entryId
                       )}&title=${encodeURIComponent(
                         title
-                      )}&returnTo=${encodeURIComponent(returnTo)}`}
+                      )}&returnTo=${encodeURIComponent(returnTo)}&model=${encodeURIComponent(model ?? "")}`}
                       className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                     >
                       번역 추가

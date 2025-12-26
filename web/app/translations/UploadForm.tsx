@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type UploadResult = {
   imported: number;
@@ -18,6 +18,12 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
   );
   const [message, setMessage] = useState("");
   const [result, setResult] = useState<UploadResult | null>(null);
+  const [adminToken, setAdminToken] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("ADMIN_TOKEN");
+    if (stored) setAdminToken(stored);
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -33,6 +39,12 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
       return;
     }
 
+    if (!adminToken.trim()) {
+      setStatus("error");
+      setMessage("관리자 토큰을 입력해 주세요.");
+      return;
+    }
+
     setStatus("loading");
     setMessage("");
     setResult(null);
@@ -41,8 +53,12 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
     formData.append("file", file);
 
     try {
+      localStorage.setItem("ADMIN_TOKEN", adminToken);
       const response = await fetch("/api/translations/import", {
         method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+        },
         body: formData,
       });
 
@@ -68,21 +84,31 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-3">
         <input
-          type="file"
-          accept=".csv,.xlsx"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          type="password"
+          value={adminToken}
+          onChange={(event) => setAdminToken(event.target.value)}
+          placeholder="관리자 토큰 입력"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
-        <button
-          type="submit"
-          disabled={status === "loading" || readOnly}
-          className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {status === "loading" ? "업로드 중..." : "업로드"}
-        </button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="file"
+            accept=".csv,.xlsx"
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            disabled={readOnly}
+          />
+          <button
+            type="submit"
+            disabled={status === "loading" || readOnly}
+            className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {status === "loading" ? "업로드 중..." : "업로드"}
+          </button>
+        </div>
       </div>
       {message ? (
         <div

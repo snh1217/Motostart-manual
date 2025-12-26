@@ -1,10 +1,29 @@
 ﻿import Link from "next/link";
+import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import UploadForm from "./UploadForm";
 import type { TranslationItem } from "../../lib/types";
 
+const buildApiUrl = async (query: string) => {
+  const headerList = await headers();
+  const host = headerList.get("host");
+  const proto = headerList.get("x-forwarded-proto") ?? "http";
+  return host ? `${proto}://${host}/api/translations?${query}` : `/api/translations?${query}`;
+};
+
 const loadTranslations = async (): Promise<TranslationItem[]> => {
+  try {
+    const apiUrl = await buildApiUrl("model=all");
+    const response = await fetch(apiUrl, { cache: "no-store" });
+    if (response.ok) {
+      const data = (await response.json()) as { items?: TranslationItem[] };
+      return data.items ?? [];
+    }
+  } catch {
+    // fall back to file
+  }
+
   try {
     const filePath = path.resolve(process.cwd(), "data", "translations.json");
     const raw = await fs.readFile(filePath, "utf8");

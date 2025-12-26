@@ -3,12 +3,13 @@
 export default async function NewTranslationPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ entryId?: string; title?: string; returnTo?: string }>;
+  searchParams?: Promise<{ entryId?: string; title?: string; returnTo?: string; model?: string }>;
 }) {
   const resolvedParams = searchParams ? await searchParams : undefined;
   const entryId = resolvedParams?.entryId ?? "";
   const title = resolvedParams?.title ?? "";
   const returnTo = resolvedParams?.returnTo ?? "/translations";
+  const model = resolvedParams?.model ?? undefined;
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
   return (
@@ -22,6 +23,7 @@ export default async function NewTranslationPage({
         entryId={entryId}
         title={title}
         returnTo={returnTo}
+        model={model}
         readOnly={isReadOnly}
       />
     </section>

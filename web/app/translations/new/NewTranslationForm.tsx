@@ -1,12 +1,13 @@
 ﻿"use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 
 type Props = {
   entryId: string;
   title: string;
   returnTo: string;
+  model?: string;
   readOnly?: boolean;
 };
 
@@ -14,6 +15,7 @@ export default function NewTranslationForm({
   entryId,
   title,
   returnTo,
+  model,
   readOnly = false,
 }: Props) {
   const [titleKo, setTitleKo] = useState("");
@@ -23,6 +25,12 @@ export default function NewTranslationForm({
     "idle"
   );
   const [message, setMessage] = useState("");
+  const [adminToken, setAdminToken] = useState("");
+
+  useEffect(() => {
+    const stored = localStorage.getItem("ADMIN_TOKEN");
+    if (stored) setAdminToken(stored);
+  }, []);
 
   const handleCopy = async () => {
     try {
@@ -48,15 +56,26 @@ export default function NewTranslationForm({
       return;
     }
 
+    if (!adminToken.trim()) {
+      setStatus("error");
+      setMessage("관리자 토큰을 입력해 주세요.");
+      return;
+    }
+
     setStatus("saving");
     setMessage("");
 
     try {
-      const response = await fetch("/api/translations/upsert", {
+      localStorage.setItem("ADMIN_TOKEN", adminToken);
+      const response = await fetch("/api/translations", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
         body: JSON.stringify({
           entryId,
+          model,
           title_ko: titleKo,
           summary_ko: summaryKo,
           text_ko: textKo,
@@ -65,7 +84,7 @@ export default function NewTranslationForm({
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.message ?? "저장 실패");
+        throw new Error(data?.error ?? "저장 실패");
       }
 
       setStatus("saved");
@@ -102,6 +121,22 @@ export default function NewTranslationForm({
           </button>
         </div>
         {title ? <div className="mt-2 text-xs text-slate-500">{title}</div> : null}
+        {model ? <div className="mt-1 text-xs text-slate-500">모델: {model}</div> : null}
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-slate-700" htmlFor="adminToken">
+          관리자 토큰
+        </label>
+        <input
+          id="adminToken"
+          type="password"
+          value={adminToken}
+          onChange={(event) => setAdminToken(event.target.value)}
+          className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
+          placeholder="관리자 토큰 입력"
+          disabled={readOnly}
+        />
       </div>
 
       <div className="space-y-2">
