@@ -35,6 +35,10 @@ const readCasesFromFile = async (): Promise<CaseRow[]> => {
   }
 };
 
+const cacheHeaders = {
+  "Cache-Control": "public, max-age=30, stale-while-revalidate=300",
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const modelParam = searchParams.get("model")?.trim() ?? "all";
@@ -59,7 +63,10 @@ export async function GET(request: Request) {
         { status: 500 }
       );
     }
-    return NextResponse.json({ items: data ?? [] });
+    return NextResponse.json(
+      { items: data ?? [] },
+      { headers: cacheHeaders }
+    );
   }
 
   const items = await readCasesFromFile();
@@ -72,7 +79,7 @@ export async function GET(request: Request) {
     }
     return true;
   });
-  return NextResponse.json({ items: filtered });
+  return NextResponse.json({ items: filtered }, { headers: cacheHeaders });
 }
 
 export async function POST(request: Request) {

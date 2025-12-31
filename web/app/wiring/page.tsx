@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { promises as fs } from "fs";
 import path from "path";
+import { cache } from "react";
+import WiringAdminAction from "./WiringAdminAction";
 
 type WiringEntry = {
   id: string;
@@ -35,7 +37,7 @@ const scoreEntry = (entry: WiringEntry, tokens: string[]) => {
   return score;
 };
 
-const loadWiringManifest = async (): Promise<WiringEntry[]> => {
+const loadWiringManifest = cache(async (): Promise<WiringEntry[]> => {
   try {
     const manifestPath = path.resolve(
       process.cwd(),
@@ -49,7 +51,7 @@ const loadWiringManifest = async (): Promise<WiringEntry[]> => {
   } catch {
     return [];
   }
-};
+});
 
 export default async function WiringPage({
   searchParams,
@@ -84,11 +86,14 @@ export default async function WiringPage({
 
   return (
     <section className="space-y-8">
-      <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">회로도</h1>
-        <p className="text-slate-600">
-          회로도 PDF를 원본 해상도로 바로 열 수 있습니다.
-        </p>
+      <header className="flex flex-wrap items-center justify-between gap-3">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">회로도</h1>
+          <p className="text-slate-600">
+            회로도 PDF를 원본 해상도로 바로 열 수 있습니다.
+          </p>
+        </div>
+        <WiringAdminAction />
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -118,6 +123,9 @@ export default async function WiringPage({
             검색
           </button>
         </form>
+        <p className="mt-2 text-xs text-slate-500">
+          제목, 태그, 설명에서 회로도를 찾습니다.
+        </p>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -140,6 +148,9 @@ export default async function WiringPage({
             추천 받기
           </button>
         </form>
+        <p className="mt-2 text-xs text-slate-500">
+          추천 결과는 아래에 표시됩니다.
+        </p>
         {ask && (
           <div className="mt-4 space-y-3">
             {recommendations.length ? (

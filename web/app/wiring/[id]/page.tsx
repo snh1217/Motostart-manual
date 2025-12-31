@@ -1,5 +1,6 @@
 import Link from "next/link";
 import wiringData from "../../../data/wiring_manifest.json";
+import WiringViewer from "./WiringViewer";
 
 const wiringEntries = wiringData as Array<{
   id: string;
@@ -17,6 +18,11 @@ export default async function WiringDetailPage({
 }) {
   const resolvedParams = await params;
   const entry = wiringEntries.find((item) => item.id === resolvedParams.id);
+  const lowerFile = entry?.file.toLowerCase() ?? "";
+  const isImage =
+    lowerFile.endsWith(".png") ||
+    lowerFile.endsWith(".jpg") ||
+    lowerFile.endsWith(".jpeg");
 
   if (!entry) {
     return (
@@ -61,9 +67,7 @@ export default async function WiringDetailPage({
         </a>
       </div>
 
-      <div className="h-[80vh] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white">
-        <iframe title={entry.title} src={entry.file} className="h-full w-full" />
-      </div>
+      <WiringViewer file={entry.file} title={entry.title} isImage={isImage} />
     </section>
   );
 }

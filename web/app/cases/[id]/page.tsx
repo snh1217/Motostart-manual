@@ -9,8 +9,15 @@ type CaseRow = {
   symptom: string;
   action: string;
   photo_1?: string;
+  photo_1_desc?: string;
   photo_2?: string;
+  photo_2_desc?: string;
   photo_3?: string;
+  photo_3_desc?: string;
+  photo_4?: string;
+  photo_4_desc?: string;
+  photo_5?: string;
+  photo_5_desc?: string;
 };
 
 const systemLabels: Record<string, string> = {
@@ -23,7 +30,8 @@ const loadCases = async (): Promise<CaseRow[]> => {
   try {
     const casesPath = path.resolve(process.cwd(), "data", "cases.json");
     const raw = await fs.readFile(casesPath, "utf8");
-    const parsed = JSON.parse(raw);
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized);
     return Array.isArray(parsed) ? (parsed as CaseRow[]) : [];
   } catch {
     return [];
@@ -51,7 +59,13 @@ export default async function CaseDetailPage({
     );
   }
 
-  const photos = [item.photo_1, item.photo_2, item.photo_3].filter(Boolean);
+  const photos = [
+    { src: item.photo_1, desc: item.photo_1_desc },
+    { src: item.photo_2, desc: item.photo_2_desc },
+    { src: item.photo_3, desc: item.photo_3_desc },
+    { src: item.photo_4, desc: item.photo_4_desc },
+    { src: item.photo_5, desc: item.photo_5_desc },
+  ].filter((photo) => photo.src);
 
   return (
     <section className="space-y-8">
@@ -80,12 +94,21 @@ export default async function CaseDetailPage({
         {photos.length ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {photos.map((photo, index) => (
-              <div
+              <figure
                 key={`${item.id}-photo-${index}`}
                 className="overflow-hidden rounded-2xl border border-slate-200 bg-white"
               >
-                <img src={photo} alt={item.symptom} className="h-full w-full object-cover" />
-              </div>
+                <img
+                  src={photo.src}
+                  alt={item.symptom}
+                  className="h-full w-full object-cover"
+                />
+                {photo.desc ? (
+                  <figcaption className="border-t border-slate-100 px-3 py-2 text-xs text-slate-600">
+                    {photo.desc}
+                  </figcaption>
+                ) : null}
+              </figure>
             ))}
           </div>
         ) : (

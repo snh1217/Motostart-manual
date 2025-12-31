@@ -1,5 +1,6 @@
-﻿import { promises as fs } from "fs";
+import { promises as fs } from "fs";
 import path from "path";
+import { cache } from "react";
 import type { ManifestEntry, ManualType, ModelCode } from "./types";
 
 type Manifest = {
@@ -26,15 +27,42 @@ const resolveManifestPath = async () => {
   throw new Error("manifest.json not found");
 };
 
-const readManifest = async (): Promise<Manifest> => {
+const readManifest = cache(async (): Promise<Manifest> => {
   const manifestPath = await resolveManifestPath();
   const raw = await fs.readFile(manifestPath, "utf8");
   return JSON.parse(raw) as Manifest;
-};
+});
 
-export const loadManifest = async (): Promise<ManifestEntry[]> => {
+export const loadManifest = cache(async (): Promise<ManifestEntry[]> => {
   const manifest = await readManifest();
   return Array.isArray(manifest.entries) ? manifest.entries : [];
+});
+
+export const getManualsBaseUrl = () => {
+  const base = process.env.MANUALS_BASE_URL ?? "";
+  return base.endsWith("/") ? base.slice(0, -1) : base;
+};
+
+const appendCacheBust = (url: string) => {
+  const bust = process.env.MANUALS_CACHE_BUST ?? process.env.MANUALS_VERSION;
+  if (!bust) return url;
+  const hasQuery = url.includes("?");
+  const joiner = hasQuery ? "&" : "?";
+  return `${url}${joiner}v=${encodeURIComponent(bust)}`;
+};
+
+export const getManualFileUrl = (file: string) => {
+  if (!file) return "";
+  const base = getManualsBaseUrl();
+  let url = "";
+  if (file.startsWith("http://") || file.startsWith("https://")) {
+    url = file;
+  } else if (file.startsWith("/")) {
+    url = base ? `${base}${file}` : file;
+  } else {
+    url = base ? `${base}/manuals/splits/${file}` : `/manuals/splits/${file}`;
+  }
+  return appendCacheBust(url);
 };
 
 export const filterByModel = (

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -134,7 +134,7 @@ export default function NewTranslationForm({
           value={adminToken}
           onChange={(event) => setAdminToken(event.target.value)}
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
-          placeholder="관리자 토큰 입력"
+          placeholder="관리자코드"
           disabled={readOnly}
         />
       </div>
@@ -210,3 +210,4 @@ export default function NewTranslationForm({
     </form>
   );
 }
+

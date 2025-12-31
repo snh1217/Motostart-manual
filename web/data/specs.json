@@ -12,15 +12,85 @@
     "model": "368G",
     "category": "oil",
     "item": "엔진오일량",
-    "value": "1.6 L",
-    "note": "필터 교환 시 1.7 L"
+    "value": "1.55 L",
+    "note": "필터 교환 시 1.75 L"
+  },
+  {
+    "id": "spec-368g-torque-002",
+    "model": "368G",
+    "category": "torque",
+    "item": "엔진오일 드레인볼트 토크",
+    "value": "25 N·m",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-gear-oil-001",
+    "model": "368G",
+    "category": "oil",
+    "item": "기어박스 오일량",
+    "value": "0.2 L",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-gear-torque-001",
+    "model": "368G",
+    "category": "torque",
+    "item": "기어박스 오일 드레인볼트 토크",
+    "value": "20 N·m",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-coolant-torque-001",
+    "model": "368G",
+    "category": "torque",
+    "item": "냉각수 드레인볼트 토크",
+    "value": "8-10 N·m",
+    "note": "차대 메뉴얼 기준"
   },
   {
     "id": "spec-350d-torque-001",
     "model": "350D",
     "category": "torque",
-    "item": "드레인볼트 토크",
-    "value": "23 N·m"
+    "item": "엔진오일 드레인볼트 토크",
+    "value": "25 N·m",
+    "note": "사용설명서 기준"
+  },
+  {
+    "id": "spec-350d-oil-001",
+    "model": "350D",
+    "category": "oil",
+    "item": "엔진오일량",
+    "value": "1.56 L",
+    "note": "필터 교환 시 1.75 L"
+  },
+  {
+    "id": "spec-350d-torque-002",
+    "model": "350D",
+    "category": "torque",
+    "item": "스파크 플러그 토크",
+    "value": "14 N·m"
+  },
+  {
+    "id": "spec-350d-torque-003",
+    "model": "350D",
+    "category": "torque",
+    "item": "냉각수 드레인볼트 토크",
+    "value": "8-10 N·m"
+  },
+  {
+    "id": "spec-350d-gear-oil-001",
+    "model": "350D",
+    "category": "oil",
+    "item": "기어박스 오일량",
+    "value": "200 mL",
+    "note": "차대 사용설명서 기준"
+  },
+  {
+    "id": "spec-350d-gear-torque-001",
+    "model": "350D",
+    "category": "torque",
+    "item": "기어박스 오일 드레인볼트 토크",
+    "value": "20 N·m"
   },
   {
     "id": "spec-125m-oil-001",
@@ -29,5 +99,782 @@
     "item": "엔진오일량",
     "value": "1.0 L",
     "note": "점검 시량"
+  },
+  {
+    "id": "spec-125td-consumable-l",
+    "model": "125TD",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "12"
+  },
+  {
+    "id": "spec-125td-oil-ml",
+    "model": "125TD",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "1000"
+  },
+  {
+    "id": "spec-125td-oil-ml",
+    "model": "125TD",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "0.95L"
+  },
+  {
+    "id": "spec-125td-oil-ml",
+    "model": "125TD",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "0.9L"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "오일배출토르크",
+    "value": "25N.m (2.6 kgf.m, 18 lbf. ft"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "오일필터토르크",
+    "value": "1.2 kgf.m, 9 lbf.ft)."
+  },
+  {
+    "id": "spec-125td-oil-ml",
+    "model": "125TD",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(전체)",
+    "value": "0.16L"
+  },
+  {
+    "id": "spec-125td-oil-ml",
+    "model": "125TD",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(교환)",
+    "value": "160"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "기어오일 토르크",
+    "value": "20 N.m (2 kgf.m, 15 lbf.ft"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "브레이크오일",
+    "value": "DOT4 0.23L"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "냉각수량",
+    "value": "0.78L"
+  },
+  {
+    "id": "spec-125td-torque-",
+    "model": "125TD",
+    "category": "torque",
+    "item": "후론트캘리퍼 토크",
+    "value": ":24N.m (2.4 kgf.m, 18 lbf.ft)"
+  },
+  {
+    "id": "spec-125td-torque-",
+    "model": "125TD",
+    "category": "torque",
+    "item": "리어캘리퍼 토크",
+    "value": ": 24N.m (2.4 kgf.m, 18 lbf.ft)"
+  },
+  {
+    "id": "spec-125td-oil-",
+    "model": "125TD",
+    "category": "oil",
+    "item": "후론트포크오일",
+    "value": "150±2ml"
+  },
+  {
+    "id": "spec-125tm-consumable-l",
+    "model": "125TM",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "12"
+  },
+  {
+    "id": "spec-125tm-oil-ml",
+    "model": "125TM",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "1000"
+  },
+  {
+    "id": "spec-125tm-oil-ml",
+    "model": "125TM",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "950"
+  },
+  {
+    "id": "spec-125tm-oil-ml",
+    "model": "125TM",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "0.9L"
+  },
+  {
+    "id": "spec-125tm-oil-ml",
+    "model": "125TM",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(전체)",
+    "value": "170"
+  },
+  {
+    "id": "spec-125tm-oil-ml",
+    "model": "125TM",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(교환)",
+    "value": "160"
+  },
+  {
+    "id": "spec-310td310m-consumable-l",
+    "model": "310TD310M",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "12"
+  },
+  {
+    "id": "spec-310td310m-oil-ml",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "2000"
+  },
+  {
+    "id": "spec-310td310m-oil-ml",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "1750"
+  },
+  {
+    "id": "spec-310td310m-oil-ml",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "1.55L"
+  },
+  {
+    "id": "spec-310td310m-oil-ml",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(전체)",
+    "value": "230"
+  },
+  {
+    "id": "spec-310td310m-oil-ml",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(교환)",
+    "value": "200"
+  },
+  {
+    "id": "spec-310td310m-oil-",
+    "model": "310TD310M",
+    "category": "oil",
+    "item": "브레이크오일",
+    "value": "DOT4 0.25L"
+  },
+  {
+    "id": "spec-350td350d-consumable-l",
+    "model": "350TD350D",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "12L"
+  },
+  {
+    "id": "spec-350td350d-oil-ml",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "2,000mL"
+  },
+  {
+    "id": "spec-350td350d-oil-ml",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "1,75L"
+  },
+  {
+    "id": "spec-350td350d-oil-ml",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "1.55L"
+  },
+  {
+    "id": "spec-350td350d-oil-",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "오일배출토르크",
+    "value": "25N.m(2.6kgf.m, 18lbf.ft)"
+  },
+  {
+    "id": "spec-350td350d-oil-",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "오일필터토르크",
+    "value": "20 N.m (2 kgf.m, 15 lbf.ft)"
+  },
+  {
+    "id": "spec-350td350d-oil-ml",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(전체)",
+    "value": "230mL"
+  },
+  {
+    "id": "spec-350td350d-oil-ml",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "기어 박스 오일(mL)(교환)",
+    "value": "200mL"
+  },
+  {
+    "id": "spec-350td350d-oil-",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "냉각수량",
+    "value": "1.44L"
+  },
+  {
+    "id": "spec-350td350d-torque-",
+    "model": "350TD350D",
+    "category": "torque",
+    "item": "후론트캘리퍼 토크",
+    "value": "45-50N.m (4.6-5.1 kgf.m, 33-37 lbf.ft)."
+  },
+  {
+    "id": "spec-350td350d-torque-",
+    "model": "350TD350D",
+    "category": "torque",
+    "item": "리어캘리퍼 토크",
+    "value": ": 24N.m (2.4 kgf.m, 18 lbf.ft)"
+  },
+  {
+    "id": "spec-350td350d-torque-",
+    "model": "350TD350D",
+    "category": "torque",
+    "item": "리어스윙암토크",
+    "value": "24N.m (2.4 kgf.m, 18 lbf.ft)."
+  },
+  {
+    "id": "spec-350td350d-oil-",
+    "model": "350TD350D",
+    "category": "oil",
+    "item": "후론트포크오일",
+    "value": "497±5ml"
+  },
+  {
+    "id": "spec-350gk-consumable-l",
+    "model": "350GK",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "17L 15L 19L"
+  },
+  {
+    "id": "spec-350gk-oil-ml",
+    "model": "350GK",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "2,000mL"
+  },
+  {
+    "id": "spec-350gk-oil-ml",
+    "model": "350GK",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "1,700mL"
+  },
+  {
+    "id": "spec-350r1-consumable-l",
+    "model": "350R1",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "15L"
+  },
+  {
+    "id": "spec-350r1-oil-ml",
+    "model": "350R1",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "2,000mL"
+  },
+  {
+    "id": "spec-350r1-oil-ml",
+    "model": "350R1",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "1,700mL"
+  },
+  {
+    "id": "spec-350t-consumable-l",
+    "model": "350T",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "19L"
+  },
+  {
+    "id": "spec-350t-oil-ml",
+    "model": "350T",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "2,000mL"
+  },
+  {
+    "id": "spec-350t-oil-ml",
+    "model": "350T",
+    "category": "oil",
+    "item": "엔진오일 교환(mL), 필터 포함",
+    "value": "1,700mL"
+  },
+  {
+    "id": "spec-125g1-consumable-l",
+    "model": "125G1",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "20"
+  },
+  {
+    "id": "spec-125g1-oil-ml",
+    "model": "125G1",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "1100"
+  },
+  {
+    "id": "spec-125g1-oil-ml",
+    "model": "125G1",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "1000"
+  },
+  {
+    "id": "spec-125u1-consumable-l",
+    "model": "125U1",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "12.5"
+  },
+  {
+    "id": "spec-125u1-oil-ml",
+    "model": "125U1",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "1100"
+  },
+  {
+    "id": "spec-125u1-oil-ml",
+    "model": "125U1",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "1000"
+  },
+  {
+    "id": "spec-125gk-consumable-l",
+    "model": "125GK",
+    "category": "consumable",
+    "item": "연료탱크(L)",
+    "value": "17"
+  },
+  {
+    "id": "spec-125gk-oil-ml",
+    "model": "125GK",
+    "category": "oil",
+    "item": "엔진오일 전용량(mL)",
+    "value": "1100"
+  },
+  {
+    "id": "spec-125gk-oil-ml",
+    "model": "125GK",
+    "category": "oil",
+    "item": "엔진오일 교환(mL),",
+    "value": "1000"
+  },
+  {
+    "id": "spec-310m-torque-m6-30-hexagon-flange-bolt",
+    "model": "310M",
+    "category": "torque",
+    "item": "M6×30 Hexagon Flange Bolt",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "실린더 헤드 볼트",
+    "value": "21±2"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "실린더 헤드 너트",
+    "value": "52±5"
+  },
+  {
+    "id": "spec-310m-torque-lh",
+    "model": "310M",
+    "category": "torque",
+    "item": "LH 크랭크케이스커버",
+    "value": "12±1.5 N.m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "서머스텟 로킹 볼트",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-m6-16-hexagon-flange-bolts",
+    "model": "310M",
+    "category": "torque",
+    "item": "M6×16 hexagon flange bolts",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "로커암 로킹 너트",
+    "value": "7±1"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "스파크 플러그",
+    "value": "14±1"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "실린더 헤드커버",
+    "value": "12±1.5 N•m."
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "오일펌프 로킹 볼트",
+    "value": "11±1.5N.m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "로커암 샤프토 고정",
+    "value": "7±1N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "실린더 헤드 압력판",
+    "value": "10±1 N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "엔진 온도 센서",
+    "value": "14±1.5N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "산소센서",
+    "value": "10± 1N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "캠스프로켓 볼트",
+    "value": "12±1.5N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "캠체인 텐셔너 볼트",
+    "value": "12±1.5 N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "텐셔너 리프트 볼트",
+    "value": "10±1 N•m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "드리븐 풀리 너트",
+    "value": "75±7 N.m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "드라이브 페이스 볼트",
+    "value": "103±10 N.m"
+  },
+  {
+    "id": "spec-310m-torque-rh",
+    "model": "310M",
+    "category": "torque",
+    "item": "RH 크랭크케이스커버",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-right-cover-small-ac-cover",
+    "model": "310M",
+    "category": "torque",
+    "item": "Right cover small AC cover",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "워퍼펌프 커버 파이프 조인트",
+    "value": "20±2.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "워터펌프 커버 볼트",
+    "value": "12±1.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "워터펌프 드레인 볼트",
+    "value": "10±1"
+  },
+  {
+    "id": "spec-310m-torque-right-cover-large-ac-cover",
+    "model": "310M",
+    "category": "torque",
+    "item": "Right cover large AC cover",
+    "value": "16±1.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "스테이터 볼트",
+    "value": "10±1"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "펄스코일",
+    "value": "5±1"
+  },
+  {
+    "id": "spec-310m-torque-flywheel-locking-bolt",
+    "model": "310M",
+    "category": "torque",
+    "item": "Flywheel locking bolt",
+    "value": "75±7"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "기어박스커버 볼트",
+    "value": "20±2.5"
+  },
+  {
+    "id": "spec-310m-torque-6205-bearing-plate-bolt",
+    "model": "310M",
+    "category": "torque",
+    "item": "6205 bearing plate bolt",
+    "value": "10±0.5"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "기어박스 드레인 볼트",
+    "value": "20±2.5"
+  },
+  {
+    "id": "spec-310m-torque-lh",
+    "model": "310M",
+    "category": "torque",
+    "item": "LH크랭크 케이스",
+    "value": "12 ± 1.5n.m"
+  },
+  {
+    "id": "spec-310m-torque-rh",
+    "model": "310M",
+    "category": "torque",
+    "item": "RH크랭크 케이스",
+    "value": "12 ± 1.5n.m"
+  },
+  {
+    "id": "spec-310m-torque-m6-10-hex-flange",
+    "model": "310M",
+    "category": "torque",
+    "item": "M6 × 10 hex flange",
+    "value": "10 ± 1N.m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "스타터 모터",
+    "value": "12 ± 1.5n.m"
+  },
+  {
+    "id": "spec-310m-torque-",
+    "model": "310M",
+    "category": "torque",
+    "item": "오일필터 너트",
+    "value": "10±1N.m"
+  },
+  {
+    "id": "spec-125g1euo-oil-1244200-035000",
+    "model": "125G1EUO",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "330ml"
+  },
+  {
+    "id": "spec-125d-oil-1246300-007000",
+    "model": "125D",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1246300-007000 오일 용량",
+    "value": "150ml"
+  },
+  {
+    "id": "spec-310tm-oil-1246200-066000",
+    "model": "310TM",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1246200-066000 오일 용량",
+    "value": "220ml"
+  },
+  {
+    "id": "spec-350gk-oil-1244300-053000",
+    "model": "350GK",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244300-053000 오일 용량",
+    "value": "455ml"
+  },
+  {
+    "id": "spec-368gadx-oil-1246400-120000",
+    "model": "368GADX",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1246400-120000 오일 용량",
+    "value": "410ml"
+  },
+  {
+    "id": "spec-125g1krx-oil-1244200-035000",
+    "model": "125G1KRX",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "260ml"
+  },
+  {
+    "id": "spec-125m-oil-1246300-007000",
+    "model": "125M",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1246300-007000 오일 용량",
+    "value": "150ml"
+  },
+  {
+    "id": "spec-350td41-oil-1246200-066000",
+    "model": "350TD41",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1246200-066000 오일 용량",
+    "value": "497ml"
+  },
+  {
+    "id": "spec-350r1-oil-1244300-053000",
+    "model": "350R1",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244300-053000 오일 용량",
+    "value": "455ml"
+  },
+  {
+    "id": "spec-125g1euro5-oil-1244200-035000",
+    "model": "125G1EURO5",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "348ml"
+  },
+  {
+    "id": "spec-125u1eu-oil-1244200-035000",
+    "model": "125U1EU",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "330ml"
+  },
+  {
+    "id": "spec-125u1kr-oil-1244200-035000",
+    "model": "125U1KR",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "260ml"
+  },
+  {
+    "id": "spec-125c-oil-1244200-035000",
+    "model": "125C",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "340ml"
+  },
+  {
+    "id": "spec-125te-oil-1244200-035000",
+    "model": "125TE",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "412ml"
+  },
+  {
+    "id": "spec-310x-oil-1244200-035000",
+    "model": "310X",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "265ml"
+  },
+  {
+    "id": "spec-350td37-oil-1244200-035000",
+    "model": "350TD37",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "386ml"
+  },
+  {
+    "id": "spec-368te-oil-1244200-035000",
+    "model": "368TE",
+    "category": "oil",
+    "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
+    "value": "411ml"
   }
 ]

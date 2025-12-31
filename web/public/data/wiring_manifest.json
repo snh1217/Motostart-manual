@@ -3,7 +3,13 @@
     "id": "368g-start",
     "model": "368G",
     "title": "Starting / Ignition",
-    "tags": ["시동", "스타터", "점화", "ignition", "starter"],
+    "tags": [
+      "시동",
+      "스타터",
+      "점화",
+      "ignition",
+      "starter"
+    ],
     "note": "시동 릴레이, 스타터모터, 점화스위치, 킬스위치, ECU 인터락 흐름 포함",
     "file": "/wiring/368G/starting.pdf"
   },
@@ -11,7 +17,13 @@
     "id": "350d-charging",
     "model": "350D",
     "title": "Charging / Battery",
-    "tags": ["충전", "배터리", "레귤레이터", "charging", "battery"],
+    "tags": [
+      "충전",
+      "배터리",
+      "레귤레이터",
+      "charging",
+      "battery"
+    ],
     "note": "발전기, 레귤레이터/레크티파이어, 배터리 충전 경로 확인",
     "file": "/wiring/350D/charging.pdf"
   },
@@ -19,8 +31,308 @@
     "id": "125m-lighting",
     "model": "125M",
     "title": "Lighting / Signals",
-    "tags": ["조명", "등화", "방향지시", "lighting", "signal"],
+    "tags": [
+      "조명",
+      "등화",
+      "방향지시",
+      "lighting",
+      "signal"
+    ],
     "note": "헤드라이트, 테일램프, 방향지시등 회로 구성",
     "file": "/wiring/125M/lighting.pdf"
+  },
+  {
+    "id": "368g-368g-png",
+    "model": "368G",
+    "title": "전체 회로도",
+    "tags": [],
+    "file": "/wiring/368G/368G_.png"
+  },
+  {
+    "id": "350d-350d-png",
+    "model": "350D",
+    "title": "전체 회로도",
+    "tags": [],
+    "file": "/wiring/350D/350D_.png"
+  },
+  {
+    "id": "125-zt125_150_155_g1",
+    "model": "125",
+    "title": "ZT125,150,155-G1 회로도 영어버져전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125/zt125_150_155_g1_2.pdf"
+  },
+  {
+    "id": "150-zt125_150_155_g1",
+    "model": "150",
+    "title": "ZT125,150,155-G1 회로도 영어버져전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/150/zt125_150_155_g1_2.pdf"
+  },
+  {
+    "id": "155g1-zt125_150_155_g1",
+    "model": "155G1",
+    "title": "ZT125,150,155-G1 회로도 영어버져전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/155G1/zt125_150_155_g1_2.pdf"
+  },
+  {
+    "id": "125-zt125_150_155_z2",
+    "model": "125",
+    "title": "ZT125,150,155 -Z2 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125/zt125_150_155_z2_2.pdf"
+  },
+  {
+    "id": "150-zt125_150_155_z2",
+    "model": "150",
+    "title": "ZT125,150,155 -Z2 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/150/zt125_150_155_z2_2.pdf"
+  },
+  {
+    "id": "155-zt125_150_155_z2",
+    "model": "155",
+    "title": "ZT125,150,155 -Z2 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/155/zt125_150_155_z2_2.pdf"
+  },
+  {
+    "id": "125-zt125_150_155_u",
+    "model": "125",
+    "title": "ZT125,150,155-U 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125/zt125_150_155_u_2.pdf"
+  },
+  {
+    "id": "150-zt125_150_155_u",
+    "model": "150",
+    "title": "ZT125,150,155-U 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/150/zt125_150_155_u_2.pdf"
+  },
+  {
+    "id": "155u-zt125_150_155_u",
+    "model": "155U",
+    "title": "ZT125,150,155-U 회로도 영어버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/155U/zt125_150_155_u_2.pdf"
+  },
+  {
+    "id": "125-zt125_150_155_u1",
+    "model": "125",
+    "title": "ZT125,150,155-U1 회로도 영어 버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125/zt125_150_155_u1_2.pdf"
+  },
+  {
+    "id": "150-zt125_150_155_u1",
+    "model": "150",
+    "title": "ZT125,150,155-U1 회로도 영어 버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/150/zt125_150_155_u1_2.pdf"
+  },
+  {
+    "id": "155u1-zt125_150_155_u1",
+    "model": "155U1",
+    "title": "ZT125,150,155-U1 회로도 영어 버전",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/155U1/zt125_150_155_u1_2.pdf"
+  },
+  {
+    "id": "125tm-zt125t_m_125d",
+    "model": "125TM",
+    "title": "ZT125T-M 125D 사용설명서 회로도포함영어버젼",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125TM/zt125t_m_125d_2.pdf"
+  },
+  {
+    "id": "125d-zt125t_m_125d",
+    "model": "125D",
+    "title": "ZT125T-M 125D 사용설명서 회로도포함영어버젼",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125D/zt125t_m_125d_2.pdf"
+  },
+  {
+    "id": "202109031-annzt20210903135727442",
+    "model": "202109031",
+    "title": "회로도AnnZT20210903135727442",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/202109031/annzt20210903135727442_2.pdf"
+  },
+  {
+    "id": "35727442-annzt20210903135727442",
+    "model": "35727442",
+    "title": "회로도AnnZT20210903135727442",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/35727442/annzt20210903135727442_2.pdf"
+  },
+  {
+    "id": "310m-310m",
+    "model": "310M",
+    "title": "310M회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/310M/310m_3.pdf"
+  },
+  {
+    "id": "350d-350d",
+    "model": "350D",
+    "title": "350D 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/350D/350d_3.png"
+  },
+  {
+    "id": "368g-368g",
+    "model": "368G",
+    "title": "368G 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/368G/368g_3.png"
+  },
+  {
+    "id": "310m-310m",
+    "model": "310M",
+    "title": "310M 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/310M/310m_4.pdf"
+  },
+  {
+    "id": "125m-125m",
+    "model": "125M",
+    "title": "회로도125m",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125M/125m_2.pdf"
+  },
+  {
+    "id": "125m-125m",
+    "model": "125M",
+    "title": "회로도 125m",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125M/125m_2.jpg"
+  },
+  {
+    "id": "125d-125d",
+    "model": "125D",
+    "title": "회로도 125D",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125D/125d_2.jpg"
+  },
+  {
+    "id": "350gk-zt350_gk",
+    "model": "350GK",
+    "title": "ZT350-GK 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/350GK/zt350_gk_2.pdf"
+  },
+  {
+    "id": "125g1-zt125_g1",
+    "model": "125G1",
+    "title": "ZT125-G1 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125G1/zt125_g1_2.pdf"
+  },
+  {
+    "id": "125u1-zt125_u1",
+    "model": "125U1",
+    "title": "ZT125-U1 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/125U1/zt125_u1_2.pdf"
+  },
+  {
+    "id": "368g-368g",
+    "model": "368G",
+    "title": "368G 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/368G/368g_4.png"
+  },
+  {
+    "id": "350d-350d",
+    "model": "350D",
+    "title": "350D 회로도",
+    "tags": [
+      "회로도"
+    ],
+    "note": "회로도 자료",
+    "file": "/wiring/350D/350d_4.png"
   }
 ]

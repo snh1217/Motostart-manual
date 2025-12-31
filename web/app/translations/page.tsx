@@ -1,9 +1,12 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import UploadForm from "./UploadForm";
 import type { TranslationItem } from "../../lib/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const buildApiUrl = async (query: string) => {
   const headerList = await headers();
@@ -38,10 +41,9 @@ const loadTranslations = async (): Promise<TranslationItem[]> => {
 export default async function TranslationsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: { q?: string };
 }) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const query = resolvedSearchParams?.q ?? "";
+  const query = searchParams?.q ?? "";
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
   const translations = await loadTranslations();
@@ -57,39 +59,39 @@ export default async function TranslationsPage({
   return (
     <section className="space-y-8">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">번역 관리</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">���� ����</h1>
         <p className="text-slate-600">
-          번역 템플릿 업로드로 한글 요약/본문을 관리합니다.
+          ���� ���ø� ���ε�� �ѱ� ���/������ �����մϴ�.
         </p>
         {isReadOnly ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
-            읽기 전용 모드입니다. 업로드 및 저장 기능이 비활성화됩니다.
+            �б� ���� ����Դϴ�. ���ε� �� ���� ����� ��Ȱ��ȭ�˴ϴ�.
           </div>
         ) : null}
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">양식 다운로드</h2>
+        <h2 className="text-base font-semibold">��� �ٿ�ε�</h2>
         <div className="mt-4 flex flex-wrap gap-3">
           <a
             className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
             href="/templates/translations_template.xlsx"
           >
-            번역 양식(엑셀)
+            ���� ���(����)
           </a>
           <a
             className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
             href="/templates/translations_template.csv"
           >
-            번역 양식(CSV)
+            ���� ���(CSV)
           </a>
         </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">업로드</h2>
+        <h2 className="text-base font-semibold">���ε�</h2>
         <p className="mt-1 text-sm text-slate-600">
-          번역 CSV/XLSX 파일을 업로드하세요.
+          ���� CSV/XLSX ������ ���ε��ϼ���.
         </p>
         <div className="mt-4">
           <UploadForm readOnly={isReadOnly} />
@@ -101,25 +103,25 @@ export default async function TranslationsPage({
           <input
             name="q"
             defaultValue={query}
-            placeholder="메뉴얼 ID 또는 한글 제목 검색"
+            placeholder="�޴��� ID �Ǵ� �ѱ� ���� �˻�"
             className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           />
           <button
             type="submit"
             className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
           >
-            검색
+            �˻�
           </button>
           {isReadOnly ? (
             <span className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400">
-              새 번역
+              �� ����
             </span>
           ) : (
             <Link
               href="/translations/new"
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
             >
-              새 번역
+              �� ����
             </Link>
           )}
         </form>
@@ -128,9 +130,9 @@ export default async function TranslationsPage({
           <table className="min-w-full text-left text-sm">
             <thead className="bg-slate-100 text-slate-600">
               <tr>
-                <th className="px-4 py-3 font-semibold">메뉴얼 ID</th>
-                <th className="px-4 py-3 font-semibold">한글 제목</th>
-                <th className="px-4 py-3 font-semibold">업데이트</th>
+                <th className="px-4 py-3 font-semibold">�޴��� ID</th>
+                <th className="px-4 py-3 font-semibold">�ѱ� ����</th>
+                <th className="px-4 py-3 font-semibold">������Ʈ</th>
               </tr>
             </thead>
             <tbody>
@@ -151,7 +153,7 @@ export default async function TranslationsPage({
               ) : (
                 <tr>
                   <td className="px-4 py-6 text-center text-slate-500" colSpan={3}>
-                    등록된 번역이 없습니다.
+                    ��ϵ� ������ �����ϴ�.
                   </td>
                 </tr>
               )}

@@ -1,14 +1,25 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import models from "../data/models.json";
-import type { ModelCode } from "../lib/types";
+import ModelSelector from "./ModelSelector";
 
-type ModelEntry = { id: ModelCode; name: string };
+type ModelEntry = { id: string; name: string };
 
 type HomeParams = {
   model?: string;
 };
 
-const modelCards = models as ModelEntry[];
+const getModelRank = (id: string) => {
+  if (id.startsWith("125")) return 0;
+  if (id.startsWith("350")) return 1;
+  if (id.startsWith("368")) return 2;
+  return 9;
+};
+
+const modelCards = (models as ModelEntry[]).slice().sort((a, b) => {
+  const rankDiff = getModelRank(a.id) - getModelRank(b.id);
+  if (rankDiff !== 0) return rankDiff;
+  return a.id.localeCompare(b.id);
+});
 const keywordChips = [
   "엔진오일 용량",
   "냉각수",
@@ -26,11 +37,20 @@ export default async function HomePage({
   const resolved = searchParams ? await searchParams : undefined;
   const selectedModel =
     resolved?.model && modelCards.some((item) => item.id === resolved.model)
-      ? (resolved.model as ModelCode)
+      ? resolved.model
       : "all";
 
   const scopeLabel =
     selectedModel === "all" ? "전체 모델" : `${selectedModel} 모델`;
+
+  const selectorOptions = [
+    { id: "all", label: "전체", href: "/" },
+    ...modelCards.map((m) => ({
+      id: m.id,
+      label: m.id,
+      href: `/?model=${m.id}`,
+    })),
+  ];
 
   return (
     <section className="space-y-10">
@@ -45,13 +65,15 @@ export default async function HomePage({
             </p>
           </div>
 
+          <ModelSelector options={selectorOptions} selected={selectedModel} />
+
           <form
             action="/search"
             method="get"
-            className="mx-auto w-full max-w-3xl space-y-3"
+            className="mx-auto w-full max-w-2xl space-y-3"
           >
             <input type="hidden" name="model" value={selectedModel} />
-            <div className="flex flex-col gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-4 sm:flex-row sm:items-center">
+            <div className="flex items-center gap-3 rounded-3xl border border-slate-200 bg-slate-50 px-4 py-3">
               <input
                 name="q"
                 placeholder="예: 엔진오일 용량, 헤드 토크, 퓨즈, 브레이크액"
@@ -59,7 +81,7 @@ export default async function HomePage({
               />
               <button
                 type="submit"
-                className="rounded-full bg-slate-900 px-6 py-3 text-base font-semibold text-white"
+                className="whitespace-nowrap rounded-full bg-slate-900 px-5 py-2.5 text-base font-semibold text-white"
               >
                 검색
               </button>
@@ -68,35 +90,6 @@ export default async function HomePage({
               검색 범위: {scopeLabel}
             </div>
           </form>
-
-          <div className="space-y-2">
-            <div className="text-sm font-semibold text-slate-700">모델 선택</div>
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/?model=all"
-                className={`rounded-full border px-5 py-2 text-base font-semibold transition ${
-                  selectedModel === "all"
-                    ? "border-slate-900 bg-slate-900 text-white"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                }`}
-              >
-                전체
-              </Link>
-              {modelCards.map((model) => (
-                <Link
-                  key={model.id}
-                  href={`/?model=${model.id}`}
-                  className={`rounded-full border px-5 py-2 text-base font-semibold transition ${
-                    selectedModel === model.id
-                      ? "border-slate-900 bg-slate-900 text-white"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
-                  }`}
-                >
-                  {model.id}
-                </Link>
-              ))}
-            </div>
-          </div>
 
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Link

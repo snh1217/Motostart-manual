@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { cache } from "react";
 import type { TranslationItem } from "./types";
 
 const resolveTranslationsPath = async () => {
@@ -21,7 +22,7 @@ const resolveTranslationsPath = async () => {
   throw new Error("translations.json not found");
 };
 
-export const loadTranslations = async (): Promise<TranslationItem[]> => {
+export const loadTranslations = cache(async (): Promise<TranslationItem[]> => {
   try {
     const translationsPath = await resolveTranslationsPath();
     const raw = await fs.readFile(translationsPath, "utf8");
@@ -31,7 +32,7 @@ export const loadTranslations = async (): Promise<TranslationItem[]> => {
   } catch {
     return [];
   }
-};
+});
 
 export const getTranslationByEntryId = async (
   entryId: string

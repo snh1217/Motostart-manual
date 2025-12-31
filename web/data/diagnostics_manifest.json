@@ -1,0 +1,39 @@
+[
+  {
+    "id": "368g-diag-001",
+    "model": "368G",
+    "title": "엔진 아이들링 점검",
+    "section": "엔진/아이들",
+    "image": "/diagnostics/placeholder.png",
+    "lines": [
+      { "label": "RPM", "value": "1500 ±100", "note": "예열 후 측정" },
+      { "label": "TPS", "value": "0.6~0.7 V", "note": "스로틀 닫힘" }
+    ],
+    "note": "진단기 기본 화면 예시",
+    "updated_at": "2025-12-27"
+  },
+  {
+    "id": "350d-diag-001",
+    "model": "350D",
+    "title": "ABS/브레이크 압력 확인",
+    "section": "제동",
+    "image": "/diagnostics/placeholder.png",
+    "lines": [
+      { "label": "브레이크 압력", "value": "0.8~1.0 MPa" },
+      { "label": "ABS 센서", "value": "정상" }
+    ],
+    "updated_at": "2025-12-27"
+  },
+  {
+    "id": "125m-diag-001",
+    "model": "125M",
+    "title": "ECU 기본값 점검",
+    "section": "전자",
+    "image": "/diagnostics/placeholder.png",
+    "lines": [
+      { "label": "배터리 전압", "value": "12.6 V" },
+      { "label": "아이들 RPM", "value": "1600 ±100" }
+    ],
+    "updated_at": "2025-12-27"
+  }
+]

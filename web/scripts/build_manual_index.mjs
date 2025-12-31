@@ -1,6 +1,4 @@
-// Usage: node scripts/build_manual_index.mjs
-
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import { existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -44,10 +42,95 @@ const MANIFEST_PATH = path.resolve(
   "manifest.json"
 );
 const OUTPUT_PATH = path.resolve(process.cwd(), "data", "manual_index.json");
+const KEYWORDS_PATH = path.resolve(process.cwd(), "data", "manual_keywords.json");
 
 const MIN_TEXT_LENGTH = 200;
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 100;
+const KEYWORDS_LIMIT = 20;
+const STOPWORDS = new Set([
+  "the",
+  "and",
+  "with",
+  "for",
+  "from",
+  "that",
+  "this",
+  "are",
+  "was",
+  "were",
+  "have",
+  "has",
+  "had",
+  "into",
+  "onto",
+  "over",
+  "under",
+  "about",
+  "part",
+  "parts",
+  "page",
+  "figure",
+  "section",
+  "engine",
+  "system",
+  "manual",
+  "spec",
+  "specification",
+  "bolt",
+  "torque",
+  "tighten",
+  "value",
+  "values",
+  "item",
+  "items",
+  "note",
+  "notes",
+  "주의",
+  "참고",
+  "그림",
+  "표",
+  "페이지",
+  "장",
+  "항목",
+  "값",
+  "토크",
+  "볼트",
+  "너트",
+  "규격",
+  "확인",
+  "점검",
+  "경우",
+  "check",
+  "use",
+  "using",
+]);
+
+const extractRegexKeywords = (text) => {
+  const matches = new Set();
+  const addMatches = (regex) => {
+    const found = text.match(regex);
+    if (found) {
+      found.forEach((item) => matches.add(item));
+    }
+  };
+
+  addMatches(/[A-Z]{1,3}-?\d{2,4}/g); // error codes like P0300, E-123
+  addMatches(
+    /\b\d+(\.\d+)?\s?[~-]\s?\d+(\.\d+)?\s?(?:mm|cm|V|v|A|a|k?Pa|psi|bar|kgf\/cm²)\b/gi
+  ); // ranges like 0.5~0.8mm, 10-12V
+  addMatches(/\b\d+\s?(?:Pin|PIN|pin|P)\b/g); // connectors like 3P, 4 Pin
+  addMatches(/\b\d+(\.\d+)?\s?(?:L|ml|ML|cc|CC)\b/g); // volumes like 1.5L, 300ml
+  addMatches(/\b(?:psi|kPa|KPA|bar|kgf\/cm²)\b/g); // pressure units
+  addMatches(/\b\d{1,4}\s?(?:V|v|A|a|W|w|Nm|N·m|n·m|MPa|mpa|kgf|kgf·m|mm|cm)\b/g);
+  addMatches(/\b\d+(\.\d+)?\s?(?:Nm|kgf[·\\-\\.]?m|ft[·\\-\\.]?lb)\b/gi); // torque
+  addMatches(/\b\d+(\.\d+)?\s?(?:°C|°F|Ω|kΩ|ohm)\b/gi); // temp & resistance
+  addMatches(/\b(?:M\d+|\d+mm)\s?(?:bolt|nut|screw)?\b/gi); // hardware sizes
+  addMatches(/\b[A-Z0-9]{3,}-[A-Z0-9]{3,}(?:-[A-Z0-9]{3,})?\b/gi); // part numbers with hyphens
+  addMatches(/\b[A-Z0-9]{4,}\b/g); // fallback part numbers
+
+  return Array.from(matches);
+};
 
 const readManifest = async () => {
   const raw = await fs.readFile(MANIFEST_PATH, "utf8");
@@ -78,9 +161,33 @@ const chunkText = (text) => {
 
 const padIndex = (index) => String(index).padStart(4, "0");
 
+const extractKeywords = (text) => {
+  const tokens = text
+    .toLowerCase()
+    .match(/[a-z0-9가-힣]+/g);
+  if (!tokens) return [];
+
+  const freq = new Map();
+  for (const token of tokens) {
+    if (token.length < 2) continue;
+    if (STOPWORDS.has(token)) continue;
+    freq.set(token, (freq.get(token) || 0) + 1);
+  }
+
+  const ranked = Array.from(freq.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, KEYWORDS_LIMIT)
+    .map(([token]) => token);
+
+  const regexKeywords = extractRegexKeywords(text);
+  const merged = [...new Set([...regexKeywords, ...ranked])];
+  return merged.slice(0, KEYWORDS_LIMIT + regexKeywords.length);
+};
+
 const buildIndex = async () => {
   const entries = await readManifest();
   const records = [];
+  const keywordEntries = [];
   let successCount = 0;
   let missingCount = 0;
   let shortTextCount = 0;
@@ -152,6 +259,17 @@ const buildIndex = async () => {
         });
       });
 
+      const keywords = extractKeywords(text);
+      keywordEntries.push({
+        entryId: entry.id,
+        model: entry.model,
+        manual_type: entry.manual_type,
+        title: entry.title,
+        file: entry.file,
+        pages: { start: entry.pages.start, end: entry.pages.end },
+        keywords,
+      });
+
       totalChunks += chunks.length;
       successCount += 1;
     } catch (error) {
@@ -165,11 +283,13 @@ const buildIndex = async () => {
 
   await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true });
   await fs.writeFile(OUTPUT_PATH, JSON.stringify(records, null, 2), "utf8");
+  await fs.writeFile(KEYWORDS_PATH, JSON.stringify(keywordEntries, null, 2), "utf8");
 
   console.log(
     `done: success=${successCount} missing=${missingCount} shortText=${shortTextCount} error=${errorCount} totalChunks=${totalChunks}`
   );
   console.log(`outputPath: ${OUTPUT_PATH}`);
+  console.log(`keywordsPath: ${KEYWORDS_PATH}`);
 };
 
 buildIndex().catch((error) => {

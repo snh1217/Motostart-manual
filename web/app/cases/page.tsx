@@ -1,8 +1,9 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
-import UploadForm from "./UploadForm";
+import { cache } from "react";
+import CasesAdminPanel from "./CasesAdminPanel";
 
 type CaseRow = {
   id: string;
@@ -11,8 +12,15 @@ type CaseRow = {
   symptom: string;
   action: string;
   photo_1?: string;
+  photo_1_desc?: string;
   photo_2?: string;
+  photo_2_desc?: string;
   photo_3?: string;
+  photo_3_desc?: string;
+  photo_4?: string;
+  photo_4_desc?: string;
+  photo_5?: string;
+  photo_5_desc?: string;
 };
 
 const systemLabels: Record<string, string> = {
@@ -29,10 +37,10 @@ const buildApiUrl = async (query: string) => {
   return host ? `${proto}://${host}/api/cases?${query}` : `/api/cases?${query}`;
 };
 
-const loadCases = async (): Promise<CaseRow[]> => {
+const loadCases = cache(async (): Promise<CaseRow[]> => {
   try {
     const apiUrl = await buildApiUrl("model=all");
-    const response = await fetch(apiUrl, { cache: "no-store" });
+    const response = await fetch(apiUrl, { next: { revalidate: 30 } });
     if (response.ok) {
       const data = (await response.json()) as { items?: CaseRow[] };
       return data.items ?? [];
@@ -44,12 +52,13 @@ const loadCases = async (): Promise<CaseRow[]> => {
   try {
     const casesPath = path.resolve(process.cwd(), "data", "cases.json");
     const raw = await fs.readFile(casesPath, "utf8");
-    const parsed = JSON.parse(raw);
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized);
     return Array.isArray(parsed) ? (parsed as CaseRow[]) : [];
   } catch {
     return [];
   }
-};
+});
 
 const buildQuery = (model: string, system: string) => {
   const params = new URLSearchParams();
@@ -91,36 +100,7 @@ export default async function CasesPage({
         ) : null}
       </header>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">양식 다운로드</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          엑셀 또는 CSV 양식을 내려받아 작성하세요.
-        </p>
-        <div className="mt-4 flex flex-wrap gap-3">
-          <a
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
-            href="/templates/cases_template.xlsx"
-          >
-            양식 다운로드(엑셀)
-          </a>
-          <a
-            className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
-            href="/templates/cases_template.csv"
-          >
-            양식 다운로드(CSV)
-          </a>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <h2 className="text-base font-semibold">업로드</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          CSV 또는 XLSX 파일을 업로드하세요.
-        </p>
-        <div className="mt-4">
-          <UploadForm readOnly={isReadOnly} />
-        </div>
-      </section>
+      <CasesAdminPanel readOnly={isReadOnly} />
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <div className="flex flex-wrap items-center gap-3">
@@ -168,7 +148,14 @@ export default async function CasesPage({
 
         <div className="mt-5 space-y-4">
           {filteredCases.length ? (
-            filteredCases.map((item) => (
+            filteredCases.map((item) => {
+              const photoDesc =
+                item.photo_1_desc ||
+                item.photo_2_desc ||
+                item.photo_3_desc ||
+                item.photo_4_desc ||
+                item.photo_5_desc;
+              return (
               <Link
                 key={item.id}
                 href={`/cases/${item.id}`}
@@ -202,8 +189,14 @@ export default async function CasesPage({
                     </div>
                   ) : null}
                 </div>
+                {photoDesc ? (
+                  <p className="mt-3 text-xs text-slate-500">
+                    사진 설명: {photoDesc}
+                  </p>
+                ) : null}
               </Link>
-            ))
+            );
+            })
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
               등록된 정비사례가 없습니다.

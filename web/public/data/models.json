@@ -1,5 +1,11 @@
 [
+  {"id":"125C","name":"ZONTES 125C"},
+  {"id":"125D","name":"ZONTES 125D"},
+  {"id":"125E","name":"ZONTES 125E"},
+  {"id":"125M","name":"ZONTES 125M"},
+  {"id":"310M","name":"ZONTES 310M"},
   {"id":"350D","name":"ZONTES 350D"},
-  {"id":"368G","name":"ZONTES 368G"},
-  {"id":"125M","name":"ZONTES 125M"}
+  {"id":"350GK","name":"ZONTES 350GK"},
+  {"id":"368E","name":"ZONTES 368E"},
+  {"id":"368G","name":"ZONTES 368G"}
 ]

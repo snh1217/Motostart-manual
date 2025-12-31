@@ -1,4 +1,4 @@
-[
+﻿[
   {
     "id": "spec-368g-torque-001",
     "model": "368G",
@@ -12,15 +12,85 @@
     "model": "368G",
     "category": "oil",
     "item": "엔진오일량",
-    "value": "1.6 L",
-    "note": "필터 교환 시 1.7 L"
+    "value": "1.55 L",
+    "note": "필터 교환 시 1.75 L"
+  },
+  {
+    "id": "spec-368g-torque-002",
+    "model": "368G",
+    "category": "torque",
+    "item": "엔진오일 드레인볼트 토크",
+    "value": "25 N·m",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-gear-oil-001",
+    "model": "368G",
+    "category": "oil",
+    "item": "기어박스 오일량",
+    "value": "0.2 L",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-gear-torque-001",
+    "model": "368G",
+    "category": "torque",
+    "item": "기어박스 오일 드레인볼트 토크",
+    "value": "20 N·m",
+    "note": "차대 메뉴얼 기준"
+  },
+  {
+    "id": "spec-368g-coolant-torque-001",
+    "model": "368G",
+    "category": "torque",
+    "item": "냉각수 드레인볼트 토크",
+    "value": "8-10 N·m",
+    "note": "차대 메뉴얼 기준"
   },
   {
     "id": "spec-350d-torque-001",
     "model": "350D",
     "category": "torque",
-    "item": "드레인볼트 토크",
-    "value": "23 N·m"
+    "item": "엔진오일 드레인볼트 토크",
+    "value": "25 N·m",
+    "note": "사용설명서 기준"
+  },
+  {
+    "id": "spec-350d-oil-001",
+    "model": "350D",
+    "category": "oil",
+    "item": "엔진오일량",
+    "value": "1.56 L",
+    "note": "필터 교환 시 1.75 L"
+  },
+  {
+    "id": "spec-350d-torque-002",
+    "model": "350D",
+    "category": "torque",
+    "item": "스파크 플러그 토크",
+    "value": "14 N·m"
+  },
+  {
+    "id": "spec-350d-torque-003",
+    "model": "350D",
+    "category": "torque",
+    "item": "냉각수 드레인볼트 토크",
+    "value": "8-10 N·m"
+  },
+  {
+    "id": "spec-350d-gear-oil-001",
+    "model": "350D",
+    "category": "oil",
+    "item": "기어박스 오일량",
+    "value": "200 mL",
+    "note": "차대 사용설명서 기준"
+  },
+  {
+    "id": "spec-350d-gear-torque-001",
+    "model": "350D",
+    "category": "torque",
+    "item": "기어박스 오일 드레인볼트 토크",
+    "value": "20 N·m"
   },
   {
     "id": "spec-125m-oil-001",

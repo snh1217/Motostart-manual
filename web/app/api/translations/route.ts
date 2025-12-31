@@ -49,11 +49,16 @@ const toTranslationItem = (row: DbTranslation): TranslationItem => {
 const readTranslationsFromFile = async (): Promise<TranslationItem[]> => {
   try {
     const raw = await fs.readFile(dataPath, "utf8");
-    const parsed = JSON.parse(raw);
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized);
     return Array.isArray(parsed) ? (parsed as TranslationItem[]) : [];
   } catch {
     return [];
   }
+};
+
+const cacheHeaders = {
+  "Cache-Control": "public, max-age=30, stale-while-revalidate=300",
 };
 
 export async function GET(request: Request) {
@@ -76,7 +81,7 @@ export async function GET(request: Request) {
     }
 
     const items = (data ?? []).map((row) => toTranslationItem(row as DbTranslation));
-    return NextResponse.json({ items });
+    return NextResponse.json({ items }, { headers: cacheHeaders });
   }
 
   const items = await readTranslationsFromFile();
@@ -85,7 +90,7 @@ export async function GET(request: Request) {
     if (model && !item.entryId.toUpperCase().includes(model)) return false;
     return true;
   });
-  return NextResponse.json({ items: filtered });
+  return NextResponse.json({ items: filtered }, { headers: cacheHeaders });
 }
 
 export async function POST(request: Request) {

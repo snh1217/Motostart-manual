@@ -1,4 +1,4 @@
-﻿import NewTranslationForm from "./NewTranslationForm";
+import NewTranslationForm from "./NewTranslationForm";
 
 export default async function NewTranslationPage({
   searchParams,

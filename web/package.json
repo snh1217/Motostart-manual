@@ -7,18 +7,24 @@
     "dev": "next dev",
     "gen:templates": "node scripts/generate_templates.mjs",
     "migrate:db": "node scripts/migrate_to_supabase.mjs",
+    "migrate:manuals": "node scripts/migrate_manuals_to_storage.mjs",
+    "migrate:diagnostics": "node scripts/migrate_diagnostics_to_supabase.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
     "@supabase/supabase-js": "^2.89.0",
+    "@upstash/ratelimit": "^2.0.6",
+    "@upstash/redis": "^1.34.3",
     "next": "16.1.1",
     "papaparse": "^5.5.3",
     "pdf-parse": "^2.4.5",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

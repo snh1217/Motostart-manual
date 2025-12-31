@@ -1,4 +1,4 @@
-﻿import Papa from "papaparse";
+import Papa from "papaparse";
 import * as XLSX from "xlsx";
 
 type RawRow = Record<string, unknown>;
@@ -28,10 +28,19 @@ const headerMap: Record<string, string> = {
   photo1: "photo_1",
   "사진": "photo_1",
   "사진1": "photo_1",
+  "사진1설명": "photo_1_desc",
   photo2: "photo_2",
   "사진2": "photo_2",
+  "사진2설명": "photo_2_desc",
   photo3: "photo_3",
   "사진3": "photo_3",
+  "사진3설명": "photo_3_desc",
+  photo4: "photo_4",
+  "사진4": "photo_4",
+  "사진4설명": "photo_4_desc",
+  photo5: "photo_5",
+  "사진5": "photo_5",
+  "사진5설명": "photo_5_desc",
 };
 
 const normalizeRow = (row: RawRow): Record<string, string> => {

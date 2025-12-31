@@ -1,7 +1,11 @@
 ﻿import Link from "next/link";
 import { headers } from "next/headers";
+import { getManualFileUrl } from "../../lib/manuals";
 import { getTranslationByEntryId } from "../../lib/translation";
 import type { TranslationItem } from "../../lib/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const buildApiUrl = async (query: string) => {
   const headerList = await headers();
@@ -13,7 +17,13 @@ const buildApiUrl = async (query: string) => {
 const inferModel = (entryId: string) => {
   const upper = entryId.toUpperCase();
   if (upper.includes("350D")) return "350D";
+  if (upper.includes("350GK")) return "350GK";
   if (upper.includes("368G")) return "368G";
+  if (upper.includes("368E")) return "368E";
+  if (upper.includes("310M")) return "310M";
+  if (upper.includes("125C")) return "125C";
+  if (upper.includes("125D")) return "125D";
+  if (upper.includes("125E")) return "125E";
   if (upper.includes("125M")) return "125M";
   return "UNKNOWN";
 };
@@ -36,23 +46,32 @@ const loadTranslation = async (entryId: string, model?: string) => {
 export default async function ViewerPage({
   searchParams,
 }: {
-  searchParams?: Promise<{
+  searchParams?: {
     entryId?: string;
     file?: string;
     title?: string;
     page?: string;
     model?: string;
-  }>;
+  };
 }) {
-  const resolvedSearchParams = searchParams ? await searchParams : undefined;
-  const entryId = resolvedSearchParams?.entryId ?? "";
-  const file = resolvedSearchParams?.file ?? "";
-  const title = resolvedSearchParams?.title ?? "매뉴얼";
-  const page = resolvedSearchParams?.page;
-  const model = resolvedSearchParams?.model ?? (entryId ? inferModel(entryId) : undefined);
+  const entryId = searchParams?.entryId ?? "";
+  const file = searchParams?.file ?? "";
+  const title = searchParams?.title ?? "매뉴얼";
+  const page = searchParams?.page;
+  const model = searchParams?.model ?? (entryId ? inferModel(entryId) : undefined);
 
   const pageHash = page ? `#page=${page}` : "";
-  const src = file ? `/manuals/splits/${file}${pageHash}` : "";
+  const fileUrl = file ? getManualFileUrl(file) : "";
+  const isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === "preview";
+  const cacheBust =
+    process.env.MANUALS_CACHE_BUST ?? process.env.MANUALS_VERSION ?? "";
+  const proxiedUrl = fileUrl
+    ? `/api/proxy-pdf?url=${encodeURIComponent(fileUrl)}${
+        cacheBust ? `&v=${encodeURIComponent(cacheBust)}` : ""
+      }`
+    : "";
+  const pdfUrl = isPreview ? proxiedUrl : fileUrl;
+  const src = pdfUrl ? `${pdfUrl}${pageHash}` : "";
 
   const translation = entryId
     ? (await loadTranslation(entryId, model)) ?? (await getTranslationByEntryId(entryId))
@@ -133,11 +152,7 @@ export default async function ViewerPage({
                   </p>
                   <div className="mt-4">
                     <Link
-                      href={`/translations/new?entryId=${encodeURIComponent(
-                        entryId
-                      )}&title=${encodeURIComponent(
-                        title
-                      )}&returnTo=${encodeURIComponent(returnTo)}&model=${encodeURIComponent(model ?? "")}`}
+                      href={`/translations/new?entryId=${encodeURIComponent(entryId)}&title=${encodeURIComponent(title)}&returnTo=${encodeURIComponent(returnTo)}&model=${encodeURIComponent(model ?? "")}`}
                       className="inline-flex items-center rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
                     >
                       번역 추가

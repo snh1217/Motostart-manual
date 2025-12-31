@@ -29,10 +29,21 @@ const resolveDataPath = async (filename: string) => {
   throw new Error(`data file not found: ${filename}`);
 };
 
+const jsonCache = new Map<string, { mtimeMs: number; value: unknown }>();
+
 const readJson = async <T>(filename: string): Promise<T> => {
   const filePath = await resolveDataPath(filename);
+  const stats = await fs.stat(filePath);
+  const cached = jsonCache.get(filePath);
+  if (cached && cached.mtimeMs === stats.mtimeMs) {
+    return cached.value as T;
+  }
+
   const raw = await fs.readFile(filePath, "utf8");
-  return JSON.parse(raw) as T;
+  const sanitized = raw.replace(/^\uFEFF/, "");
+  const parsed = JSON.parse(sanitized) as T;
+  jsonCache.set(filePath, { mtimeMs: stats.mtimeMs, value: parsed });
+  return parsed;
 };
 
 type ManualIndexRecord = {
@@ -59,6 +70,16 @@ type ManualHit = {
   snippet: string;
   summary: string;
   score: number;
+};
+
+type KeywordEntry = {
+  entryId: string;
+  model: string;
+  manual_type: string;
+  title: string;
+  file: string;
+  pages: { start: number; end: number };
+  keywords: string[];
 };
 
 export async function GET(request: Request) {
@@ -115,16 +136,52 @@ export async function GET(request: Request) {
     .filter((row) => row.id !== answerSpec?.id);
 
   let manualIndex: ManualIndexRecord[] = [];
+  let manualIndexDisabled = false;
+  let keywordIndex: KeywordEntry[] = [];
   try {
-    manualIndex = await readJson<ManualIndexRecord[]>("manual_index.json");
+    const manualIndexPath = await resolveDataPath("manual_index.json");
+    const stats = await fs.stat(manualIndexPath);
+    const maxBytes = Number(process.env.MANUAL_INDEX_MAX_BYTES ?? 8000000);
+    if (process.env.MANUAL_INDEX_DISABLED === "1") {
+      manualIndexDisabled = true;
+    } else if (process.env.VERCEL && stats.size > maxBytes) {
+      manualIndexDisabled = true;
+    } else {
+      manualIndex = await readJson<ManualIndexRecord[]>("manual_index.json");
+    }
   } catch {
     manualIndex = [];
   }
+  try {
+    keywordIndex = await readJson<KeywordEntry[]>("manual_keywords.json");
+  } catch {
+    keywordIndex = [];
+  }
+
+  let allowedModels: string[] = [];
+  try {
+    const modelList = await readJson<Array<{ id: string }>>("models.json");
+    allowedModels = modelList.map((item) => item.id);
+  } catch {
+    allowedModels = [];
+  }
+  const allowedModelSet = new Set(allowedModels);
 
   const manifestMap = new Map<
     string,
     { title_ko?: string; ko_file?: string }
   >();
+  let manifestEntries: Array<{
+    id: string;
+    model: string;
+    manual_type: string;
+    section: string;
+    title: string;
+    title_ko?: string;
+    file: string;
+    pages: { start: number; end: number };
+    ko_file?: string;
+  }> = [];
   try {
     const manifestPath = path.resolve(
       process.cwd(),
@@ -134,9 +191,20 @@ export async function GET(request: Request) {
     );
     const raw = await fs.readFile(manifestPath, "utf8");
     const parsed = JSON.parse(raw) as {
-      entries?: Array<{ id: string; title_ko?: string; ko_file?: string }>;
+      entries?: Array<{
+        id: string;
+        model: string;
+        manual_type: string;
+        section: string;
+        title: string;
+        title_ko?: string;
+        file: string;
+        pages: { start: number; end: number };
+        ko_file?: string;
+      }>;
     };
-    (parsed.entries ?? []).forEach((entry) => {
+    manifestEntries = parsed.entries ?? [];
+    manifestEntries.forEach((entry) => {
       if (entry.id) {
         manifestMap.set(entry.id, {
           title_ko: entry.title_ko,
@@ -149,7 +217,10 @@ export async function GET(request: Request) {
   }
 
   const minScore = tokens.length >= 4 ? 2 : 1;
-  const manualHits = manualIndex
+  let manualHits = manualIndex
+    .filter((record) =>
+      allowedModelSet.size ? allowedModelSet.has(record.model) : true
+    )
     .filter((record) => (model ? record.model === model : true))
     .flatMap((record): ManualHit[] => {
       const hitScore = score(record.text, tokens);
@@ -176,13 +247,87 @@ export async function GET(request: Request) {
     .sort((a, b) => b.score - a.score)
     .slice(0, 8);
 
+  if (
+    !manualHits.length &&
+    (manualIndexDisabled || manualIndex.length === 0) &&
+    keywordIndex.length
+  ) {
+    manualHits = keywordIndex
+      .filter((entry) =>
+        allowedModelSet.size ? allowedModelSet.has(entry.model) : true
+      )
+      .filter((entry) => (model ? entry.model === model : true))
+      .flatMap((entry): ManualHit[] => {
+        const text = entry.keywords.join(" ");
+        const hitScore = score(text, tokens);
+        if (hitScore < minScore) return [];
+        return [
+          {
+            id: entry.entryId,
+            entryId: entry.entryId,
+            model: entry.model,
+            manual_type: entry.manual_type,
+            title: entry.title,
+            title_ko: manifestMap.get(entry.entryId)?.title_ko,
+            file: entry.file,
+            ko_file: manifestMap.get(entry.entryId)?.ko_file,
+            page: entry.pages?.start ?? 1,
+            snippet: entry.keywords.slice(0, 6).join(", "),
+            summary: entry.keywords.slice(0, 12).join(", "),
+            score: hitScore,
+          },
+        ];
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }
+
+  if (!manualHits.length && (manualIndexDisabled || manualIndex.length === 0)) {
+    manualHits = manifestEntries
+      .filter((entry) =>
+        allowedModelSet.size ? allowedModelSet.has(entry.model) : true
+      )
+      .filter((entry) => (model ? entry.model === model : true))
+      .flatMap((entry): ManualHit[] => {
+        const text = [entry.title, entry.section, entry.file].filter(Boolean).join(" ");
+        const hitScore = score(text, tokens);
+        if (hitScore < minScore) return [];
+        return [
+          {
+            id: entry.id,
+            entryId: entry.id,
+            model: entry.model,
+            manual_type: entry.manual_type,
+            title: entry.title,
+            title_ko: entry.title_ko,
+            file: entry.file,
+            ko_file: entry.ko_file,
+            page: entry.pages?.start ?? 1,
+            snippet: makeSnippet(text, tokens),
+            summary: makeSummaryFromTokens(text, tokens),
+            score: hitScore,
+          },
+        ];
+      })
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 8);
+  }
+
   const answerManual = manualHits.length ? manualHits[0] : null;
   const otherManuals = manualHits.slice(1);
 
-  return NextResponse.json({
-    answerSpec,
-    otherSpecs,
-    answerManual,
-    otherManuals,
-  });
+  return NextResponse.json(
+    {
+      answerSpec,
+      otherSpecs,
+      answerManual,
+      otherManuals,
+      fallbackMode: manualIndexDisabled || manualIndex.length === 0 ? "manifest" : "index",
+    },
+    {
+      headers: {
+        "Cache-Control": "public, max-age=30, stale-while-revalidate=300",
+      },
+    }
+  );
 }

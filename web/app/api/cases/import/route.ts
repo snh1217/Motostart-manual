@@ -1,4 +1,4 @@
-﻿import { promises as fs } from "fs";
+import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import { parseCsv, parseXlsx } from "../../../../lib/importers";
@@ -12,8 +12,15 @@ type CaseRow = {
   symptom: string;
   action: string;
   photo_1?: string;
+  photo_1_desc?: string;
   photo_2?: string;
+  photo_2_desc?: string;
   photo_3?: string;
+  photo_3_desc?: string;
+  photo_4?: string;
+  photo_4_desc?: string;
+  photo_5?: string;
+  photo_5_desc?: string;
 };
 
 const normalizeModel = (model: string): string => {
@@ -41,8 +48,15 @@ const buildCaseRow = (row: Record<string, string>, index: number): CaseRow | nul
     symptom: row.symptom.trim(),
     action: row.action.trim(),
     photo_1: row.photo_1?.trim() || undefined,
+    photo_1_desc: row.photo_1_desc?.trim() || undefined,
     photo_2: row.photo_2?.trim() || undefined,
+    photo_2_desc: row.photo_2_desc?.trim() || undefined,
     photo_3: row.photo_3?.trim() || undefined,
+    photo_3_desc: row.photo_3_desc?.trim() || undefined,
+    photo_4: row.photo_4?.trim() || undefined,
+    photo_4_desc: row.photo_4_desc?.trim() || undefined,
+    photo_5: row.photo_5?.trim() || undefined,
+    photo_5_desc: row.photo_5_desc?.trim() || undefined,
   };
 };
 
