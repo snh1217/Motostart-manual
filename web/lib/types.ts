@@ -65,3 +65,34 @@ export type DiagnosticEntry = {
   updated_at?: string;
   source?: "db" | "json";
 };
+
+export type PartPhoto = {
+  id: string;
+  url: string;
+  label?: string;
+  desc?: string;
+  tags?: string[];
+};
+
+export type PartStep = {
+  order: number;
+  title: string;
+  desc?: string;
+  tools?: string;
+  torque?: string;
+  note?: string;
+  photoIds?: string[];
+};
+
+export type PartEntry = {
+  id: string;
+  model: ModelCode | string;
+  system: "engine" | "chassis" | "electrical" | "other";
+  name: string;
+  summary?: string;
+  tags?: string[];
+  photos?: PartPhoto[];
+  steps?: PartStep[];
+  updated_at?: string;
+  source?: "db" | "json";
+};

@@ -16,6 +16,7 @@ const items: MenuItem[] = [
   { href: "/specs", label: "토크/규격" },
   { href: "/diagnostics", label: "진단기" },
   { href: "/cases", label: "정비사례" },
+  { href: "/parts", label: "부품/절차" },
   { href: "/wiring", label: "회로도" },
   { href: "/manuals", label: "매뉴얼(원문)" },
   { href: "/translations", label: "번역 관리", adminOnly: true },

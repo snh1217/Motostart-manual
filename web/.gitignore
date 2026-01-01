@@ -39,6 +39,7 @@ yarn-error.log*
 # large static assets (stored outside git)
 /public/manuals/splits/
 /public/wiring/
+/data/parts.json
 
 # typescript
 *.tsbuildinfo
