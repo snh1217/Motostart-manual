@@ -193,9 +193,9 @@ export default async function WiringPage({
         </div>
         {filteredEntries.length ? (
           <div className="grid gap-4 md:grid-cols-2">
-            {filteredEntries.map((entry) => (
+            {filteredEntries.map((entry, idx) => (
               <article
-                key={entry.id}
+                key={`${entry.id}-${idx}`}
                 className="rounded-2xl border border-slate-200 bg-white p-5"
               >
                 <div className="space-y-2">
