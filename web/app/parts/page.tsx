@@ -2,6 +2,7 @@ import PartAdminPanel from "./PartAdminPanel";
 import { loadParts } from "../../lib/parts";
 import type { PartEntry } from "../../lib/types";
 import Link from "next/link";
+import PartUploadForm from "./PartUploadForm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +72,7 @@ export default async function PartsPage({
       </header>
 
       <PartAdminPanel />
+      <PartUploadForm />
 
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm text-slate-500">
