@@ -10,9 +10,11 @@ export const dynamic = "force-dynamic";
 export default async function DiagnosticDetailPage({
   params,
 }: {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }) {
-  const item: DiagnosticEntry | null = await getDiagnosticById(params.id);
+  const resolved = await params;
+  const id = resolved?.id ?? "";
+  const item: DiagnosticEntry | null = await getDiagnosticById(id);
   if (!item) return notFound();
 
   return (
