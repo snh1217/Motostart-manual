@@ -36,14 +36,14 @@ const toTranslationItem = (row: DbTranslation): TranslationItem => {
   return {
     entryId: row.entry_id ?? row.entryId ?? "",
     title_ko: row.title_ko ?? row.title ?? (row.meta?.title_ko as string | undefined),
-    summary_ko:
-      row.summary_ko ?? (row.meta?.summary_ko as string | undefined),
-    text_ko:
-      row.text_ko ??
-      row.ko_text ??
-      (row.meta?.text_ko as string | undefined),
-    updated_at: row.updated_at ?? row.updatedAt ?? undefined,
-  };
+  summary_ko:
+    row.summary_ko ?? (row.meta?.summary_ko as string | undefined),
+  text_ko:
+    row.text_ko ??
+    row.ko_text ??
+    (row.meta?.text_ko as string | undefined),
+  updated_at: row.updated_at ?? row.updatedAt ?? new Date().toISOString().slice(0, 10),
+};
 };
 
 const readTranslationsFromFile = async (): Promise<TranslationItem[]> => {

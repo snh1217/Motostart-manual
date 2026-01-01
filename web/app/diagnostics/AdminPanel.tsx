@@ -1,14 +1,12 @@
-﻿import dynamic from "next/dynamic";
 import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import type { DiagnosticEntry } from "../../lib/types";
+import AdminForm from "./AdminForm";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const AdminForm = dynamic(() => import("./AdminForm"), { ssr: false });
 
 const buildApiUrl = async (query: string) => {
   const headerList = await headers();

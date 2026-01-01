@@ -141,13 +141,20 @@ export async function POST(request: Request) {
   let updated = 0;
   let skipped = 0;
 
+  const allowedCategories: SpecRow["category"][] = ["torque", "oil", "clearance", "consumable"];
+
   rows.forEach((row) => {
     const model = row.model?.toUpperCase();
-    const category = row.category;
+    const category = row.category as SpecRow["category"];
     const item = row.item;
     const value = row.value;
 
     if (!model || !category || !item || !value) {
+      skipped += 1;
+      return;
+    }
+
+    if (!allowedCategories.includes(category)) {
       skipped += 1;
       return;
     }

@@ -1,28 +1,24 @@
-﻿import dynamic from "next/dynamic";
 import type { DiagnosticEntry } from "../../lib/types";
 import { loadDiagnostics } from "../../lib/diagnostics";
 import Link from "next/link";
 import Image from "next/image";
 import ModelSelector from "../ModelSelector";
+import DiagnosticsAdminPanel from "./AdminPanel";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const DiagnosticsAdminPanel = dynamic(() => import("./AdminPanel"), {
-  ssr: false,
-});
-
 const modelOptions = [
-  { id: "all", label: "전체" },
-  { id: "125C", label: "125C" },
-  { id: "125D", label: "125D" },
-  { id: "125E", label: "125E" },
-  { id: "125M", label: "125M" },
-  { id: "310M", label: "310M" },
-  { id: "350D", label: "350D" },
-  { id: "350GK", label: "350GK" },
-  { id: "368E", label: "368E" },
-  { id: "368G", label: "368G" },
+  { id: "all", label: "전체", href: "/diagnostics" },
+  { id: "125C", label: "125C", href: "/diagnostics?model=125C" },
+  { id: "125D", label: "125D", href: "/diagnostics?model=125D" },
+  { id: "125E", label: "125E", href: "/diagnostics?model=125E" },
+  { id: "125M", label: "125M", href: "/diagnostics?model=125M" },
+  { id: "310M", label: "310M", href: "/diagnostics?model=310M" },
+  { id: "350D", label: "350D", href: "/diagnostics?model=350D" },
+  { id: "350GK", label: "350GK", href: "/diagnostics?model=350GK" },
+  { id: "368E", label: "368E", href: "/diagnostics?model=368E" },
+  { id: "368G", label: "368G", href: "/diagnostics?model=368G" },
 ];
 
 export default async function DiagnosticsPage({
@@ -46,7 +42,6 @@ export default async function DiagnosticsPage({
         <ModelSelector
           options={modelOptions}
           selected={selectedModel}
-          onChangeHref={(m) => `/diagnostics${m === "all" ? "" : `?model=${m}`}`}
         />
       </header>
 

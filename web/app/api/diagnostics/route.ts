@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import type { DiagnosticEntry } from "../../../lib/types";
-import { requireAdmin } from "../../../lib/auth/admin";
+import { isAdminAuthorized } from "../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "READ_ONLY_MODE" }, { status: 403 });
   }
 
-  if (!(await requireAdmin(request))) {
+  if (!isAdminAuthorized(request)) {
     return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
