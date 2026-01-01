@@ -7,6 +7,9 @@ import type { SpecRow } from "../../lib/types";
 import CopyButton from "./CopyButton";
 import { loadTranslations } from "../../lib/translation";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 const buildApiUrl = async (query: string) => {
   const headerList = await headers();
   const host = headerList.get("host");
@@ -93,7 +96,7 @@ const suggestionKeywords = [
 export default async function SearchPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string; model?: string }>;
+  searchParams: Promise<{ q?: string; model?: string }>;
 }) {
   const params = (await searchParams) ?? {};
   const query = params.q ?? "";
