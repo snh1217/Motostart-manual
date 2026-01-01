@@ -35,9 +35,11 @@ export default function PartAdminPanel() {
     photos: [],
     steps: [],
   });
-  const [photosText, setPhotosText] = useState('[{"id":"ph-1","url":""}]');
+  const [photosText, setPhotosText] = useState(
+    '[{"id":"ph-1","url":"https://...","label":"좌측","tags":["볼트"]}]'
+  );
   const [stepsText, setStepsText] = useState(
-    '[{"order":1,"title":"단계 1","desc":"설명 입력"}]'
+    '[{"order":1,"title":"커버 분리","desc":"볼트 4개 해체","photoIds":["ph-1"]}]'
   );
 
   useEffect(() => {
@@ -81,7 +83,7 @@ export default function PartAdminPanel() {
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error ?? "업로드 실패");
+        throw new Error(data?.error ?? "저장 실패");
       }
       setStatus("success");
       setMessage(`저장 완료 (${data.source ?? "local"})`);
@@ -169,7 +171,13 @@ export default function PartAdminPanel() {
           placeholder="태그 (쉼표 구분)"
           value={form.tags?.join(",") ?? ""}
           onChange={(e) =>
-            setForm({ ...form, tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })
+            setForm({
+              ...form,
+              tags: e.target.value
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean),
+            })
           }
         />
 
@@ -183,7 +191,7 @@ export default function PartAdminPanel() {
               onChange={(e) => setPhotosText(e.target.value)}
             />
             <p className="text-xs text-slate-500">
-              예) [{"id":"ph-1","url":"https://...","label":"좌측","tags":["볼트"]}]
+              예) {"[{\"id\":\"ph-1\",\"url\":\"https://...\",\"label\":\"좌측\",\"tags\":[\"볼트\"]}]"}
             </p>
           </div>
           <div className="space-y-1">
@@ -195,7 +203,7 @@ export default function PartAdminPanel() {
               onChange={(e) => setStepsText(e.target.value)}
             />
             <p className="text-xs text-slate-500">
-              예) [{"order":1,"title":"커버 분리","desc":"볼트 4개 해체","photoIds":["ph-1"]}]
+              예) {"[{\"order\":1,\"title\":\"커버 분리\",\"desc\":\"볼트 4개 해체\",\"photoIds\":[\"ph-1\"]}]"}
             </p>
           </div>
         </div>
