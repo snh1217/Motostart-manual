@@ -46,19 +46,20 @@ const loadTranslation = async (entryId: string, model?: string) => {
 export default async function ViewerPage({
   searchParams,
 }: {
-  searchParams?: {
+  searchParams: Promise<{
     entryId?: string;
     file?: string;
     title?: string;
     page?: string;
     model?: string;
-  };
+  }>;
 }) {
-  const entryId = searchParams?.entryId ?? "";
-  const file = searchParams?.file ?? "";
-  const title = searchParams?.title ?? "매뉴얼";
-  const page = searchParams?.page;
-  const model = searchParams?.model ?? (entryId ? inferModel(entryId) : undefined);
+  const resolved = await searchParams;
+  const entryId = resolved?.entryId ?? "";
+  const file = resolved?.file ?? "";
+  const title = resolved?.title ?? "매뉴얼";
+  const page = resolved?.page;
+  const model = resolved?.model ?? (entryId ? inferModel(entryId) : undefined);
 
   const pageHash = page ? `#page=${page}` : "";
   const fileUrl = file ? getManualFileUrl(file) : "";

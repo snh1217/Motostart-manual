@@ -24,9 +24,10 @@ const modelOptions = [
 export default async function DiagnosticsPage({
   searchParams,
 }: {
-  searchParams?: { model?: string };
+  searchParams: Promise<{ model?: string }>;
 }) {
-  const selectedModel = searchParams?.model ?? "all";
+  const resolved = await searchParams;
+  const selectedModel = resolved?.model ?? "all";
   const items = await loadDiagnostics();
   const filtered = items.filter((item) =>
     selectedModel === "all" ? true : item.model === selectedModel
@@ -39,10 +40,7 @@ export default async function DiagnosticsPage({
         <p className="text-sm text-slate-600">
           진단기 화면 캡처를 등록하고, 라인별 설명을 관리합니다.
         </p>
-        <ModelSelector
-          options={modelOptions}
-          selected={selectedModel}
-        />
+        <ModelSelector options={modelOptions} selected={selectedModel} />
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
