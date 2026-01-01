@@ -351,8 +351,8 @@ export default function SpecsClient({
                 </td>
               </tr>
             ) : (
-              filteredSpecs.map((row) => (
-                <tr key={row.id} className="border-t border-slate-100">
+              filteredSpecs.map((row, idx) => (
+                <tr key={`${row.id}-${idx}`} className="border-t border-slate-100">
                   {isAdmin ? (
                     <td className="px-4 py-3">
                       <input
