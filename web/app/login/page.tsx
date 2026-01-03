@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import LoginForm from "./AdminLoginForm";
 
 export const runtime = "nodejs";
@@ -11,7 +12,9 @@ export default function LoginPage() {
           이용을 위해 로그인 코드가 필요합니다.
         </p>
       </header>
-      <LoginForm />
+      <Suspense fallback={null}>
+        <LoginForm />
+      </Suspense>
     </section>
   );
 }

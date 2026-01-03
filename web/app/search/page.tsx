@@ -131,7 +131,7 @@ export default async function SearchPage({
     model === "all"
       ? models
           .map((entry) => specByModel.get(entry.id))
-          .filter(Boolean)
+          .filter((row): row is SpecRow => Boolean(row))
       : results?.answerSpec
       ? [results.answerSpec]
       : [];

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const next = existing.filter((item) => !idSet.has(item.id));
   const deleted = existing.length - next.length;
 
-  const dbResult = await deleteSpecsFromDb(Array.from(idSet));
+  const dbResult = await deleteSpecsFromDb(Array.from(idSet) as string[]);
   if (!dbResult.ok) {
     return NextResponse.json(
       { error: `DB_ERROR: ${dbResult.error}` },

@@ -140,11 +140,21 @@ export async function POST(request: Request) {
     const name = row.name || row.part || row.partname;
     if (!model || !name) return;
 
+    const systemValue = (row.system || "other").toLowerCase();
+    const system = (
+      systemValue === "engine" ||
+      systemValue === "chassis" ||
+      systemValue === "electrical" ||
+      systemValue === "other"
+        ? systemValue
+        : "other"
+    ) as PartEntry["system"];
+
     const key = `${model}||${name}`;
     const existing = groups.get(key) ?? {
       id: row.id || `part-${model}-${name}`.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
       model,
-      system: (row.system || "other").toLowerCase(),
+      system,
       name,
       summary: row.summary || "",
       tags: (row.tags || "")
