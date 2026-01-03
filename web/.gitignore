@@ -40,6 +40,7 @@ yarn-error.log*
 /public/manuals/splits/
 /public/wiring/
 /data/parts.json
+/data/login_codes.json
 
 # typescript
 *.tsbuildinfo

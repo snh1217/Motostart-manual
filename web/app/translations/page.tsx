@@ -15,9 +15,12 @@ const buildApiUrl = async (query: string) => {
   return host ? `${proto}://${host}/api/translations?${query}` : `/api/translations?${query}`;
 };
 
-const loadTranslations = async (): Promise<TranslationItem[]> => {
+const loadTranslations = async (query: string): Promise<TranslationItem[]> => {
+  if (!query.trim()) return [];
   try {
-    const apiUrl = await buildApiUrl("model=all");
+    const params = new URLSearchParams();
+    params.set("q", query.trim());
+    const apiUrl = await buildApiUrl(params.toString());
     const response = await fetch(apiUrl, { cache: "no-store" });
     if (response.ok) {
       const data = (await response.json()) as { items?: TranslationItem[] };
@@ -41,17 +44,14 @@ const loadTranslations = async (): Promise<TranslationItem[]> => {
 export default async function TranslationsPage({
   searchParams,
 }: {
-  searchParams?: { q?: string };
+  searchParams?: Promise<{ q?: string }>;
 }) {
-  const query = searchParams?.q ?? "";
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
+  const query = resolvedSearchParams?.q ?? "";
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
 
-  const translations = await loadTranslations();
-  const filtered = translations.filter((item) => {
-    if (!query) return true;
-    const haystack = [item.entryId, item.title_ko].filter(Boolean).join(" ").toLowerCase();
-    return haystack.includes(query.toLowerCase());
-  });
+  const translations = await loadTranslations(query);
+  const filtered = translations;
 
   return (
     <section className="space-y-8">
@@ -142,7 +142,9 @@ export default async function TranslationsPage({
               ) : (
                 <tr>
                   <td className="px-4 py-6 text-center text-slate-500" colSpan={3}>
-                    조건에 맞는 항목이 없습니다.
+                    {query.trim()
+                      ? "조건에 맞는 항목이 없습니다."
+                      : "검색어를 입력해 주세요."}
                   </td>
                 </tr>
               )}

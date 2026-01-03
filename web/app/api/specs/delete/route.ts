@@ -1,24 +1,13 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
-import type { SpecRow } from "../../../../lib/types";
+import {
+  deleteSpecsFromDb,
+  loadSpecsForWrite,
+  saveSpecsToFile,
+} from "../../../../lib/specs";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const specsPath = path.resolve(process.cwd(), "data", "specs.json");
-
-const readSpecs = async (): Promise<SpecRow[]> => {
-  try {
-    const raw = await fs.readFile(specsPath, "utf8");
-    const sanitized = raw.replace(/^\uFEFF/, "");
-    const parsed = JSON.parse(sanitized);
-    return Array.isArray(parsed) ? (parsed as SpecRow[]) : [];
-  } catch {
-    return [];
-  }
-};
 
 export async function POST(request: Request) {
   if (isReadOnlyMode()) {
@@ -46,12 +35,19 @@ export async function POST(request: Request) {
     );
   }
 
-  const existing = await readSpecs();
+  const existing = await loadSpecsForWrite();
   const next = existing.filter((item) => !idSet.has(item.id));
   const deleted = existing.length - next.length;
 
-  await fs.mkdir(path.dirname(specsPath), { recursive: true });
-  await fs.writeFile(specsPath, JSON.stringify(next, null, 2), "utf8");
+  const dbResult = await deleteSpecsFromDb(Array.from(idSet));
+  if (!dbResult.ok) {
+    return NextResponse.json(
+      { error: `DB_ERROR: ${dbResult.error}` },
+      { status: 500 }
+    );
+  }
+
+  await saveSpecsToFile(next);
 
   return NextResponse.json({ deleted });
 }

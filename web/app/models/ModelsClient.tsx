@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { compareModelCode } from "../../lib/modelSort";
 
 type ModelEntry = { id: string; name: string };
 
@@ -10,6 +11,9 @@ type ModelsClientProps = {
 };
 
 export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
+  const [rows, setRows] = useState<ModelEntry[]>(models);
+  const [loadingModels, setLoadingModels] = useState(models.length === 0);
+  const [loadError, setLoadError] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [modelId, setModelId] = useState("");
   const [modelName, setModelName] = useState("");
@@ -29,9 +33,44 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     localStorage.setItem("ADMIN_TOKEN", adminToken);
   }, [adminToken]);
 
-  const sortedModels = useMemo(() => {
-    return [...models].sort((a, b) => a.id.localeCompare(b.id));
+  useEffect(() => {
+    if (models.length) {
+      setRows(models);
+      setLoadingModels(false);
+      return;
+    }
+
+    let active = true;
+    setLoadingModels(true);
+    setLoadError("");
+
+    fetch("/api/models", { cache: "no-store" })
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok) {
+          throw new Error(data?.error ?? "모델을 불러오지 못했습니다.");
+        }
+        if (!active) return;
+        setRows(Array.isArray(data?.models) ? data.models : []);
+      })
+      .catch((error) => {
+        if (!active) return;
+        setLoadError(
+          error instanceof Error ? error.message : "모델을 불러오지 못했습니다."
+        );
+      })
+      .finally(() => {
+        if (active) setLoadingModels(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, [models]);
+
+  const sortedModels = useMemo(() => {
+    return [...rows].sort((a, b) => compareModelCode(a.id, b.id));
+  }, [rows]);
 
   const allSelected =
     sortedModels.length > 0 &&
@@ -230,6 +269,10 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
         </div>
       ) : null}
 
+      {loadError ? (
+        <div className="text-sm text-red-600">{loadError}</div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-100 text-slate-600">
@@ -247,7 +290,16 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
             </tr>
           </thead>
           <tbody>
-            {sortedModels.length === 0 ? (
+            {loadingModels ? (
+              <tr>
+                <td
+                  className="px-4 py-6 text-center text-slate-500"
+                  colSpan={4}
+                >
+                  모델 불러오는 중...
+                </td>
+              </tr>
+            ) : sortedModels.length === 0 ? (
               <tr>
                 <td
                   className="px-4 py-6 text-center text-slate-500"

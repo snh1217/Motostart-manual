@@ -64,14 +64,19 @@ const cacheHeaders = {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const entryId = searchParams.get("entryId")?.trim() ?? "";
+  const query = searchParams.get("q")?.trim() ?? "";
   const modelParam = searchParams.get("model")?.trim() ?? "all";
   const model = modelParam === "all" ? null : modelParam;
 
   if (hasSupabaseConfig && supabaseAdmin) {
-    let query = supabaseAdmin.from("translations").select("*");
-    if (entryId) query = query.eq("entry_id", entryId);
-    if (model) query = query.eq("model", model);
-    const { data, error } = await query.order("updated_at", { ascending: false });
+    let dbQuery = supabaseAdmin.from("translations").select("*");
+    if (entryId) dbQuery = dbQuery.eq("entry_id", entryId);
+    if (model) dbQuery = dbQuery.eq("model", model);
+    if (query) {
+      const escaped = query.replace(/%/g, "\\%").replace(/_/g, "\\_");
+      dbQuery = dbQuery.or(`entry_id.ilike.%${escaped}%,title_ko.ilike.%${escaped}%`);
+    }
+    const { data, error } = await dbQuery.order("updated_at", { ascending: false });
 
     if (error) {
       return NextResponse.json(
@@ -88,6 +93,10 @@ export async function GET(request: Request) {
   const filtered = items.filter((item) => {
     if (entryId && item.entryId !== entryId) return false;
     if (model && !item.entryId.toUpperCase().includes(model)) return false;
+    if (query) {
+      const haystack = [item.entryId, item.title_ko].filter(Boolean).join(" ").toLowerCase();
+      if (!haystack.includes(query.toLowerCase())) return false;
+    }
     return true;
   });
   return NextResponse.json({ items: filtered }, { headers: cacheHeaders });

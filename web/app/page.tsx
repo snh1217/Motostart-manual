@@ -1,6 +1,7 @@
 import Link from "next/link";
 import models from "../data/models.json";
 import ModelSelector from "./ModelSelector";
+import { sortModelCodes } from "../lib/modelSort";
 
 type ModelEntry = { id: string; name: string };
 
@@ -8,18 +9,7 @@ type HomeParams = {
   model?: string;
 };
 
-const getModelRank = (id: string) => {
-  if (id.startsWith("125")) return 0;
-  if (id.startsWith("350")) return 1;
-  if (id.startsWith("368")) return 2;
-  return 9;
-};
-
-const modelCards = (models as ModelEntry[]).slice().sort((a, b) => {
-  const rankDiff = getModelRank(a.id) - getModelRank(b.id);
-  if (rankDiff !== 0) return rankDiff;
-  return a.id.localeCompare(b.id);
-});
+const modelCards = sortModelCodes(models as ModelEntry[]);
 const keywordChips = [
   "엔진오일 용량",
   "냉각수",
@@ -65,7 +55,14 @@ export default async function HomePage({
             </p>
           </div>
 
-          <ModelSelector options={selectorOptions} selected={selectedModel} />
+          <ModelSelector
+            options={selectorOptions}
+            selected={selectedModel}
+            title="모델 선택 (선택 사항)"
+          />
+          <p className="text-center text-xs text-slate-500">
+            모델을 선택하면 검색 범위가 해당 모델로 좁아집니다. 선택하지 않으면 전체 모델에서 검색됩니다.
+          </p>
 
           <form
             action="/search"
@@ -86,49 +83,13 @@ export default async function HomePage({
                 검색
               </button>
             </div>
-            <div className="text-sm font-semibold text-slate-700">
-              검색 범위: {scopeLabel}
+            <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
+              <span>현재 범위</span>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {scopeLabel}
+              </span>
             </div>
           </form>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Link
-              href={`/search?q=${encodeURIComponent("토크")}&model=${selectedModel}`}
-              className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-            >
-              스펙(토크/용량)
-              <span className="mt-2 block text-sm font-normal text-slate-600">
-                토크·규격 빠르게 찾기
-              </span>
-            </Link>
-            <Link
-              href="/cases"
-              className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-            >
-              정비사례
-              <span className="mt-2 block text-sm font-normal text-slate-600">
-                현장 사례 모음
-              </span>
-            </Link>
-            <Link
-              href="/wiring"
-              className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-            >
-              회로도
-              <span className="mt-2 block text-sm font-normal text-slate-600">
-                회로도 바로보기
-              </span>
-            </Link>
-            <Link
-              href="/manuals"
-              className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
-            >
-              매뉴얼
-              <span className="mt-2 block text-sm font-normal text-slate-600">
-                원문 매뉴얼 목록
-              </span>
-            </Link>
-          </div>
 
           <div className="space-y-2">
             <div className="text-sm font-semibold text-slate-700">
@@ -144,6 +105,48 @@ export default async function HomePage({
                   {keyword}
                 </Link>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-slate-700">바로가기</div>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <Link
+                href={`/search?q=${encodeURIComponent("토크")}&model=${selectedModel}`}
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                스펙(토크/용량)
+                <span className="mt-2 block text-sm font-normal text-slate-600">
+                  토크·규격 빠르게 찾기
+                </span>
+              </Link>
+              <Link
+                href="/cases"
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                정비사례
+                <span className="mt-2 block text-sm font-normal text-slate-600">
+                  현장 사례 모음
+                </span>
+              </Link>
+              <Link
+                href="/wiring"
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                회로도
+                <span className="mt-2 block text-sm font-normal text-slate-600">
+                  회로도 바로보기
+                </span>
+              </Link>
+              <Link
+                href="/manuals"
+                className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
+              >
+                매뉴얼
+                <span className="mt-2 block text-sm font-normal text-slate-600">
+                  원문 매뉴얼 목록
+                </span>
+              </Link>
             </div>
           </div>
         </div>

@@ -3,6 +3,10 @@ import ModelSelector from "../ModelSelector";
 import { getManualFileUrl, loadManifest } from "../../lib/manuals";
 import { loadTranslations } from "../../lib/translation";
 import type { ManifestEntry, ManualType, ModelCode } from "../../lib/types";
+import { sortModelCodes } from "../../lib/modelSort";
+import { promises as fs } from "fs";
+import path from "path";
+import { cache } from "react";
 
 const allowedModels: ModelCode[] = [
   "125C",
@@ -71,6 +75,20 @@ const groupByTitleSection = (items: ManifestEntry[]): EntryGroup[] => {
   });
 };
 
+const loadModelOptions = cache(async (): Promise<ModelCode[]> => {
+  try {
+    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
+    const raw = await fs.readFile(modelsPath, "utf8");
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized) as Array<{ id: ModelCode }>;
+    if (!Array.isArray(parsed)) return allowedModels;
+    const sorted = sortModelCodes(parsed).map((item) => item.id);
+    return sorted.filter((model) => allowedModels.includes(model));
+  } catch {
+    return allowedModels;
+  }
+});
+
 export default async function ManualsPage({
   searchParams,
 }: {
@@ -79,13 +97,41 @@ export default async function ManualsPage({
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const modelParam = resolvedSearchParams?.model ?? "";
   const highlight = resolvedSearchParams?.highlight ?? "";
+  const modelOptions = await loadModelOptions();
+
+  const selectedModel = modelOptions.includes(modelParam as ModelCode)
+    ? (modelParam as ModelCode)
+    : null;
+
+  const selectorOptions = modelOptions.map((model) => ({
+    id: model,
+    label: model,
+    href: `/manuals?model=${model}`,
+  }));
+
+  if (!selectedModel) {
+    return (
+      <section className="space-y-8">
+        <header className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight">매뉴얼</h1>
+          <p className="text-slate-600">모델을 선택해 매뉴얼을 확인하세요.</p>
+        </header>
+        <section className="rounded-2xl border border-slate-200 bg-white p-6">
+          <ModelSelector options={selectorOptions} selected="" title="모델 선택" />
+        </section>
+        <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
+          모델을 선택하면 매뉴얼 목록이 표시됩니다.
+        </div>
+      </section>
+    );
+  }
 
   let entries: ManifestEntry[] = [];
   let loadError: string | null = null;
 
   try {
     const allEntries = await loadManifest();
-    entries = allEntries.filter((entry) => allowedModels.includes(entry.model));
+    entries = allEntries.filter((entry) => entry.model === selectedModel);
   } catch {
     loadError = "매뉴얼 목록을 불러오지 못했습니다.";
   }
@@ -104,18 +150,13 @@ export default async function ManualsPage({
     );
   }
 
-  const modelOptions = allowedModels.filter((model) =>
-    entries.some((entry) => entry.model === model)
-  );
-
-  const selectedModel = modelOptions.includes(modelParam as ModelCode)
-    ? (modelParam as ModelCode)
-    : modelOptions[0] ?? allowedModels[0];
-
-  const filtered = entries.filter((entry) => entry.model === selectedModel);
+  const filtered = entries;
   const translations = await loadTranslations();
+  const entryIdSet = new Set(filtered.map((entry) => entry.id));
   const translationMap = new Map(
-    translations.map((item) => [item.entryId, item])
+    translations
+      .filter((item) => entryIdSet.has(item.entryId))
+      .map((item) => [item.entryId, item])
   );
 
   const groupedByType: Record<ManualType, EntryGroup[]> = {
@@ -129,12 +170,6 @@ export default async function ManualsPage({
     const byType = filtered.filter((entry) => entry.manual_type === type);
     groupedByType[type] = groupByTitleSection(byType);
   }
-
-  const selectorOptions = modelOptions.map((model) => ({
-    id: model,
-    label: model,
-    href: `/manuals?model=${model}`,
-  }));
 
   return (
     <section className="space-y-8">

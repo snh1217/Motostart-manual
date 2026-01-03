@@ -3,6 +3,9 @@ import { promises as fs } from "fs";
 import path from "path";
 import { cache } from "react";
 import WiringAdminAction from "./WiringAdminAction";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
+import { sortModelCodes } from "../../lib/modelSort";
 
 type WiringEntry = {
   id: string;
@@ -62,11 +65,12 @@ export default async function WiringPage({
   const model = resolvedSearchParams?.model ?? "all";
   const query = resolvedSearchParams?.q ?? "";
   const ask = resolvedSearchParams?.ask ?? "";
+  const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
+  const isAdmin = role === "admin";
 
-  const wiringEntries = await loadWiringManifest();
-  const modelOptions = Array.from(
-    new Set(wiringEntries.map((entry) => entry.model))
-  ).sort();
+  const shouldPrefetch = model !== "all" || query.trim() !== "" || ask.trim() !== "";
+  const wiringEntries = shouldPrefetch ? await loadWiringManifest() : [];
+  const modelOptions = await loadModelOptions();
 
   const queryTokens = tokenize(query);
   const filteredEntries = wiringEntries.filter((entry) => {
@@ -93,7 +97,7 @@ export default async function WiringPage({
             회로도 PDF를 원본 해상도로 바로 열 수 있습니다.
           </p>
         </div>
-        <WiringAdminAction />
+        {isAdmin ? <WiringAdminAction /> : null}
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -233,10 +237,25 @@ export default async function WiringPage({
           </div>
         ) : (
           <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
-            표시할 회로도가 없습니다.
+            {shouldPrefetch
+              ? "표시할 회로도가 없습니다."
+              : "모델 또는 검색어를 입력해 주세요."}
           </div>
         )}
       </section>
     </section>
   );
 }
+
+const loadModelOptions = cache(async (): Promise<string[]> => {
+  try {
+    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
+    const raw = await fs.readFile(modelsPath, "utf8");
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized) as Array<{ id: string }>;
+    if (!Array.isArray(parsed)) return [];
+    return sortModelCodes(parsed).map((item) => item.id);
+  } catch {
+    return [];
+  }
+});

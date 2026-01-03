@@ -9,9 +9,16 @@ export const diagnosticsManifestPath = path.resolve(
   "diagnostics_manifest.json"
 );
 
-export const loadDiagnostics = async (): Promise<DiagnosticEntry[]> => {
+export const loadDiagnostics = async (filters?: {
+  model?: string;
+}): Promise<DiagnosticEntry[]> => {
+  const model = filters?.model;
   if (hasSupabaseConfig && supabaseAdmin) {
-    const { data } = await supabaseAdmin.from("diagnostics").select("*");
+    const query = supabaseAdmin.from("diagnostics").select("*");
+    if (model && model !== "all") {
+      query.eq("model", model);
+    }
+    const { data } = await query;
     const items = (data as DiagnosticEntry[]) ?? [];
     return items.map((item) => ({ ...item, source: "db" }));
   }
@@ -20,9 +27,10 @@ export const loadDiagnostics = async (): Promise<DiagnosticEntry[]> => {
     const raw = await fs.readFile(diagnosticsManifestPath, "utf8");
     const sanitized = raw.replace(/^\uFEFF/, "");
     const parsed = JSON.parse(sanitized);
-    return Array.isArray(parsed)
-      ? (parsed as DiagnosticEntry[]).map((item) => ({ ...item, source: "json" }))
-      : [];
+    const items = Array.isArray(parsed) ? (parsed as DiagnosticEntry[]) : [];
+    const filtered =
+      model && model !== "all" ? items.filter((item) => item.model === model) : items;
+    return filtered.map((item) => ({ ...item, source: "json" }));
   } catch {
     return [];
   }

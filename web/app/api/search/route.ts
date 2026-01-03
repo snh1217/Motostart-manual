@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import type { SpecRow } from "../../../lib/types";
+import { loadSpecs } from "../../../lib/specs";
 import {
   expandTokens,
   makeSnippet,
@@ -98,7 +99,7 @@ export async function GET(request: Request) {
 
   const tokens = expandTokens(q);
 
-  const specs = await readJson<SpecRow[]>("specs.json");
+  const specs = await loadSpecs();
   const scoredSpecs = specs
     .filter((row) => {
       if (model && row.model !== model) return false;

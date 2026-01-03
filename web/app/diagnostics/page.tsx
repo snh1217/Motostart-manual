@@ -4,6 +4,8 @@ import Link from "next/link";
 import Image from "next/image";
 import ModelSelector from "../ModelSelector";
 import DiagnosticsAdminPanel from "./AdminPanel";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -28,10 +30,10 @@ export default async function DiagnosticsPage({
 }) {
   const resolved = await searchParams;
   const selectedModel = resolved?.model ?? "all";
-  const items = await loadDiagnostics();
-  const filtered = items.filter((item) =>
-    selectedModel === "all" ? true : item.model === selectedModel
-  );
+  const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
+  const isAdmin = role === "admin";
+  const shouldPrefetch = selectedModel !== "all";
+  const filtered = shouldPrefetch ? await loadDiagnostics({ model: selectedModel }) : [];
 
   return (
     <section className="space-y-6">
@@ -48,12 +50,14 @@ export default async function DiagnosticsPage({
           filtered.map((item) => <DiagnosticCard key={item.id} item={item} />)
         ) : (
           <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-500">
-            등록된 항목이 없습니다.
+            {shouldPrefetch
+              ? "등록된 항목이 없습니다."
+              : "모델을 선택해 주세요."}
           </div>
         )}
       </div>
 
-      <DiagnosticsAdminPanel />
+      {isAdmin ? <DiagnosticsAdminPanel /> : null}
     </section>
   );
 }

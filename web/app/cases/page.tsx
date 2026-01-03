@@ -1,9 +1,12 @@
 import Link from "next/link";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import { cache } from "react";
 import CasesAdminPanel from "./CasesAdminPanel";
+import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
+import { sortModelCodes } from "../../lib/modelSort";
+import ModelSelector from "../ModelSelector";
 
 type CaseRow = {
   id: string;
@@ -37,10 +40,13 @@ const buildApiUrl = async (query: string) => {
   return host ? `${proto}://${host}/api/cases?${query}` : `/api/cases?${query}`;
 };
 
-const loadCases = cache(async (): Promise<CaseRow[]> => {
+const loadCases = cache(async (model: string, system: string): Promise<CaseRow[]> => {
+  const params = new URLSearchParams();
+  if (model) params.set("model", model);
+  if (system) params.set("system", system);
   try {
-    const apiUrl = await buildApiUrl("model=all");
-    const response = await fetch(apiUrl, { next: { revalidate: 30 } });
+    const apiUrl = await buildApiUrl(params.toString());
+    const response = await fetch(apiUrl, { cache: "no-store" });
     if (response.ok) {
       const data = (await response.json()) as { items?: CaseRow[] };
       return data.items ?? [];
@@ -67,6 +73,19 @@ const buildQuery = (model: string, system: string) => {
   return `?${params.toString()}`;
 };
 
+const loadModelOptions = cache(async (): Promise<string[]> => {
+  try {
+    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
+    const raw = await fs.readFile(modelsPath, "utf8");
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized) as Array<{ id: string }>;
+    if (!Array.isArray(parsed)) return [];
+    return sortModelCodes(parsed).map((item) => item.id);
+  } catch {
+    return [];
+  }
+});
+
 export default async function CasesPage({
   searchParams,
 }: {
@@ -76,15 +95,20 @@ export default async function CasesPage({
   const model = resolvedSearchParams?.model ?? "all";
   const system = resolvedSearchParams?.system ?? "all";
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
+  const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
+  const isAdmin = role === "admin";
 
-  const cases = await loadCases();
-  const modelOptions = Array.from(new Set(cases.map((item) => item.model))).sort();
-
-  const filteredCases = cases.filter((item) => {
-    if (model !== "all" && item.model !== model) return false;
-    if (system !== "all" && item.system !== system) return false;
-    return true;
-  });
+  const modelOptions = await loadModelOptions();
+  const shouldPrefetch = model !== "all" || system !== "all";
+  const filteredCases = shouldPrefetch ? await loadCases(model, system) : [];
+  const selectorOptions = [
+    { id: "all", label: "전체", href: `/cases${buildQuery("all", system)}` },
+    ...modelOptions.map((id) => ({
+      id,
+      label: id,
+      href: `/cases${buildQuery(id, system)}`,
+    })),
+  ];
 
   return (
     <section className="space-y-8">
@@ -100,36 +124,14 @@ export default async function CasesPage({
         ) : null}
       </header>
 
-      <CasesAdminPanel readOnly={isReadOnly} />
+      {isAdmin ? <CasesAdminPanel readOnly={isReadOnly} /> : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <label className="text-sm font-semibold text-slate-600" htmlFor="model">
-            모델
-          </label>
-          <form method="get" className="flex flex-wrap items-center gap-3">
-            <select
-              id="model"
-              name="model"
-              defaultValue={model}
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm"
-            >
-              <option value="all">전체</option>
-              {modelOptions.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-            <input type="hidden" name="system" value={system} />
-            <button
-              type="submit"
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
-            >
-              적용
-            </button>
-          </form>
-        </div>
+        <ModelSelector
+          options={selectorOptions}
+          selected={model}
+          title="모델 선택"
+        />
         <div className="mt-4 flex flex-wrap gap-2 border-b border-slate-200">
           {Object.entries(systemLabels).map(([value, label]) => (
             <Link
@@ -199,7 +201,9 @@ export default async function CasesPage({
             })
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
-              등록된 정비사례가 없습니다.
+              {shouldPrefetch
+                ? "등록된 정비사례가 없습니다."
+                : "모델 또는 시스템을 선택해 주세요."}
             </div>
           )}
         </div>

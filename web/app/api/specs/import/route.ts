@@ -1,15 +1,16 @@
-import { promises as fs } from "fs";
-import path from "path";
 import { NextResponse } from "next/server";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
+import {
+  loadSpecsForWrite,
+  saveSpecsToFile,
+  upsertSpecsToDb,
+} from "../../../../lib/specs";
 import type { SpecRow } from "../../../../lib/types";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-
-const specsPath = path.resolve(process.cwd(), "data", "specs.json");
 
 const normalizeHeader = (header: string): string =>
   header
@@ -73,19 +74,22 @@ const toSlug = (value: string) =>
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+const hashText = (value: string) => {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i += 1) {
+    hash = (hash * 33) ^ value.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+};
+
+const safeSlug = (value: string) => {
+  const slug = toSlug(value);
+  if (slug) return slug;
+  return `k${hashText(value)}`;
+};
+
 const buildKey = (row: SpecRow) =>
   `${row.model}|${row.category}|${row.item}`.toLowerCase();
-
-const readSpecs = async (): Promise<SpecRow[]> => {
-  try {
-    const raw = await fs.readFile(specsPath, "utf8");
-    const sanitized = raw.replace(/^\uFEFF/, "");
-    const parsed = JSON.parse(sanitized);
-    return Array.isArray(parsed) ? (parsed as SpecRow[]) : [];
-  } catch {
-    return [];
-  }
-};
 
 export async function POST(request: Request) {
   if (isReadOnlyMode()) {
@@ -133,7 +137,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const existing = await readSpecs();
+  const existing = await loadSpecsForWrite();
   const byId = new Map(existing.map((item) => [item.id, item]));
   const byKey = new Map(existing.map((item) => [buildKey(item), item]));
 
@@ -141,7 +145,12 @@ export async function POST(request: Request) {
   let updated = 0;
   let skipped = 0;
 
-  const allowedCategories: SpecRow["category"][] = ["torque", "oil", "clearance", "consumable"];
+  const allowedCategories: SpecRow["category"][] = [
+    "torque",
+    "oil",
+    "clearance",
+    "consumable",
+  ];
 
   rows.forEach((row) => {
     const model = row.model?.toUpperCase();
@@ -185,7 +194,7 @@ export async function POST(request: Request) {
       return;
     }
 
-    const baseId = `spec-${toSlug(model)}-${toSlug(category)}-${toSlug(item)}`;
+    const baseId = `spec-${toSlug(model)}-${toSlug(category)}-${safeSlug(item)}`;
     let candidateId = nextRow.id || baseId || `spec-${Date.now()}`;
     let counter = 2;
     while (byId.has(candidateId)) {
@@ -200,8 +209,15 @@ export async function POST(request: Request) {
   });
 
   const combined = Array.from(byId.values());
-  await fs.mkdir(path.dirname(specsPath), { recursive: true });
-  await fs.writeFile(specsPath, JSON.stringify(combined, null, 2), "utf8");
+  const dbResult = await upsertSpecsToDb(combined);
+  if (!dbResult.ok) {
+    return NextResponse.json(
+      { error: `DB_ERROR: ${dbResult.error}` },
+      { status: 500 }
+    );
+  }
+
+  await saveSpecsToFile(combined);
 
   return NextResponse.json({
     imported,

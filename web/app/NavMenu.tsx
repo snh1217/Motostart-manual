@@ -2,13 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 type MenuItem = {
   href: string;
   label: string;
   adminOnly?: boolean;
 };
+
+type SessionRole = "user" | "admin" | null;
 
 const items: MenuItem[] = [
   { href: "/", label: "홈" },
@@ -19,6 +21,7 @@ const items: MenuItem[] = [
   { href: "/parts", label: "부품/절차" },
   { href: "/wiring", label: "회로도" },
   { href: "/manuals", label: "매뉴얼(원문)" },
+  { href: "/admin/login-codes", label: "로그인 코드", adminOnly: true },
   { href: "/translations", label: "번역 관리", adminOnly: true },
   { href: "/models", label: "모델 관리", adminOnly: true },
 ];
@@ -27,20 +30,36 @@ export default function NavMenu() {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [showAdminForm, setShowAdminForm] = useState(false);
-  const [tokenInput, setTokenInput] = useState("");
+  const [sessionRole, setSessionRole] = useState<SessionRole>(null);
+  const isLoginPage = pathname === "/login";
 
-  useEffect(() => {
+  const syncAdminState = () => {
     try {
       const stored = localStorage.getItem("ADMIN_TOKEN");
       setIsAdmin(Boolean(stored && stored.trim()));
-      if (stored && stored.trim()) {
-        setTokenInput(stored);
-      }
     } catch {
       setIsAdmin(false);
     }
+  };
+
+  useEffect(() => {
+    syncAdminState();
+  }, []);
+
+  const syncSessionState = async () => {
+    try {
+      const res = await fetch("/api/auth/status", { cache: "no-store" });
+      const data = await res.json();
+      setSessionRole(data?.loggedIn ? (data?.role as SessionRole) : null);
+    } catch {
+      setSessionRole(null);
+    }
+  };
+
+  useEffect(() => {
+    void syncSessionState();
   }, []);
 
   useEffect(() => {
@@ -57,24 +76,40 @@ export default function NavMenu() {
 
   useEffect(() => {
     setOpen(false);
-    setShowAdminForm(false);
   }, [pathname]);
 
-  const handleAdminLogin = () => {
-    if (!tokenInput.trim()) return;
-    localStorage.setItem("ADMIN_TOKEN", tokenInput.trim());
-    setIsAdmin(true);
-    setTokenInput(tokenInput.trim());
-    setShowAdminForm(false);
-    window.dispatchEvent(new Event("admin-token-changed"));
-  };
+  useEffect(() => {
+    const handleTokenChange = () => {
+      syncAdminState();
+    };
+    window.addEventListener("admin-token-changed", handleTokenChange);
+    return () => window.removeEventListener("admin-token-changed", handleTokenChange);
+  }, []);
+
+  useEffect(() => {
+    const handleSessionChange = () => {
+      void syncSessionState();
+    };
+    window.addEventListener("session-changed", handleSessionChange);
+    return () => window.removeEventListener("session-changed", handleSessionChange);
+  }, []);
 
   const handleAdminLogout = () => {
-    localStorage.removeItem("ADMIN_TOKEN");
-    setIsAdmin(false);
-    setTokenInput("");
-    setShowAdminForm(false);
-    window.dispatchEvent(new Event("admin-token-changed"));
+    const logout = async () => {
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch {
+        // Ignore network failures.
+      } finally {
+        localStorage.removeItem("ADMIN_TOKEN");
+        setIsAdmin(false);
+        setSessionRole(null);
+        window.dispatchEvent(new Event("admin-token-changed"));
+        window.dispatchEvent(new Event("session-changed"));
+        router.push(`/login?next=${encodeURIComponent(pathname ?? "/")}`);
+      }
+    };
+    void logout();
   };
 
   return (
@@ -83,8 +118,17 @@ export default function NavMenu() {
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300"
+        aria-disabled={isLoginPage}
+        disabled={isLoginPage}
+        onClick={() => {
+          if (isLoginPage) return;
+          setOpen((prev) => !prev);
+        }}
+        className={`flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition ${
+          isLoginPage
+            ? "cursor-not-allowed opacity-50"
+            : "hover:border-slate-300 hover:cursor-pointer"
+        }`}
       >
         <span className="flex h-4 w-4 flex-col items-center justify-center gap-1">
           <span className="h-0.5 w-4 rounded-full bg-slate-600" />
@@ -93,7 +137,7 @@ export default function NavMenu() {
         </span>
         메뉴
       </button>
-      {open ? (
+      {open && !isLoginPage ? (
         <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
           {items
             .filter((item) => (item.adminOnly ? isAdmin : true))
@@ -102,48 +146,28 @@ export default function NavMenu() {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
+                className="block rounded-xl px-3 py-2 text-sm text-slate-700 hover:bg-slate-100 hover:cursor-pointer"
               >
                 {item.label}
               </Link>
             ))}
           <div className="mt-2 border-t border-slate-100 pt-2">
-            {isAdmin ? (
+            {sessionRole ? (
               <button
                 type="button"
                 onClick={handleAdminLogout}
-                className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
+                className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:cursor-pointer"
               >
-                관리자 로그아웃
+                {isAdmin ? "관리자 로그아웃" : "로그아웃"}
               </button>
             ) : (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setShowAdminForm((prev) => !prev)}
-                  className="w-full rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-slate-100"
-                >
-                  관리자 로그인
-                </button>
-                {showAdminForm ? (
-                  <div className="mt-2 space-y-2 px-2 pb-2">
-                    <input
-                      type="password"
-                      value={tokenInput}
-                      onChange={(event) => setTokenInput(event.target.value)}
-                      placeholder="ADMIN_TOKEN"
-                      className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleAdminLogin}
-                      className="w-full rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white"
-                    >
-                      확인
-                    </button>
-                  </div>
-                ) : null}
-              </>
+              <Link
+                href={`/login?next=${encodeURIComponent(pathname ?? "/")}`}
+                onClick={() => setOpen(false)}
+                className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:cursor-pointer"
+              >
+                로그인
+              </Link>
             )}
           </div>
         </div>

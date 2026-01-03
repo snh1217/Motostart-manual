@@ -1,8 +1,18 @@
 import { promises as fs } from "fs";
 import path from "path";
 import * as XLSXModule from "xlsx";
+import { createClient } from "@supabase/supabase-js";
 
 const XLSX = XLSXModule.default ?? XLSXModule;
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const hasSupabase = Boolean(supabaseUrl && serviceRoleKey);
+const supabase = hasSupabase
+  ? createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    })
+  : null;
 
 const SPEC_PATH = path.resolve(process.cwd(), "data", "specs.json");
 const MODELS_PATH = path.resolve(process.cwd(), "data", "models.json");
@@ -24,6 +34,21 @@ const toSlug = (value) =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
+
+const hashText = (value) => {
+  let hash = 5381;
+  const text = String(value ?? "");
+  for (let i = 0; i < text.length; i += 1) {
+    hash = (hash * 33) ^ text.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(36);
+};
+
+const safeSlug = (value) => {
+  const slug = toSlug(String(value ?? ""));
+  if (slug) return slug;
+  return `k${hashText(value)}`;
+};
 
 const readJson = async (filePath, fallback) => {
   try {
@@ -84,7 +109,7 @@ const parseTorqueSheet = (sheet, specs, models) => {
       const category = categoryForHeader(label);
       if (!category) continue;
       addSpec(specs, {
-        id: `spec-${toSlug(model)}-${toSlug(category)}-${toSlug(label)}`,
+        id: `spec-${toSlug(model)}-${toSlug(category)}-${safeSlug(label)}`,
         model,
         category,
         item: label,
@@ -107,7 +132,7 @@ const parseAssemblyTorqueSheet = (sheet, specs, models) => {
     const value = String(row[3] || "").trim();
     if (!item || !value) continue;
     addSpec(specs, {
-      id: `spec-${toSlug(model)}-torque-${toSlug(item)}`,
+      id: `spec-${toSlug(model)}-torque-${safeSlug(item)}`,
       model,
       category: "torque",
       item,
@@ -132,7 +157,7 @@ const parseShockOilSheet = (sheet, specs, models) => {
       models.add(model);
       const itemHeader = header[col] ? `${header[col]} 오일 용량` : "쇼바 오일 용량";
       addSpec(specs, {
-        id: `spec-${toSlug(model)}-oil-${toSlug(itemHeader)}`,
+        id: `spec-${toSlug(model)}-oil-${safeSlug(itemHeader)}`,
         model,
         category: "oil",
         item: itemHeader,
@@ -184,6 +209,27 @@ const main = async () => {
 
   await writeJson(SPEC_PATH, specs);
   await updateModels(models);
+
+  if (hasSupabase && supabase) {
+    const now = new Date().toISOString();
+    const payload = specs.map((item) => ({
+      id: item.id,
+      model: item.model,
+      category: item.category,
+      item: item.item,
+      value: item.value,
+      note: item.note ?? null,
+      updated_at: now,
+    }));
+    const { error } = await supabase
+      .from("specs")
+      .upsert(payload, { onConflict: "id" });
+    if (error) {
+      console.error(`specs upsert failed: ${error.message}`);
+    } else {
+      console.log(`specs upserted: ${payload.length}`);
+    }
+  }
 
   console.log(`specs updated: ${specs.length}`);
 };

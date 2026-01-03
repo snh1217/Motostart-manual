@@ -1,11 +1,12 @@
 ﻿import Link from "next/link";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import { cache } from "react";
 import type { SpecRow } from "../../lib/types";
 import CopyButton from "./CopyButton";
 import { loadTranslations } from "../../lib/translation";
+import { compareModelCode, sortModelCodes } from "../../lib/modelSort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -44,13 +45,6 @@ type ModelEntry = { id: string; name?: string };
 
 type Manifest = { entries?: Array<{ model?: string }> };
 
-const getModelRank = (id: string) => {
-  if (id.startsWith("125")) return 0;
-  if (id.startsWith("350")) return 1;
-  if (id.startsWith("368")) return 2;
-  return 9;
-};
-
 const loadModels = cache(async (): Promise<ModelEntry[]> => {
   const cwd = process.cwd();
   const modelsPath = path.join(cwd, "data", "models.json");
@@ -58,11 +52,7 @@ const loadModels = cache(async (): Promise<ModelEntry[]> => {
     const raw = await fs.readFile(modelsPath, "utf8");
     const data = JSON.parse(raw) as ModelEntry[];
     if (Array.isArray(data) && data.length > 0) {
-      return data.slice().sort((a, b) => {
-        const rankDiff = getModelRank(a.id) - getModelRank(b.id);
-        if (rankDiff !== 0) return rankDiff;
-        return a.id.localeCompare(b.id);
-      });
+      return sortModelCodes(data);
     }
   } catch {
     // fall back to manifest
@@ -77,11 +67,7 @@ const loadModels = cache(async (): Promise<ModelEntry[]> => {
   });
   return Array.from(modelSet)
     .map((id) => ({ id }))
-    .sort((a, b) => {
-      const rankDiff = getModelRank(a.id) - getModelRank(b.id);
-      if (rankDiff !== 0) return rankDiff;
-      return a.id.localeCompare(b.id);
-    });
+    .sort((a, b) => compareModelCode(a.id, b.id));
 });
 
 const suggestionKeywords = [
@@ -112,11 +98,15 @@ export default async function SearchPage({
 
   if (query) {
     try {
+      const cookieHeader = (await cookies()).toString();
       const params = new URLSearchParams();
       params.set("q", query);
       params.set("model", model);
       const apiUrl = await buildApiUrl(params.toString());
-      const response = await fetch(apiUrl, { cache: "no-store" });
+      const response = await fetch(apiUrl, {
+        cache: "no-store",
+        headers: cookieHeader ? { cookie: cookieHeader } : undefined,
+      });
       if (!response.ok) {
         errorMessage = "검색 요청 처리 중 오류가 발생했습니다.";
       } else {
@@ -127,9 +117,33 @@ export default async function SearchPage({
     }
   }
 
+  const orderedSpecs = results
+    ? [results.answerSpec, ...results.otherSpecs].filter(Boolean)
+    : [];
+  const specByModel = new Map<string, SpecRow>();
+  orderedSpecs.forEach((row) => {
+    const spec = row as SpecRow;
+    if (!specByModel.has(spec.model)) {
+      specByModel.set(spec.model, spec);
+    }
+  });
+  const tableRows =
+    model === "all"
+      ? models
+          .map((entry) => specByModel.get(entry.id))
+          .filter(Boolean)
+      : results?.answerSpec
+      ? [results.answerSpec]
+      : [];
   const answerText = results?.answerSpec
     ? `${results.answerSpec.item}: ${results.answerSpec.value}`
     : "정답 없음";
+  const copyText =
+    model === "all" && tableRows.length
+      ? tableRows
+          .map((row) => `${row.model}: ${row.item} ${row.value}`)
+          .join("\n")
+      : answerText;
 
   const scopeLabel = model === "all" ? "전체 모델" : `${model} 모델`;
 
@@ -260,31 +274,64 @@ export default async function SearchPage({
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs font-semibold text-slate-500">정답</p>
-                <h2 className="text-xl font-semibold text-slate-900">{answerText}</h2>
+                <h2 className="text-xl font-semibold text-slate-900">
+                  {model === "all"
+                    ? `${results?.answerSpec?.item ?? query} · 모델별`
+                    : answerText}
+                </h2>
                 <p className="text-sm text-slate-600">검색 범위: {scopeLabel}</p>
               </div>
-              <CopyButton text={answerText} />
+              <CopyButton text={copyText} />
             </div>
 
-            {results?.answerSpec ? (
-              <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                <div className="grid gap-2 md:grid-cols-4">
-                  <div>
-                    <p className="text-xs text-slate-500">모델</p>
-                    <p className="font-semibold text-slate-700">{results.answerSpec.model}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500">카테고리</p>
-                    <p className="font-semibold text-slate-700">{results.answerSpec.category}</p>
-                  </div>
-                  <div className="md:col-span-2">
-                    <p className="text-xs text-slate-500">비고</p>
-                    <p className="font-semibold text-slate-700">
-                      {results.answerSpec.note || "-"}
-                    </p>
+            {tableRows.length ? (
+              model === "all" ? (
+                <div className="mt-4 overflow-x-auto rounded-xl border border-slate-100 bg-slate-50">
+                  <table className="w-full min-w-[480px] text-left text-sm text-slate-700">
+                    <thead className="bg-slate-100 text-xs text-slate-500">
+                      <tr>
+                        <th className="px-4 py-2">모델</th>
+                        <th className="px-4 py-2">카테고리</th>
+                        <th className="px-4 py-2">값</th>
+                        <th className="px-4 py-2">비고</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tableRows.map((row) => (
+                        <tr key={row.id} className="border-t border-slate-200">
+                          <td className="px-4 py-2 font-semibold">{row.model}</td>
+                          <td className="px-4 py-2">{row.category}</td>
+                          <td className="px-4 py-2 font-semibold">{row.value}</td>
+                          <td className="px-4 py-2">{row.note || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="mt-4 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                  <div className="grid gap-2 md:grid-cols-4">
+                    <div>
+                      <p className="text-xs text-slate-500">모델</p>
+                      <p className="font-semibold text-slate-700">
+                        {results?.answerSpec?.model ?? "-"}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">카테고리</p>
+                      <p className="font-semibold text-slate-700">
+                        {results?.answerSpec?.category ?? "-"}
+                      </p>
+                    </div>
+                    <div className="md:col-span-2">
+                      <p className="text-xs text-slate-500">비고</p>
+                      <p className="font-semibold text-slate-700">
+                        {results?.answerSpec?.note || "-"}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )
             ) : (
               <p className="mt-4 text-sm text-slate-500">정답 스펙을 찾지 못했습니다.</p>
             )}
@@ -337,9 +384,9 @@ export default async function SearchPage({
                   <h4 className="text-sm font-semibold text-slate-700">추가 스펙</h4>
                   {results?.otherSpecs?.length ? (
                     <div className="space-y-2">
-                      {results.otherSpecs.map((row) => (
+                      {results.otherSpecs.map((row, index) => (
                         <div
-                          key={row.id}
+                          key={`${row.id}-${row.model}-${row.category}-${index}`}
                           className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm text-slate-700"
                         >
                           <p className="font-semibold">

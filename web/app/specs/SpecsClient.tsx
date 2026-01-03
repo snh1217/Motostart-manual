@@ -35,6 +35,9 @@ export default function SpecsClient({
       : "all";
   });
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [rows, setRows] = useState<SpecRow[]>(specs);
+  const [loadingSpecs, setLoadingSpecs] = useState(false);
+  const [loadError, setLoadError] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [isAdmin, setIsAdmin] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -57,15 +60,52 @@ export default function SpecsClient({
     setIsAdmin(Boolean(adminToken.trim()));
   }, [adminToken]);
 
-  const filteredSpecs = useMemo(() => {
-    return specs.filter((row) => {
-      const matchesModel =
-        selectedModel === "all" || row.model === selectedModel;
-      const matchesCategory =
-        selectedCategory === "all" || row.category === selectedCategory;
-      return matchesModel && matchesCategory;
-    });
-  }, [specs, selectedModel, selectedCategory]);
+  useEffect(() => {
+    const controller = new AbortController();
+    const shouldLoad =
+      selectedModel !== "all" || selectedCategory !== "all";
+
+    if (!shouldLoad) {
+      setRows([]);
+      setSelectedIds(new Set());
+      return () => controller.abort();
+    }
+
+    setLoadingSpecs(true);
+    setLoadError("");
+
+    const params = new URLSearchParams();
+    params.set("model", selectedModel);
+    params.set("category", selectedCategory);
+
+    fetch(`/api/specs?${params.toString()}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(({ response, data }) => {
+        if (!response.ok) {
+          throw new Error(data?.error ?? "스펙을 불러오지 못했습니다.");
+        }
+        setRows(Array.isArray(data?.specs) ? data.specs : []);
+        setSelectedIds(new Set());
+      })
+      .catch((error) => {
+        if (error?.name === "AbortError") return;
+        setLoadError(
+          error instanceof Error ? error.message : "스펙을 불러오지 못했습니다."
+        );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) {
+          setLoadingSpecs(false);
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedModel, selectedCategory]);
+
+  const filteredSpecs = useMemo(() => rows, [rows]);
 
   const allSelected =
     filteredSpecs.length > 0 &&
@@ -188,7 +228,7 @@ export default function SpecsClient({
       setStatus("success");
       setMessage(`삭제 완료: ${data.deleted}건`);
       setSelectedIds(new Set());
-      window.location.reload();
+      setRows((prev) => prev.filter((row) => !ids.includes(row.id)));
     } catch (error) {
       setStatus("error");
       setMessage(
@@ -317,6 +357,10 @@ export default function SpecsClient({
         </div>
       ) : null}
 
+      {loadError ? (
+        <div className="text-sm text-red-600">{loadError}</div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-100 text-slate-600">
@@ -341,13 +385,22 @@ export default function SpecsClient({
             </tr>
           </thead>
           <tbody>
-            {filteredSpecs.length === 0 ? (
+            {loadingSpecs ? (
               <tr>
                 <td
                   className="px-4 py-6 text-center text-slate-500"
                   colSpan={isAdmin ? 7 : 5}
                 >
-                  표시할 스펙이 없습니다.
+                  스펙 불러오는 중...
+                </td>
+              </tr>
+            ) : filteredSpecs.length === 0 ? (
+              <tr>
+                <td
+                  className="px-4 py-6 text-center text-slate-500"
+                  colSpan={isAdmin ? 7 : 5}
+                >
+                  모델 또는 카테고리를 선택해 주세요.
                 </td>
               </tr>
             ) : (
