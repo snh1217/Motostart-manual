@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 
 type Status = "idle" | "loading" | "success" | "error";
 type Role = "user" | "admin" | null;
@@ -13,7 +13,6 @@ const getNextPath = (value: string | null) => {
 
 export default function LoginForm() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const nextPath = getNextPath(searchParams?.get("next") ?? null);
 
   const [tokenInput, setTokenInput] = useState("");
@@ -78,7 +77,7 @@ export default function LoginForm() {
       setMessage(data?.role === "admin" ? "관리자 로그인 완료" : "로그인 완료");
       broadcastTokenChange();
       broadcastSessionChange();
-      router.replace(nextPath);
+      window.location.assign(nextPath);
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "로그인 오류");
