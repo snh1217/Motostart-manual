@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PartEntry, PartPhoto, PartStep } from "../../lib/types";
+import { useRouter } from "next/navigation";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -23,10 +24,17 @@ const emptyStep = (): PartStep => ({
   photoIds: [],
 });
 
-export default function PartAdminPanel() {
+export default function PartAdminPanel({
+  initialEntry,
+}: {
+  initialEntry?: PartEntry | null;
+}) {
+  const router = useRouter();
   const [adminToken, setAdminToken] = useState("");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+
+  const isEditing = Boolean(initialEntry?.id);
 
   const [form, setForm] = useState<PartEntry>({
     id: "",
@@ -67,6 +75,24 @@ export default function PartAdminPanel() {
   useEffect(() => {
     if (adminToken) localStorage.setItem("ADMIN_TOKEN", adminToken);
   }, [adminToken]);
+
+  useEffect(() => {
+    if (!initialEntry) return;
+    setForm({
+      id: initialEntry.id ?? "",
+      model: initialEntry.model ?? "368G",
+      system: initialEntry.system ?? "engine",
+      name: initialEntry.name ?? "",
+      summary: initialEntry.summary ?? "",
+      tags: initialEntry.tags ?? [],
+      photos: initialEntry.photos ?? [],
+      steps: initialEntry.steps ?? [],
+    });
+    setUploadMessage("");
+    setUploadErrors({});
+    setPreviewUrls({});
+    setExpandedPreviews({});
+  }, [initialEntry]);
 
   const updatePhoto = (idx: number, key: keyof PartPhoto, value: string | string[]) => {
     setForm((prev) => {
@@ -160,7 +186,7 @@ export default function PartAdminPanel() {
 
     const payload: PartEntry = {
       ...form,
-      id: form.id?.trim() || autoId,
+      id: form.id?.trim() || `${autoId}-${Date.now()}`,
       tags: form.tags?.filter(Boolean) ?? [],
       photos: cleanedPhotos,
       steps: cleanedSteps,
@@ -179,6 +205,23 @@ export default function PartAdminPanel() {
       if (!res.ok) throw new Error(data?.error ?? "저장 실패");
       setStatus("success");
       setMessage(`저장 완료 (${data.source ?? "local"})`);
+      setForm({
+        id: "",
+        model: "368G",
+        system: "engine",
+        name: "",
+        summary: "",
+        tags: [],
+        photos: [],
+        steps: [],
+      });
+      setUploadMessage("");
+      setUploadErrors({});
+      setPreviewUrls({});
+      setExpandedPreviews({});
+      if (isEditing) {
+        router.replace("/parts");
+      }
     } catch (err) {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "저장 오류");
@@ -274,6 +317,18 @@ export default function PartAdminPanel() {
       </div>
 
       <form className="space-y-4" onSubmit={handleSubmit}>
+        {isEditing ? (
+          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <span>편집 중: {initialEntry?.id}</span>
+            <button
+              type="button"
+              onClick={() => router.replace("/parts")}
+              className="rounded-full border border-amber-200 px-2 py-1 text-xs text-amber-800 hover:border-amber-300"
+            >
+              편집 취소
+            </button>
+          </div>
+        ) : null}
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
             <span className="font-semibold text-slate-700">기본 정보</span>

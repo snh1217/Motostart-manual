@@ -1,4 +1,4 @@
-import PartAdminPanel from "./PartAdminPanel";
+﻿import PartAdminPanel from "./PartAdminPanel";
 import { loadParts } from "../../lib/parts";
 import type { PartEntry } from "../../lib/types";
 import Link from "next/link";
@@ -16,7 +16,7 @@ export const dynamic = "force-dynamic";
 const systemLabels: Record<string, string> = {
   all: "전체",
   engine: "엔진",
-  chassis: "차대",
+  chassis: "차체",
   electrical: "전장",
   other: "기타",
 };
@@ -45,15 +45,16 @@ const score = (entry: PartEntry, tokens: string[]) => {
 export default async function PartsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ model?: string; system?: string; q?: string }>;
+  searchParams: Promise<{ model?: string; system?: string; q?: string; edit?: string }>;
 }) {
   const resolved = await searchParams;
   const model = resolved?.model ?? "all";
   const system = resolved?.system ?? "all";
   const q = resolved?.q ?? "";
+  const editId = resolved?.edit?.trim() ?? "";
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
-  const shouldPrefetch = model !== "all" || system !== "all" || q.trim() !== "";
+  const shouldPrefetch = Boolean(editId) || model !== "all" || system !== "all" || q.trim() !== "";
   const tokens = q
     .toLowerCase()
     .split(/\s+/)
@@ -68,42 +69,41 @@ export default async function PartsPage({
         .map((i) => i.item)
     : items;
 
+  const editEntry = editId ? (await loadParts({ id: editId })).at(0) ?? null : null;
   const modelOptions = await loadModelOptions();
+  const partsPdfUrl = process.env.NEXT_PUBLIC_PARTS_LIST_PDF_URL ?? "";
 
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">부품 절차</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">부품/절차</h1>
         <p className="text-sm text-slate-600">
-          부품별 사진과 탈거/조립 절차를 관리합니다. (Supabase가 연결되면 DB 우선)
+          부품별 사진과 탈거/조립 절차를 관리합니다. (Supabase 연결 시 DB 우선)
         </p>
         <p className="text-xs text-slate-500">
-          검색만 필요한 경우 아래 관리자 도구는 펼치지 않아도 됩니다.
+          검색용으로만 사용한다면 아래 관리자 도구는 펼치지 않아도 됩니다.
         </p>
+        {partsPdfUrl ? (
+          <div className="flex flex-col gap-1">
+            <a
+              href={partsPdfUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+            >
+              파츠리스트 PDF 새창으로 열기
+            </a>
+            <span className="text-xs text-slate-500">
+              PDF에서 복사/붙여넣기는 가능하지만 자동 추출은 지원하지 않습니다.
+            </span>
+          </div>
+        ) : isAdmin ? (
+          <p className="text-xs text-slate-500">
+            파츠리스트 PDF 링크를 쓰려면 `NEXT_PUBLIC_PARTS_LIST_PDF_URL`을 설정하세요.
+          </p>
+        ) : null}
         <PartFilters model={model} system={system} modelOptions={modelOptions} q={q} />
       </header>
-
-      {isAdmin ? (
-        <details className="rounded-2xl border border-slate-200 bg-white p-4">
-          <summary className="cursor-pointer list-none">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="space-y-1">
-                <h2 className="text-base font-semibold text-slate-900">관리자 도구</h2>
-                <p className="text-xs text-slate-500">
-                  부품 추가/업로드/사진 등록 (ADMIN_TOKEN 필요)
-                </p>
-              </div>
-              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">
-                펼치기/접기
-              </span>
-            </div>
-          </summary>
-          <div className="mt-4 space-y-4">
-            <PartAdminPanel />
-            <PartUploadForm />
-          </div>
-        </details>
-      ) : null}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between text-sm text-slate-500">
@@ -143,16 +143,17 @@ export default async function PartsPage({
                       </div>
                     ) : null}
                   </div>
-                  <span className="text-xs text-slate-500">
-                    {entry.updated_at ?? ""}
-                  </span>
+                  <span className="text-xs text-slate-500">{entry.updated_at ?? ""}</span>
                 </div>
 
                 {entry.photos?.length ? (
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {entry.photos.slice(0, 3).map((photo, i) => (
-                      <div
+                      <a
                         key={`${entry.id}-photo-${i}`}
+                        href={photo.url}
+                        target="_blank"
+                        rel="noreferrer"
                         className="h-20 overflow-hidden rounded-lg border border-slate-100 bg-slate-50"
                       >
                         <img
@@ -160,7 +161,7 @@ export default async function PartsPage({
                           alt={photo.label ?? entry.name}
                           className="h-full w-full object-cover"
                         />
-                      </div>
+                      </a>
                     ))}
                   </div>
                 ) : null}
@@ -192,12 +193,28 @@ export default async function PartsPage({
                   </div>
                 ) : null}
 
-                <div className="mt-4 flex items-center gap-2 text-xs text-slate-500">
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-xs text-slate-500">
                   <span className="rounded-full bg-slate-100 px-2 py-0.5">
                     {entry.source === "db" ? "DB" : "JSON"}
                   </span>
                   <Link
-                    href={`/viewer?entryId=${encodeURIComponent(entry.id)}&title=${encodeURIComponent(entry.name)}`}
+                    href={`/parts/${encodeURIComponent(entry.id)}`}
+                    className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:border-slate-300"
+                  >
+                    상세 보기
+                  </Link>
+                  {isAdmin ? (
+                    <Link
+                      href={`/parts?edit=${encodeURIComponent(entry.id)}`}
+                      className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:border-slate-300"
+                    >
+                      수정
+                    </Link>
+                  ) : null}
+                  <Link
+                    href={`/viewer?entryId=${encodeURIComponent(entry.id)}&title=${encodeURIComponent(
+                      entry.name
+                    )}`}
                     className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:border-slate-300"
                   >
                     관련 매뉴얼 보기
@@ -209,11 +226,33 @@ export default async function PartsPage({
             <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-sm text-slate-500">
               {shouldPrefetch
                 ? "등록된 부품/절차가 없습니다."
-                : "모델, 시스템, 검색어 중 하나를 선택해 주세요."}
+                : "모델, 시스템, 검색어를 선택해 주세요."}
             </div>
           )}
         </div>
       </div>
+
+      {isAdmin ? (
+        <details className="rounded-2xl border border-slate-200 bg-white p-4">
+          <summary className="cursor-pointer list-none">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold text-slate-900">관리자 도구</h2>
+                <p className="text-xs text-slate-500">
+                  부품 추가/업로드/사진 등록 (ADMIN_TOKEN 필요)
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-xs text-slate-600">
+                펼치기/접기
+              </span>
+            </div>
+          </summary>
+          <div className="mt-4 space-y-4">
+            <PartAdminPanel initialEntry={editEntry} />
+            <PartUploadForm />
+          </div>
+        </details>
+      ) : null}
     </section>
   );
 }
@@ -230,42 +269,65 @@ function PartFilters({
   q: string;
 }) {
   return (
-    <form method="get" className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 lg:flex-row">
-      <select
-        name="model"
-        defaultValue={model}
-        className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 focus:border-slate-400 focus:outline-none lg:w-40"
-      >
-        <option value="all">전체</option>
-        {modelOptions.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </select>
-      <select
-        name="system"
-        defaultValue={system}
-        className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm text-slate-600 focus:border-slate-400 focus:outline-none lg:w-40"
-      >
-        {Object.entries(systemLabels).map(([id, label]) => (
-          <option key={id} value={id}>
-            {label}
-          </option>
-        ))}
-      </select>
-      <input
-        name="q"
-        defaultValue={q}
-        placeholder="예: 클러치 커버, 점화코일, 볼트"
-        className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
-      />
-      <button
-        type="submit"
-        className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white"
-      >
-        검색
-      </button>
+    <form
+      method="get"
+      className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4"
+    >
+      <div className="space-y-2">
+        <div className="text-xs font-semibold text-slate-600">모델 선택</div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { id: "all", label: "전체" },
+            ...modelOptions.map((item) => ({ id: item, label: item })),
+          ].map((option) => (
+            <label key={option.id} className="cursor-pointer">
+              <input
+                type="radio"
+                name="model"
+                value={option.id}
+                defaultChecked={model === option.id}
+                className="peer sr-only"
+              />
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 transition peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white">
+                {option.label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="text-xs font-semibold text-slate-600">시스템 선택</div>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(systemLabels).map(([id, label]) => (
+            <label key={id} className="cursor-pointer">
+              <input
+                type="radio"
+                name="system"
+                value={id}
+                defaultChecked={system === id}
+                className="peer sr-only"
+              />
+              <span className="rounded-full border border-slate-200 px-3 py-1 text-sm text-slate-700 transition peer-checked:border-slate-900 peer-checked:bg-slate-900 peer-checked:text-white">
+                {label}
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 lg:flex-row">
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="예: 클러치 커버, 점화코일, 볼트"
+          className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm focus:border-slate-400 focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white"
+        >
+          검색
+        </button>
+      </div>
     </form>
   );
 }

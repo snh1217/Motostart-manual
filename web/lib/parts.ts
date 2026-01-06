@@ -25,14 +25,16 @@ export const savePartsToFile = async (items: PartEntry[]) => {
 };
 
 export const loadParts = async (filters?: {
+  id?: string;
   model?: string;
   system?: string;
   q?: string;
 }): Promise<PartEntry[]> => {
-  const { model, system, q } = filters ?? {};
+  const { id, model, system, q } = filters ?? {};
 
   if (hasSupabaseConfig && supabaseAdmin) {
     const query = supabaseAdmin.from("parts").select("*");
+    if (id) query.eq("id", id);
     if (model && model !== "all") query.eq("model", model);
     if (system && system !== "all") query.eq("system", system);
     const { data, error } = await query.order("updated_at", {
@@ -58,11 +60,11 @@ export const loadParts = async (filters?: {
       updated_at: row.updated_at ?? undefined,
       source: "db" as const,
     }));
-    return applyFilters(items, model, system, q);
+    return applyFilters(items, model, system, q, id);
   }
 
   const items = await loadPartsFromFile();
-  return applyFilters(items, model, system, q).map((item) => ({
+  return applyFilters(items, model, system, q, id).map((item) => ({
     ...item,
     source: "json" as const,
   }));
@@ -72,7 +74,8 @@ const applyFilters = (
   items: PartEntry[],
   model?: string,
   system?: string,
-  q?: string
+  q?: string,
+  id?: string
 ) => {
   const tokens =
     q
@@ -81,6 +84,7 @@ const applyFilters = (
       .filter(Boolean) ?? [];
 
   return items.filter((item) => {
+    if (id && item.id !== id) return false;
     if (model && model !== "all" && item.model !== model) return false;
     if (system && system !== "all" && item.system !== system) return false;
     if (!tokens.length) return true;
@@ -146,4 +150,26 @@ export const upsertPart = async (payload: PartEntry, request: Request) => {
   }
   await savePartsToFile(items);
   return { ok: true, source: "json" as const, total: items.length };
+};
+
+export const deletePart = async (id: string) => {
+  if (isReadOnlyMode()) {
+    return { error: "READ_ONLY_MODE" as const };
+  }
+
+  if (hasSupabaseConfig && supabaseAdmin) {
+    const { error } = await supabaseAdmin.from("parts").delete().eq("id", id);
+    if (error) {
+      return { error: "DB_ERROR", detail: error.message };
+    }
+    return { ok: true, source: "db" as const };
+  }
+
+  const items = await loadPartsFromFile();
+  const next = items.filter((item) => item.id !== id);
+  if (next.length === items.length) {
+    return { error: "NOT_FOUND" as const };
+  }
+  await savePartsToFile(next);
+  return { ok: true, source: "json" as const, total: next.length };
 };
