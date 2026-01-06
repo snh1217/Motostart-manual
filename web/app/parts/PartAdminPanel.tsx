@@ -54,7 +54,6 @@ export default function PartAdminPanel() {
   // 사진 업로드 상태
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
-  const [uploadFileName, setUploadFileName] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -184,7 +183,6 @@ export default function PartAdminPanel() {
 
   const handlePhotoUpload = async (file: File | null, targetIdx?: number) => {
     if (!file) return;
-    setUploadFileName(file.name);
     setUploading(true);
     setUploadMessage("");
     try {
@@ -345,21 +343,6 @@ export default function PartAdminPanel() {
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span>URL을 직접 입력하거나 업로드로 자동 채울 수 있습니다.</span>
-              <div className="flex flex-wrap items-center gap-2">
-                <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300">
-                  파일 선택
-                  <input
-                    type="file"
-                    accept="image/*"
-                    disabled={uploading}
-                    onChange={(e) => handlePhotoUpload(e.target.files?.[0] ?? null)}
-                    className="hidden"
-                  />
-                </label>
-                {uploadFileName ? (
-                  <span className="text-xs text-slate-400">{uploadFileName}</span>
-                ) : null}
-              </div>
             </div>
             {uploadMessage ? (
               <div className="text-xs text-slate-600">{uploadMessage}</div>
@@ -413,6 +396,15 @@ export default function PartAdminPanel() {
                     value={photo.url}
                     onChange={(e) => updatePhoto(idx, "url", e.target.value)}
                   />
+                  {photo.url ? (
+                    <div className="md:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
+                      <img
+                        src={photo.url}
+                        alt={photo.label ?? `사진 ${idx + 1}`}
+                        className="h-32 w-full object-cover"
+                      />
+                    </div>
+                  ) : null}
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
                     placeholder="태그 (쉼표 구분)"
