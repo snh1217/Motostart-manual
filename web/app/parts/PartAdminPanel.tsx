@@ -57,6 +57,7 @@ export default function PartAdminPanel() {
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
   const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({});
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
+  const [expandedPreviews, setExpandedPreviews] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -420,12 +421,40 @@ export default function PartAdminPanel() {
                     </div>
                   ) : null}
                   {photo.url || previewUrls[idx] ? (
-                    <div className="md:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
-                      <img
-                        src={photo.url || previewUrls[idx]}
-                        alt={photo.label ?? `사진 ${idx + 1}`}
-                        className="h-32 w-full object-cover"
-                      />
+                    <div className="md:col-span-2 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedPreviews((prev) => ({
+                              ...prev,
+                              [idx]: !prev[idx],
+                            }))
+                          }
+                          className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
+                        >
+                          {expandedPreviews[idx] ? "미리보기 축소" : "미리보기 확대"}
+                        </button>
+                        {(photo.url || previewUrls[idx]) ? (
+                          <a
+                            href={photo.url || previewUrls[idx]}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
+                          >
+                            원본 보기
+                          </a>
+                        ) : null}
+                      </div>
+                      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                        <img
+                          src={photo.url || previewUrls[idx]}
+                          alt={photo.label ?? `사진 ${idx + 1}`}
+                          className={`w-full object-contain ${
+                            expandedPreviews[idx] ? "h-64" : "h-32"
+                          }`}
+                        />
+                      </div>
                     </div>
                   ) : null}
                   <input
