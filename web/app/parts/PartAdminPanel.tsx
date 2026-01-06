@@ -402,6 +402,12 @@ export default function PartAdminPanel() {
                     onChange={(e) => updatePhoto(idx, "label", e.target.value)}
                   />
                   <input
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="?? ??"
+                    value={photo.desc ?? ""}
+                    onChange={(e) => updatePhoto(idx, "desc", e.target.value)}
+                  />
+                  <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
                     placeholder="URL"
                     value={photo.url}
