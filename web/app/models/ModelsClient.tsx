@@ -246,21 +246,37 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     setStatus("loading");
     setMessage("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("model", normalizedId);
-      formData.append("kind", kind);
-
       const uploadRes = await fetch("/api/models/upload", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`,
         },
-        body: formData,
+        body: JSON.stringify({
+          model: normalizedId,
+          kind,
+          filename: file.name,
+          contentType: file.type || "application/pdf",
+        }),
       });
       const uploadData = await readJsonResponse(uploadRes);
       if (!uploadRes.ok) {
         throw new Error(uploadData?.error ?? "업로드 실패");
+      }
+      if (!uploadData?.signedUrl || !uploadData?.url) {
+        throw new Error("업로드 URL이 비어 있습니다.");
+      }
+
+      const putRes = await fetch(uploadData.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/pdf",
+        },
+        body: file,
+      });
+      if (!putRes.ok) {
+        const errorText = await putRes.text();
+        throw new Error(errorText || "파일 업로드 실패");
       }
 
       const updateRes = await fetch("/api/models/update", {
