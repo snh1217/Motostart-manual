@@ -121,12 +121,12 @@ export default async function HomePage({
                 </span>
               </Link>
               <Link
-                href="/cases"
+                href="/parts"
                 className="rounded-2xl border border-slate-200 bg-white px-6 py-5 text-base font-semibold text-slate-900 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300"
               >
-                정비사례
+                부품/절차
                 <span className="mt-2 block text-sm font-normal text-slate-600">
-                  현장 사례 모음
+                  부품 절차 관리
                 </span>
               </Link>
               <Link

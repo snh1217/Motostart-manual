@@ -34,11 +34,27 @@ body {
   [role="tab"],
   [role="option"] {
     cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 
   button:disabled,
   [role="button"][aria-disabled="true"],
   [aria-disabled="true"] {
     cursor: not-allowed;
+  }
+}
+
+@media (max-width: 640px) {
+  a,
+  button,
+  [role="button"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="option"],
+  input,
+  select,
+  textarea {
+    min-height: 44px;
   }
 }

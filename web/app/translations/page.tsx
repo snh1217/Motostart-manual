@@ -121,8 +121,8 @@ export default async function TranslationsPage({
           )}
         </form>
 
-        <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-          <table className="min-w-full text-left text-sm">
+        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
+          <table className="min-w-[640px] text-left text-sm sm:min-w-full">
             <thead className="bg-slate-100 text-slate-600">
               <tr>
                 <th className="px-4 py-3 font-semibold">메뉴얼 ID</th>

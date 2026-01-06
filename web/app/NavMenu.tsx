@@ -138,7 +138,7 @@ export default function NavMenu() {
         메뉴
       </button>
       {open && !isLoginPage ? (
-        <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
+        <div className="absolute right-0 mt-2 w-56 max-w-[90vw] rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
           {items
             .filter((item) => (item.adminOnly ? isAdmin : true))
             .map((item) => (
