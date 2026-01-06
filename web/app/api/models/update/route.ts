@@ -55,32 +55,28 @@ export async function POST(request: Request) {
   if (hasSupabaseConfig && supabaseAdmin) {
     const { data, error } = await supabaseAdmin
       .from("models")
-      .update({
-        name,
-        parts_engine_url: partsEngineUrl || null,
-        parts_chassis_url: partsChassisUrl || null,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
+      .upsert(
+        {
+          id,
+          name,
+          parts_engine_url: partsEngineUrl || null,
+          parts_chassis_url: partsChassisUrl || null,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "id" }
+      )
       .select("*")
       .maybeSingle();
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    if (!data) {
-      return NextResponse.json({ error: "모델을 찾을 수 없습니다." }, { status: 404 });
-    }
-    return NextResponse.json(data);
+    return NextResponse.json(data ?? { id, name, parts_engine_url: partsEngineUrl || null, parts_chassis_url: partsChassisUrl || null });
   }
 
   const existing = await readModels();
   const idx = existing.findIndex((entry) => entry.id.toUpperCase() === id);
-  if (idx < 0) {
-    return NextResponse.json({ error: "모델을 찾을 수 없습니다." }, { status: 404 });
-  }
-
   const updated: ModelEntry = {
-    ...existing[idx],
+    ...(idx >= 0 ? existing[idx] : {}),
     id,
     name,
   };
@@ -96,7 +92,11 @@ export async function POST(request: Request) {
   }
 
   const next = [...existing];
-  next[idx] = updated;
+  if (idx >= 0) {
+    next[idx] = updated;
+  } else {
+    next.push(updated);
+  }
 
   await fs.mkdir(path.dirname(modelsPath), { recursive: true });
   await fs.writeFile(modelsPath, JSON.stringify(next, null, 2), "utf8");

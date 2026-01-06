@@ -301,17 +301,37 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
 
       setPartsEngineUrl(updateData.parts_engine_url ?? "");
       setPartsChassisUrl(updateData.parts_chassis_url ?? "");
-      setRows((prev) =>
-        prev.map((row) =>
-          row.id === normalizedId
-            ? {
-                ...row,
-                parts_engine_url: updateData.parts_engine_url ?? row.parts_engine_url,
-                parts_chassis_url: updateData.parts_chassis_url ?? row.parts_chassis_url,
-              }
-            : row
-        )
-      );
+      try {
+        const refreshed = await fetch("/api/models", { cache: "no-store" });
+        const refreshedData = await readJsonResponse(refreshed);
+        if (refreshed.ok && Array.isArray(refreshedData?.models)) {
+          setRows(refreshedData.models);
+        } else {
+          setRows((prev) =>
+            prev.map((row) =>
+              row.id === normalizedId
+                ? {
+                    ...row,
+                    parts_engine_url: updateData.parts_engine_url ?? row.parts_engine_url,
+                    parts_chassis_url: updateData.parts_chassis_url ?? row.parts_chassis_url,
+                  }
+                : row
+            )
+          );
+        }
+      } catch {
+        setRows((prev) =>
+          prev.map((row) =>
+            row.id === normalizedId
+              ? {
+                  ...row,
+                  parts_engine_url: updateData.parts_engine_url ?? row.parts_engine_url,
+                  parts_chassis_url: updateData.parts_chassis_url ?? row.parts_chassis_url,
+                }
+              : row
+          )
+        );
+      }
       setStatus("success");
       setMessage("업로드 완료");
     } catch (error) {
