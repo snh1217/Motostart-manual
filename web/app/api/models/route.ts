@@ -1,18 +1,12 @@
-import { promises as fs } from "fs";
-import path from "path";
-import { NextResponse } from "next/server";
-import { sortModelCodes } from "../../../lib/modelSort";
+﻿import { NextResponse } from "next/server";
+import { loadModels } from "../../../lib/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
-    const raw = await fs.readFile(modelsPath, "utf8");
-    const sanitized = raw.replace(/^\uFEFF/, "");
-    const parsed = JSON.parse(sanitized) as Array<{ id: string; name: string }>;
-    const models = Array.isArray(parsed) ? sortModelCodes(parsed) : [];
+    const models = await loadModels();
     return NextResponse.json(
       { models },
       {

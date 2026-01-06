@@ -30,7 +30,7 @@ const readModels = async (): Promise<ModelEntry[]> => {
 export async function POST(request: Request) {
   if (isReadOnlyMode()) {
     return NextResponse.json(
-      { error: "읽기 전용 모드에서는 추가할 수 없습니다." },
+      { error: "읽기 전용 모드에서는 수정할 수 없습니다." },
       { status: 403 }
     );
   }
@@ -53,50 +53,53 @@ export async function POST(request: Request) {
   }
 
   if (hasSupabaseConfig && supabaseAdmin) {
-    const { data: existing, error: fetchError } = await supabaseAdmin
-      .from("models")
-      .select("id")
-      .eq("id", id)
-      .maybeSingle();
-    if (fetchError) {
-      return NextResponse.json({ error: fetchError.message }, { status: 500 });
-    }
-    if (existing?.id) {
-      return NextResponse.json({ error: "이미 등록된 모델입니다." }, { status: 400 });
-    }
-
     const { data, error } = await supabaseAdmin
       .from("models")
-      .insert({
-        id,
+      .update({
         name,
         parts_engine_url: partsEngineUrl || null,
         parts_chassis_url: partsChassisUrl || null,
         updated_at: new Date().toISOString(),
       })
+      .eq("id", id)
       .select("*")
       .maybeSingle();
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
+    if (!data) {
+      return NextResponse.json({ error: "모델을 찾을 수 없습니다." }, { status: 404 });
+    }
     return NextResponse.json(data);
   }
 
   const existing = await readModels();
-  if (existing.some((entry) => entry.id.toUpperCase() === id)) {
-    return NextResponse.json({ error: "이미 등록된 모델입니다." }, { status: 400 });
+  const idx = existing.findIndex((entry) => entry.id.toUpperCase() === id);
+  if (idx < 0) {
+    return NextResponse.json({ error: "모델을 찾을 수 없습니다." }, { status: 404 });
   }
 
-  const nextEntry: ModelEntry = {
+  const updated: ModelEntry = {
+    ...existing[idx],
     id,
     name,
-    ...(partsEngineUrl ? { parts_engine_url: partsEngineUrl } : {}),
-    ...(partsChassisUrl ? { parts_chassis_url: partsChassisUrl } : {}),
   };
-  const next = [...existing, nextEntry];
+  if (partsEngineUrl) {
+    updated.parts_engine_url = partsEngineUrl;
+  } else {
+    delete updated.parts_engine_url;
+  }
+  if (partsChassisUrl) {
+    updated.parts_chassis_url = partsChassisUrl;
+  } else {
+    delete updated.parts_chassis_url;
+  }
+
+  const next = [...existing];
+  next[idx] = updated;
 
   await fs.mkdir(path.dirname(modelsPath), { recursive: true });
   await fs.writeFile(modelsPath, JSON.stringify(next, null, 2), "utf8");
 
-  return NextResponse.json(nextEntry);
+  return NextResponse.json(updated);
 }

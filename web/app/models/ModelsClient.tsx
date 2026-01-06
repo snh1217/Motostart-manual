@@ -1,14 +1,21 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { compareModelCode } from "../../lib/modelSort";
 
-type ModelEntry = { id: string; name: string };
+type ModelEntry = {
+  id: string;
+  name: string;
+  parts_engine_url?: string;
+  parts_chassis_url?: string;
+};
 
 type ModelsClientProps = {
   models: ModelEntry[];
   readOnly: boolean;
 };
+
+type Status = "idle" | "loading" | "success" | "error";
 
 export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
   const [rows, setRows] = useState<ModelEntry[]>(models);
@@ -17,10 +24,11 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
   const [adminToken, setAdminToken] = useState("");
   const [modelId, setModelId] = useState("");
   const [modelName, setModelName] = useState("");
+  const [partsEngineUrl, setPartsEngineUrl] = useState("");
+  const [partsChassisUrl, setPartsChassisUrl] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
-    "idle"
-  );
+  const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -99,17 +107,25 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
   const requireAdmin = () => {
     if (!adminToken.trim()) {
       setStatus("error");
-      setMessage("Admin_Key를 입력해 주세요.");
+      setMessage("ADMIN_TOKEN을 입력해 주세요.");
       return false;
     }
     return true;
   };
 
-  const handleAdd = async (event: React.FormEvent<HTMLFormElement>) => {
+  const resetForm = () => {
+    setModelId("");
+    setModelName("");
+    setPartsEngineUrl("");
+    setPartsChassisUrl("");
+    setEditingId(null);
+  };
+
+  const handleSave = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (readOnly) {
       setStatus("error");
-      setMessage("읽기 전용 모드에서는 추가할 수 없습니다.");
+      setMessage("읽기 전용 모드에서는 저장할 수 없습니다.");
       return;
     }
 
@@ -125,7 +141,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     setMessage("");
 
     try {
-      const response = await fetch("/api/models/add", {
+      const response = await fetch(editingId ? "/api/models/update" : "/api/models/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,22 +150,23 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
         body: JSON.stringify({
           id: modelId.trim(),
           name: modelName.trim(),
+          parts_engine_url: partsEngineUrl.trim(),
+          parts_chassis_url: partsChassisUrl.trim(),
         }),
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.error ?? "추가 실패");
+        throw new Error(data?.error ?? "저장 실패");
       }
 
       setStatus("success");
-      setMessage("모델이 추가되었습니다.");
-      setModelId("");
-      setModelName("");
+      setMessage(editingId ? "모델이 수정되었습니다." : "모델이 추가되었습니다.");
+      resetForm();
       window.location.reload();
     } catch (error) {
       setStatus("error");
       setMessage(
-        error instanceof Error ? error.message : "추가 중 오류가 발생했습니다."
+        error instanceof Error ? error.message : "저장 중 오류가 발생했습니다."
       );
     }
   };
@@ -199,56 +216,101 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     }
   };
 
+  const beginEdit = (entry: ModelEntry) => {
+    setEditingId(entry.id);
+    setModelId(entry.id);
+    setModelName(entry.name ?? "");
+    setPartsEngineUrl(entry.parts_engine_url ?? "");
+    setPartsChassisUrl(entry.parts_chassis_url ?? "");
+    setMessage("");
+  };
+
   return (
     <section className="space-y-6">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">모델 관리</h1>
-        <p className="text-slate-600">차량 모델을 추가하거나 삭제하세요.</p>
+        <p className="text-slate-600">차량 모델 추가/수정/삭제를 진행하세요.</p>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
-        <form onSubmit={handleAdd} className="space-y-3">
-          <div className="text-sm font-semibold text-slate-700">모델 추가</div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <form onSubmit={handleSave} className="space-y-3">
+          <div className="text-sm font-semibold text-slate-700">
+            {editingId ? "모델 수정" : "모델 추가"}
+          </div>
+          {editingId ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              편집 중: {editingId}
+            </div>
+          ) : null}
+          <div className="flex flex-col gap-3">
             <input
               type="password"
               value={adminToken}
               onChange={(event) => setAdminToken(event.target.value)}
-              placeholder="관리자코드"
+              placeholder="ADMIN_TOKEN"
               className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
               disabled={readOnly}
             />
-            <input
-              type="text"
-              value={modelId}
-              onChange={(event) => setModelId(event.target.value)}
-              placeholder="모델 코드 (예: 350D)"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-              disabled={readOnly}
-            />
-            <input
-              type="text"
-              value={modelName}
-              onChange={(event) => setModelName(event.target.value)}
-              placeholder="모델 이름 (예: ZONTES 350D)"
-              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-              disabled={readOnly}
-            />
-            <button
-              type="submit"
-              disabled={status === "loading" || readOnly}
-              className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {status === "loading" ? "추가 중..." : "추가"}
-            </button>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                type="text"
+                value={modelId}
+                onChange={(event) => setModelId(event.target.value)}
+                placeholder="모델 코드 (예: 350D)"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                disabled={readOnly || Boolean(editingId)}
+              />
+              <input
+                type="text"
+                value={modelName}
+                onChange={(event) => setModelName(event.target.value)}
+                placeholder="모델 이름 (예: ZONTES 350D)"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                disabled={readOnly}
+              />
+            </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <input
+                type="url"
+                value={partsEngineUrl}
+                onChange={(event) => setPartsEngineUrl(event.target.value)}
+                placeholder="엔진 파츠리스트 PDF URL"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                disabled={readOnly}
+              />
+              <input
+                type="url"
+                value={partsChassisUrl}
+                onChange={(event) => setPartsChassisUrl(event.target.value)}
+                placeholder="차대 파츠리스트 PDF URL"
+                className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+                disabled={readOnly}
+              />
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="submit"
+                disabled={status === "loading" || readOnly}
+                className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {status === "loading" ? "저장 중..." : editingId ? "수정 저장" : "추가"}
+              </button>
+              {editingId ? (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
+                >
+                  편집 취소
+                </button>
+              ) : null}
+            </div>
           </div>
         </form>
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm text-slate-500">
-          선택 {selectedIds.size}건
-        </div>
+        <div className="text-sm text-slate-500">선택 {selectedIds.size}건</div>
         <button
           type="button"
           onClick={() => handleDelete(Array.from(selectedIds))}
@@ -261,50 +323,38 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
 
       {message ? (
         <div
-          className={`text-sm ${
-            status === "error" ? "text-red-600" : "text-slate-600"
-          }`}
+          className={`text-sm ${status === "error" ? "text-red-600" : "text-slate-600"}`}
         >
           {message}
         </div>
       ) : null}
 
-      {loadError ? (
-        <div className="text-sm text-red-600">{loadError}</div>
-      ) : null}
+      {loadError ? <div className="text-sm text-red-600">{loadError}</div> : null}
 
       <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-        <table className="min-w-[640px] text-left text-sm sm:min-w-full">
+        <table className="min-w-[720px] text-left text-sm sm:min-w-full">
           <thead className="bg-slate-100 text-slate-600">
             <tr>
               <th className="px-4 py-3 font-semibold">
-                <input
-                  type="checkbox"
-                  checked={allSelected}
-                  onChange={toggleAll}
-                />
+                <input type="checkbox" checked={allSelected} onChange={toggleAll} />
               </th>
               <th className="px-4 py-3 font-semibold">모델 코드</th>
               <th className="px-4 py-3 font-semibold">모델 이름</th>
-              <th className="px-4 py-3 font-semibold">삭제</th>
+              <th className="px-4 py-3 font-semibold">엔진 파츠리스트</th>
+              <th className="px-4 py-3 font-semibold">차대 파츠리스트</th>
+              <th className="px-4 py-3 font-semibold">관리</th>
             </tr>
           </thead>
           <tbody>
             {loadingModels ? (
               <tr>
-                <td
-                  className="px-4 py-6 text-center text-slate-500"
-                  colSpan={4}
-                >
-                  모델 불러오는 중...
+                <td className="px-4 py-6 text-center text-slate-500" colSpan={6}>
+                  모델을 불러오는 중...
                 </td>
               </tr>
             ) : sortedModels.length === 0 ? (
               <tr>
-                <td
-                  className="px-4 py-6 text-center text-slate-500"
-                  colSpan={4}
-                >
+                <td className="px-4 py-6 text-center text-slate-500" colSpan={6}>
                   등록된 모델이 없습니다.
                 </td>
               </tr>
@@ -318,19 +368,54 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
                       onChange={() => toggleOne(entry.id)}
                     />
                   </td>
-                  <td className="px-4 py-3 font-medium text-slate-800">
-                    {entry.id}
-                  </td>
+                  <td className="px-4 py-3 font-medium text-slate-800">{entry.id}</td>
                   <td className="px-4 py-3 text-slate-700">{entry.name}</td>
                   <td className="px-4 py-3">
-                    <button
-                      type="button"
-                      onClick={() => handleDelete([entry.id])}
-                      disabled={status === "loading" || readOnly}
-                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
-                    >
-                      삭제
-                    </button>
+                    {entry.parts_engine_url ? (
+                      <a
+                        href={entry.parts_engine_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      >
+                        열기
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400">미등록</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    {entry.parts_chassis_url ? (
+                      <a
+                        href={entry.parts_chassis_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      >
+                        열기
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400">미등록</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => beginEdit(entry)}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
+                      >
+                        수정
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete([entry.id])}
+                        disabled={status === "loading" || readOnly}
+                        className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
+                      >
+                        삭제
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

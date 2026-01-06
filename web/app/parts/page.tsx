@@ -5,10 +5,8 @@ import Link from "next/link";
 import PartUploadForm from "./PartUploadForm";
 import { cookies } from "next/headers";
 import { cache } from "react";
-import { promises as fs } from "fs";
-import path from "path";
 import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
-import { sortModelCodes } from "../../lib/modelSort";
+import { loadModels, type ModelEntry } from "../../lib/models";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -54,7 +52,7 @@ export default async function PartsPage({
   const editId = resolved?.edit?.trim() ?? "";
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
-  const shouldPrefetch = Boolean(editId) || model !== "all" || system !== "all" || q.trim() !== "";
+  const shouldPrefetch = true;
   const tokens = q
     .toLowerCase()
     .split(/\s+/)
@@ -70,7 +68,10 @@ export default async function PartsPage({
     : items;
 
   const editEntry = editId ? (await loadParts({ id: editId })).at(0) ?? null : null;
-  const modelOptions = await loadModelOptions();
+  const modelEntries = await loadModelEntries();
+  const modelOptions = modelEntries.map((entry) => entry.id);
+  const selectedModelMeta =
+    model !== "all" ? modelEntries.find((entry) => entry.id === model) : null;
   const partsPdfUrl = process.env.NEXT_PUBLIC_PARTS_LIST_PDF_URL ?? "";
 
   return (
@@ -101,6 +102,30 @@ export default async function PartsPage({
           <p className="text-xs text-slate-500">
             파츠리스트 PDF 링크를 쓰려면 `NEXT_PUBLIC_PARTS_LIST_PDF_URL`을 설정하세요.
           </p>
+        ) : null}
+        {selectedModelMeta?.parts_engine_url || selectedModelMeta?.parts_chassis_url ? (
+          <div className="flex flex-wrap gap-2 text-xs">
+            {selectedModelMeta.parts_engine_url ? (
+              <a
+                href={selectedModelMeta.parts_engine_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-700 hover:border-slate-300"
+              >
+                {model} 엔진 파츠리스트 PDF
+              </a>
+            ) : null}
+            {selectedModelMeta.parts_chassis_url ? (
+              <a
+                href={selectedModelMeta.parts_chassis_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-700 hover:border-slate-300"
+              >
+                {model} 차대 파츠리스트 PDF
+              </a>
+            ) : null}
+          </div>
         ) : null}
         <PartFilters model={model} system={system} modelOptions={modelOptions} q={q} />
       </header>
@@ -332,15 +357,6 @@ function PartFilters({
   );
 }
 
-const loadModelOptions = cache(async (): Promise<string[]> => {
-  try {
-    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
-    const raw = await fs.readFile(modelsPath, "utf8");
-    const sanitized = raw.replace(/^\uFEFF/, "");
-    const parsed = JSON.parse(sanitized) as Array<{ id: string }>;
-    if (!Array.isArray(parsed)) return [];
-    return sortModelCodes(parsed).map((item) => item.id);
-  } catch {
-    return [];
-  }
+const loadModelEntries = cache(async (): Promise<ModelEntry[]> => {
+  return loadModels();
 });

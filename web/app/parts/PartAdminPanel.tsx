@@ -335,12 +335,13 @@ export default function PartAdminPanel({
             <span className="text-xs text-slate-500">* 필수</span>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
-            <input
-              className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder={`ID 자동 생성: ${autoId}`}
-              value={form.id}
-              onChange={(e) => setForm({ ...form, id: e.target.value })}
-            />
+            {isEditing ? (
+              <input
+                className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-500"
+                value={form.id}
+                readOnly
+              />
+            ) : null}
             <select
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               value={form.model}
