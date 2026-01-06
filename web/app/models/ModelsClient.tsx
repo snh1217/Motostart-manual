@@ -18,6 +18,15 @@ type ModelsClientProps = {
 type Status = "idle" | "loading" | "success" | "error";
 type UploadKind = "engine" | "chassis";
 
+const readJsonResponse = async (response: Response) => {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType.includes("application/json")) {
+    return response.json();
+  }
+  const text = await response.text();
+  return { error: text || "NON_JSON_RESPONSE" };
+};
+
 export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
   const [rows, setRows] = useState<ModelEntry[]>(models);
   const [loadingModels, setLoadingModels] = useState(models.length === 0);
@@ -55,7 +64,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     setLoadError("");
 
     fetch("/api/models", { cache: "no-store" })
-      .then((response) => response.json().then((data) => ({ response, data })))
+      .then(async (response) => ({ response, data: await readJsonResponse(response) }))
       .then(({ response, data }) => {
         if (!response.ok) {
           throw new Error(data?.error ?? "모델을 불러오지 못했습니다.");
@@ -156,7 +165,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
           parts_chassis_url: partsChassisUrl.trim(),
         }),
       });
-      const data = await response.json();
+      const data = await readJsonResponse(response);
       if (!response.ok) {
         throw new Error(data?.error ?? "저장 실패");
       }
@@ -201,7 +210,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
         body: JSON.stringify({ ids }),
       });
 
-      const data = await response.json();
+      const data = await readJsonResponse(response);
       if (!response.ok) {
         throw new Error(data?.error ?? "삭제 실패");
       }
@@ -218,7 +227,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
     }
   };
 
-  const handleUpload = async (entry: ModelEntry, kind: UploadKind, file: File | null) => {
+  const handleUpload = async (kind: UploadKind, file: File | null) => {
     if (!file) return;
     if (readOnly) {
       setStatus("error");
@@ -226,14 +235,20 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
       return;
     }
     if (!requireAdmin()) return;
+    if (!modelId.trim() || !modelName.trim()) {
+      setStatus("error");
+      setMessage("모델 코드와 이름을 먼저 입력해 주세요.");
+      return;
+    }
 
-    setUploading((prev) => ({ ...prev, [`${entry.id}-${kind}`]: true }));
+    const normalizedId = modelId.trim().toUpperCase();
+    setUploading((prev) => ({ ...prev, [`${normalizedId}-${kind}`]: true }));
     setStatus("loading");
     setMessage("");
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("model", entry.id);
+      formData.append("model", normalizedId);
       formData.append("kind", kind);
 
       const uploadRes = await fetch("/api/models/upload", {
@@ -243,7 +258,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
         },
         body: formData,
       });
-      const uploadData = await uploadRes.json();
+      const uploadData = await readJsonResponse(uploadRes);
       if (!uploadRes.ok) {
         throw new Error(uploadData?.error ?? "업로드 실패");
       }
@@ -255,22 +270,24 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
           Authorization: `Bearer ${adminToken}`,
         },
         body: JSON.stringify({
-          id: entry.id,
-          name: entry.name,
+          id: normalizedId,
+          name: modelName.trim(),
           parts_engine_url:
-            kind === "engine" ? uploadData.url : entry.parts_engine_url ?? "",
+            kind === "engine" ? uploadData.url : partsEngineUrl.trim(),
           parts_chassis_url:
-            kind === "chassis" ? uploadData.url : entry.parts_chassis_url ?? "",
+            kind === "chassis" ? uploadData.url : partsChassisUrl.trim(),
         }),
       });
-      const updateData = await updateRes.json();
+      const updateData = await readJsonResponse(updateRes);
       if (!updateRes.ok) {
         throw new Error(updateData?.error ?? "저장 실패");
       }
 
+      setPartsEngineUrl(updateData.parts_engine_url ?? "");
+      setPartsChassisUrl(updateData.parts_chassis_url ?? "");
       setRows((prev) =>
         prev.map((row) =>
-          row.id === entry.id
+          row.id === normalizedId
             ? {
                 ...row,
                 parts_engine_url: updateData.parts_engine_url ?? row.parts_engine_url,
@@ -285,7 +302,7 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "업로드 오류");
     } finally {
-      setUploading((prev) => ({ ...prev, [`${entry.id}-${kind}`]: false }));
+      setUploading((prev) => ({ ...prev, [`${normalizedId}-${kind}`]: false }));
       setStatus("idle");
     }
   };
@@ -361,6 +378,40 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
                 disabled={readOnly}
               />
             </div>
+            <div className="grid gap-3 md:grid-cols-2">
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                <span>엔진 파츠리스트 PDF 업로드</span>
+                <span className="rounded-full border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                  파일 선택
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(event) =>
+                      handleUpload("engine", event.target.files?.[0] ?? null)
+                    }
+                  />
+                </span>
+              </label>
+              <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+                <span>차대 파츠리스트 PDF 업로드</span>
+                <span className="rounded-full border border-slate-200 px-2 py-1 text-xs font-semibold text-slate-700">
+                  파일 선택
+                  <input
+                    type="file"
+                    accept="application/pdf"
+                    className="hidden"
+                    onChange={(event) =>
+                      handleUpload("chassis", event.target.files?.[0] ?? null)
+                    }
+                  />
+                </span>
+              </label>
+            </div>
+            {(uploading[`${modelId.trim().toUpperCase()}-engine`] ||
+              uploading[`${modelId.trim().toUpperCase()}-chassis`]) && (
+              <div className="text-xs text-slate-500">업로드 중...</div>
+            )}
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="submit"
@@ -445,64 +496,32 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
                   <td className="px-4 py-3 font-medium text-slate-800">{entry.id}</td>
                   <td className="px-4 py-3 text-slate-700">{entry.name}</td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {entry.parts_engine_url ? (
-                        <a
-                          href={entry.parts_engine_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
-                        >
-                          열기
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-400">미등록</span>
-                      )}
-                      <label className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300">
-                        업로드
-                        <input
-                          type="file"
-                          accept="application/pdf"
-                          className="hidden"
-                          onChange={(event) =>
-                            handleUpload(entry, "engine", event.target.files?.[0] ?? null)
-                          }
-                        />
-                      </label>
-                      {uploading[`${entry.id}-engine`] ? (
-                        <span className="text-xs text-slate-400">업로드 중...</span>
-                      ) : null}
-                    </div>
+                    {entry.parts_engine_url ? (
+                      <a
+                        href={entry.parts_engine_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      >
+                        열기
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400">미등록</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      {entry.parts_chassis_url ? (
-                        <a
-                          href={entry.parts_chassis_url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
-                        >
-                          열기
-                        </a>
-                      ) : (
-                        <span className="text-xs text-slate-400">미등록</span>
-                      )}
-                      <label className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300">
-                        업로드
-                        <input
-                          type="file"
-                          accept="application/pdf"
-                          className="hidden"
-                          onChange={(event) =>
-                            handleUpload(entry, "chassis", event.target.files?.[0] ?? null)
-                          }
-                        />
-                      </label>
-                      {uploading[`${entry.id}-chassis`] ? (
-                        <span className="text-xs text-slate-400">업로드 중...</span>
-                      ) : null}
-                    </div>
+                    {entry.parts_chassis_url ? (
+                      <a
+                        href={entry.parts_chassis_url}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                      >
+                        열기
+                      </a>
+                    ) : (
+                      <span className="text-xs text-slate-400">미등록</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
