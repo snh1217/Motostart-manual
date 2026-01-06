@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PartEntry, PartPhoto, PartStep } from "../../lib/types";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -39,9 +39,22 @@ export default function PartAdminPanel() {
     steps: [],
   });
 
+  const autoId = useMemo(() => {
+    const model = String(form.model ?? "").trim().toLowerCase();
+    const system = String(form.system ?? "").trim().toLowerCase();
+    const name = String(form.name ?? "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    const base = ["part", model, system, name].filter(Boolean).join("-");
+    return base || `part-${Date.now()}`;
+  }, [form.model, form.system, form.name]);
+
   // 사진 업로드 상태
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
+  const [uploadFileName, setUploadFileName] = useState("");
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -80,6 +93,22 @@ export default function PartAdminPanel() {
     });
   };
 
+  const toggleStepPhotoId = (stepIndex: number, photoId: string) => {
+    setForm((prev) => {
+      const steps = [...(prev.steps ?? [])];
+      const step = steps[stepIndex];
+      if (!step) return prev;
+      const current = new Set(step.photoIds ?? []);
+      if (current.has(photoId)) {
+        current.delete(photoId);
+      } else {
+        current.add(photoId);
+      }
+      steps[stepIndex] = { ...step, photoIds: Array.from(current) };
+      return { ...prev, steps };
+    });
+  };
+
   const addStep = () => {
     setForm((prev) => ({
       ...prev,
@@ -106,7 +135,7 @@ export default function PartAdminPanel() {
       )
       .map((ph, i) => ({
         ...ph,
-        id: ph.id || `ph-${i + 1}`,
+        id: `ph-${i + 1}`,
         tags: (ph.tags as string[])?.filter(Boolean) ?? [],
       }));
 
@@ -128,6 +157,7 @@ export default function PartAdminPanel() {
 
     const payload: PartEntry = {
       ...form,
+      id: form.id?.trim() || autoId,
       tags: form.tags?.filter(Boolean) ?? [],
       photos: cleanedPhotos,
       steps: cleanedSteps,
@@ -152,8 +182,9 @@ export default function PartAdminPanel() {
     }
   };
 
-  const handlePhotoUpload = async (file: File | null) => {
+  const handlePhotoUpload = async (file: File | null, targetIdx?: number) => {
     if (!file) return;
+    setUploadFileName(file.name);
     setUploading(true);
     setUploadMessage("");
     try {
@@ -174,9 +205,12 @@ export default function PartAdminPanel() {
       // 업로드된 URL을 첫 번째 사진에 채우기 (또는 새로운 사진 추가)
       setForm((prev) => {
         const photos = [...(prev.photos ?? [])];
-        const targetIdx = photos.findIndex((p) => !p.url);
-        if (targetIdx >= 0) {
-          photos[targetIdx] = { ...photos[targetIdx], url: data.url ?? data.path ?? "" };
+        let nextIndex = typeof targetIdx === "number" ? targetIdx : -1;
+        if (nextIndex < 0) {
+          nextIndex = photos.findIndex((p) => !p.url);
+        }
+        if (nextIndex >= 0) {
+          photos[nextIndex] = { ...photos[nextIndex], url: data.url ?? data.path ?? "" };
         } else {
           photos.push({
             id: `ph-${photos.length + 1}`,
@@ -197,6 +231,11 @@ export default function PartAdminPanel() {
 
   const photoCount = form.photos?.length ?? 0;
   const stepCount = form.steps?.length ?? 0;
+  const photoOptions = (form.photos ?? []).map((photo, index) => ({
+    id: photo.id?.trim() || `ph-${index + 1}`,
+    name: photo.label?.trim() || `사진 ${index + 1}`,
+    url: photo.url,
+  }));
 
   return (
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
@@ -225,10 +264,9 @@ export default function PartAdminPanel() {
           <div className="grid gap-3 md:grid-cols-2">
             <input
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="ID (예: part-368g-cvt)"
+              placeholder={`ID 자동 생성: ${autoId}`}
               value={form.id}
               onChange={(e) => setForm({ ...form, id: e.target.value })}
-              required
             />
             <select
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
@@ -307,13 +345,21 @@ export default function PartAdminPanel() {
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
               <span>URL을 직접 입력하거나 업로드로 자동 채울 수 있습니다.</span>
-              <input
-                type="file"
-                accept="image/*"
-                disabled={uploading}
-                onChange={(e) => handlePhotoUpload(e.target.files?.[0] ?? null)}
-                className="text-xs"
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300">
+                  파일 선택
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={uploading}
+                    onChange={(e) => handlePhotoUpload(e.target.files?.[0] ?? null)}
+                    className="hidden"
+                  />
+                </label>
+                {uploadFileName ? (
+                  <span className="text-xs text-slate-400">{uploadFileName}</span>
+                ) : null}
+              </div>
             </div>
             {uploadMessage ? (
               <div className="text-xs text-slate-600">{uploadMessage}</div>
@@ -330,6 +376,16 @@ export default function PartAdminPanel() {
               >
                 <div className="flex flex-wrap gap-2 text-xs text-slate-500">
                   <span>사진 #{idx + 1}</span>
+                  <label className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300">
+                    파일 선택
+                    <input
+                      type="file"
+                      accept="image/*"
+                      disabled={uploading}
+                      onChange={(e) => handlePhotoUpload(e.target.files?.[0] ?? null, idx)}
+                      className="hidden"
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() => removePhoto(idx)}
@@ -341,13 +397,7 @@ export default function PartAdminPanel() {
                 <div className="grid gap-2 md:grid-cols-2">
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="사진 ID (예: ph-1)"
-                    value={photo.id}
-                    onChange={(e) => updatePhoto(idx, "id", e.target.value)}
-                  />
-                  <input
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="라벨"
+                    placeholder="이름"
                     value={photo.label ?? ""}
                     onChange={(e) => updatePhoto(idx, "label", e.target.value)}
                   />
@@ -450,21 +500,52 @@ export default function PartAdminPanel() {
                     value={step.note ?? ""}
                     onChange={(e) => updateStep(idx, "note", e.target.value)}
                   />
-                  <input
-                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
-                    placeholder="연결할 사진 ID들 (쉼표 구분, 예: ph-1,ph-2)"
-                    value={(step.photoIds ?? []).join(",")}
-                    onChange={(e) =>
-                      updateStep(
-                        idx,
-                        "photoIds",
-                        e.target.value
-                          .split(",")
-                          .map((t) => t.trim())
-                          .filter(Boolean)
-                      )
-                    }
-                  />
+                  <div className="md:col-span-2 space-y-2">
+                    <div className="text-xs font-semibold text-slate-600">
+                      연결 사진 선택
+                    </div>
+                    <div
+                      className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500"
+                      onDragOver={(event) => event.preventDefault()}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const id = event.dataTransfer.getData("text/plain");
+                        if (id) toggleStepPhotoId(idx, id);
+                      }}
+                    >
+                      사진 이름을 클릭하거나 끌어다 놓으면 연결됩니다.
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {photoOptions.length === 0 ? (
+                        <span className="text-xs text-slate-400">
+                          등록된 사진이 없습니다.
+                        </span>
+                      ) : (
+                        photoOptions.map((photo) => {
+                          const selected = (step.photoIds ?? []).includes(photo.id);
+                          return (
+                            <button
+                              key={`${photo.id}-${idx}`}
+                              type="button"
+                              draggable
+                              onDragStart={(event) =>
+                                event.dataTransfer.setData("text/plain", photo.id)
+                              }
+                              onClick={() => toggleStepPhotoId(idx, photo.id)}
+                              className={`rounded-full border px-3 py-1 text-xs font-semibold transition ${
+                                selected
+                                  ? "border-slate-900 bg-slate-900 text-white"
+                                  : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                              }`}
+                              title={photo.url ?? ""}
+                            >
+                              {photo.name}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
