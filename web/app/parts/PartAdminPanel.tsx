@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import type { PartEntry, PartPhoto, PartStep } from "../../lib/types";
@@ -6,13 +6,13 @@ import type { PartEntry, PartPhoto, PartStep } from "../../lib/types";
 type Status = "idle" | "loading" | "success" | "error";
 
 const systems = [
-  { id: "engine", label: "?�진" },
-  { id: "chassis", label: "차�?" },
-  { id: "electrical", label: "?�장" },
-  { id: "other", label: "기�?" },
+  { id: "engine", label: "엔진" },
+  { id: "chassis", label: "차체" },
+  { id: "electrical", label: "전장" },
+  { id: "other", label: "기타" },
 ];
 
-const emptyPhoto = (): PartPhoto => ({ id: "", url: "", label: "", tags: [] });
+const emptyPhoto = (): PartPhoto => ({ id: "", url: "", label: "", tags: [], desc: "" });
 const emptyStep = (): PartStep => ({
   order: 1,
   title: "",
@@ -51,7 +51,7 @@ export default function PartAdminPanel() {
     return base || `part-${Date.now()}`;
   }, [form.model, form.system, form.name]);
 
-  // ?�진 ?�로???�태
+  // 사진 업로드 상태
   const [uploading, setUploading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState("");
   const [uploadingIndex, setUploadingIndex] = useState<number | null>(null);
@@ -175,12 +175,12 @@ export default function PartAdminPanel() {
         body: JSON.stringify(payload),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "?�???�패");
+      if (!res.ok) throw new Error(data?.error ?? "저장 실패");
       setStatus("success");
-      setMessage(`?�???�료 (${data.source ?? "local"})`);
+      setMessage(`저장 완료 (${data.source ?? "local"})`);
     } catch (err) {
       setStatus("error");
-      setMessage(err instanceof Error ? err.message : "?�??�??�류");
+      setMessage(err instanceof Error ? err.message : "저장 오류");
     }
   };
 
@@ -212,8 +212,8 @@ export default function PartAdminPanel() {
         body: formData,
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "?�로???�패");
-      // ?�로?�된 URL??�?번째 ?�진??채우�?(?�는 ?�로???�진 추�?)
+      if (!res.ok) throw new Error(data?.error ?? "업로드 실패");
+      // 업로드된 URL을 해당 사진에 채웁니다.
       setForm((prev) => {
         const photos = [...(prev.photos ?? [])];
         let nextIndex = typeof targetIdx === "number" ? targetIdx : -1;
@@ -232,11 +232,17 @@ export default function PartAdminPanel() {
         }
         return { ...prev, photos };
       });
-      setUploadMessage("?�진 ?�로???�료: URL???�력?�었?�니??");
+      setUploadMessage("사진 업로드 완료: URL이 입력되었습니다.");
     } catch (err) {
-      setUploadMessage(err instanceof Error ? err.message : "?�로???�류");
+      const errorMessage = err instanceof Error ? err.message : "업로드 오류";
+      if (typeof targetIdx === "number") {
+        setUploadErrors((prev) => ({ ...prev, [targetIdx]: errorMessage }));
+      } else {
+        setUploadMessage(errorMessage);
+      }
     } finally {
       setUploading(false);
+      setUploadingIndex(null);
     }
   };
 
@@ -244,7 +250,7 @@ export default function PartAdminPanel() {
   const stepCount = form.steps?.length ?? 0;
   const photoOptions = (form.photos ?? []).map((photo, index) => ({
     id: photo.id?.trim() || `ph-${index + 1}`,
-    name: photo.label?.trim() || `?�진 ${index + 1}`,
+    name: photo.label?.trim() || `사진 ${index + 1}`,
     url: photo.url,
   }));
 
@@ -252,9 +258,9 @@ export default function PartAdminPanel() {
     <section className="space-y-4 rounded-2xl border border-slate-200 bg-white p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <h2 className="text-base font-semibold">부??직접 ?�력</h2>
+          <h2 className="text-base font-semibold">부품 직접 입력</h2>
           <p className="text-xs text-slate-500">
-            기본 ?�보�??�력?�도 ?�?�됩?�다. ?�세 ?�보???�요???�만 ?�쳐주세??
+            기본 정보만 입력해도 저장됩니다. 상세 정보가 필요할 때만 펼쳐주세요.
           </p>
         </div>
         <input
@@ -269,13 +275,13 @@ export default function PartAdminPanel() {
       <form className="space-y-4" onSubmit={handleSubmit}>
         <div className="space-y-2">
           <div className="flex items-center justify-between text-sm">
-            <span className="font-semibold text-slate-700">기본 ?�보</span>
-            <span className="text-xs text-slate-500">* ?�수</span>
+            <span className="font-semibold text-slate-700">기본 정보</span>
+            <span className="text-xs text-slate-500">* 필수</span>
           </div>
           <div className="grid gap-3 md:grid-cols-2">
             <input
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder={`ID ?�동 ?�성: ${autoId}`}
+              placeholder={`ID 자동 생성: ${autoId}`}
               value={form.id}
               onChange={(e) => setForm({ ...form, id: e.target.value })}
             />
@@ -285,7 +291,7 @@ export default function PartAdminPanel() {
               onChange={(e) => setForm({ ...form, model: e.target.value })}
             >
               <option value="all" disabled>
-                모델 ?�택
+                모델 선택
               </option>
               <option value="125C">125C</option>
               <option value="125D">125D</option>
@@ -300,9 +306,7 @@ export default function PartAdminPanel() {
             <select
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
               value={form.system}
-              onChange={(e) =>
-                setForm({ ...form, system: e.target.value as PartEntry["system"] })
-              }
+              onChange={(e) => setForm({ ...form, system: e.target.value as PartEntry["system"] })}
             >
               {systems.map((sys) => (
                 <option key={sys.id} value={sys.id}>
@@ -312,7 +316,7 @@ export default function PartAdminPanel() {
             </select>
             <input
               className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="부???�션 ?�름"
+              placeholder="부품/섹션 이름"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               required
@@ -322,19 +326,19 @@ export default function PartAdminPanel() {
 
         <details className="rounded-xl border border-slate-200 p-3">
           <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-            추�? ?�보 (?�약/?�그)
+            추가 정보 (요약/태그)
           </summary>
           <div className="mt-3 space-y-2">
             <textarea
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="?�약/비고"
+              placeholder="요약/비고"
               rows={2}
               value={form.summary ?? ""}
               onChange={(e) => setForm({ ...form, summary: e.target.value })}
             />
             <input
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-              placeholder="?�그 (?�표 구분)"
+              placeholder="태그 (쉼표 구분)"
               value={form.tags?.join(",") ?? ""}
               onChange={(e) =>
                 setForm({
@@ -351,18 +355,16 @@ export default function PartAdminPanel() {
 
         <details className="rounded-xl border border-slate-200 p-3">
           <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-            ?�진 {photoCount ? `(${photoCount})` : ""}
+            사진 {photoCount ? `(${photoCount})` : ""}
           </summary>
           <div className="mt-3 space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-              <span>URL??직접 ?�력?�거???�로?�로 ?�동 채울 ???�습?�다.</span>
+              <span>URL을 직접 입력하거나 업로드로 자동 채울 수 있습니다.</span>
             </div>
-            {uploadMessage ? (
-              <div className="text-xs text-slate-600">{uploadMessage}</div>
-            ) : null}
+            {uploadMessage ? <div className="text-xs text-slate-600">{uploadMessage}</div> : null}
             {photoCount === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-                ?�직 ?�록???�진???�습?�다. "?�진 추�?"�??�러 ?�작?�세??
+                아직 등록된 사진이 없습니다. "사진 추가"를 눌러 시작하세요.
               </div>
             ) : null}
             {form.photos?.map((photo, idx) => (
@@ -371,9 +373,9 @@ export default function PartAdminPanel() {
                 className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2"
               >
                 <div className="flex flex-wrap gap-2 text-xs text-slate-500">
-                  <span>?�진 #{idx + 1}</span>
+                  <span>사진 #{idx + 1}</span>
                   <label className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300">
-                    ?�일 ?�택
+                    파일 선택
                     <input
                       type="file"
                       accept="image/*"
@@ -387,19 +389,19 @@ export default function PartAdminPanel() {
                     onClick={() => removePhoto(idx)}
                     className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
                   >
-                    ??��
+                    삭제
                   </button>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="Name"
+                    placeholder="이름"
                     value={photo.label ?? ""}
                     onChange={(e) => updatePhoto(idx, "label", e.target.value)}
                   />
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="Photo note"
+                    placeholder="사진 설명"
                     value={photo.desc ?? ""}
                     onChange={(e) => updatePhoto(idx, "desc", e.target.value)}
                   />
@@ -410,23 +412,25 @@ export default function PartAdminPanel() {
                     onChange={(e) => updatePhoto(idx, "url", e.target.value)}
                   />
                   {uploadingIndex === idx ? (
-                    <div className="md:col-span-2 text-xs text-slate-500">Uploading...</div>
+                    <div className="md:col-span-2 text-xs text-slate-500">업로드 중...</div>
                   ) : null}
                   {uploadErrors[idx] ? (
-                    <div className="md:col-span-2 text-xs text-amber-600">Upload failed: {uploadErrors[idx]}</div>
+                    <div className="md:col-span-2 text-xs text-amber-600">
+                      업로드 실패: {uploadErrors[idx]}
+                    </div>
                   ) : null}
-                  {(photo.url || previewUrls[idx]) ? (
+                  {photo.url || previewUrls[idx] ? (
                     <div className="md:col-span-2 overflow-hidden rounded-lg border border-slate-200 bg-white">
                       <img
                         src={photo.url || previewUrls[idx]}
-                        alt={photo.label ?? `Photo ${idx + 1}`}
+                        alt={photo.label ?? `사진 ${idx + 1}`}
                         className="h-32 w-full object-cover"
                       />
                     </div>
                   ) : null}
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
-                    placeholder="Tags (comma)"
+                    placeholder="태그 (쉼표 구분)"
                     value={(photo.tags as string[])?.join(",") ?? ""}
                     onChange={(e) =>
                       updatePhoto(
@@ -437,7 +441,7 @@ export default function PartAdminPanel() {
                           .map((t) => t.trim())
                           .filter(Boolean)
                       )
-                    )
+                    }
                   />
                 </div>
               </div>
@@ -447,19 +451,19 @@ export default function PartAdminPanel() {
               onClick={addPhoto}
               className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-300"
             >
-              ?�진 추�?
+              사진 추가
             </button>
           </div>
         </details>
 
         <details className="rounded-xl border border-slate-200 p-3">
           <summary className="cursor-pointer text-sm font-semibold text-slate-700">
-            ?�계 {stepCount ? `(${stepCount})` : ""}
+            단계 {stepCount ? `(${stepCount})` : ""}
           </summary>
           <div className="mt-3 space-y-3">
             {stepCount === 0 ? (
               <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
-                ?�직 ?�록???�계가 ?�습?�다. "?�계 추�?"�??�작?�세??
+                아직 등록된 단계가 없습니다. "단계 추가"로 시작하세요.
               </div>
             ) : null}
             {form.steps?.map((step, idx) => (
@@ -468,32 +472,32 @@ export default function PartAdminPanel() {
                 className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2"
               >
                 <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-                  <span>?�계 #{idx + 1}</span>
+                  <span>단계 #{idx + 1}</span>
                   <button
                     type="button"
                     onClick={() => removeStep(idx)}
                     className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
                   >
-                    ??��
+                    삭제
                   </button>
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   <input
                     type="number"
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="?�번"
+                    placeholder="순번"
                     value={step.order}
                     onChange={(e) => updateStep(idx, "order", Number(e.target.value))}
                   />
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="?�목"
+                    placeholder="제목"
                     value={step.title}
                     onChange={(e) => updateStep(idx, "title", e.target.value)}
                   />
                   <textarea
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
-                    placeholder="?�명"
+                    placeholder="설명"
                     rows={2}
                     value={step.desc ?? ""}
                     onChange={(e) => updateStep(idx, "desc", e.target.value)}
@@ -506,7 +510,7 @@ export default function PartAdminPanel() {
                   />
                   <input
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
-                    placeholder="?�크"
+                    placeholder="토크"
                     value={step.torque ?? ""}
                     onChange={(e) => updateStep(idx, "torque", e.target.value)}
                   />
@@ -518,9 +522,7 @@ export default function PartAdminPanel() {
                     onChange={(e) => updateStep(idx, "note", e.target.value)}
                   />
                   <div className="md:col-span-2 space-y-2">
-                    <div className="text-xs font-semibold text-slate-600">
-                      ?�결 ?�진 ?�택
-                    </div>
+                    <div className="text-xs font-semibold text-slate-600">연결 사진 선택</div>
                     <div
                       className="rounded-lg border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500"
                       onDragOver={(event) => event.preventDefault()}
@@ -530,13 +532,11 @@ export default function PartAdminPanel() {
                         if (id) toggleStepPhotoId(idx, id);
                       }}
                     >
-                      ?�진 ?�름???�릭?�거???�어???�으�??�결?�니??
+                      사진 이름을 드래그하거나 눌러 연결합니다.
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {photoOptions.length === 0 ? (
-                        <span className="text-xs text-slate-400">
-                          ?�록???�진???�습?�다.
-                        </span>
+                        <span className="text-xs text-slate-400">등록된 사진이 없습니다.</span>
                       ) : (
                         photoOptions.map((photo) => {
                           const selected = (step.photoIds ?? []).includes(photo.id);
@@ -571,7 +571,7 @@ export default function PartAdminPanel() {
               onClick={addStep}
               className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-300"
             >
-              ?�계 추�?
+              단계 추가
             </button>
           </div>
         </details>
@@ -582,14 +582,10 @@ export default function PartAdminPanel() {
             disabled={status === "loading"}
             className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {status === "loading" ? "?�??�?.." : "?�??}
+            {status === "loading" ? "저장중..." : "저장"}
           </button>
           {message ? (
-            <div
-              className={`text-sm ${
-                status === "error" ? "text-red-600" : "text-emerald-700"
-              }`}
-            >
+            <div className={`text-sm ${status === "error" ? "text-red-600" : "text-emerald-700"}`}>
               {message}
             </div>
           ) : null}
