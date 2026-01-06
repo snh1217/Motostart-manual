@@ -53,14 +53,25 @@ export async function POST(request: Request) {
   }
 
   if (hasSupabaseConfig && supabaseAdmin) {
+    const { data: existingRow } = await supabaseAdmin
+      .from("models")
+      .select("parts_engine_url, parts_chassis_url")
+      .eq("id", id)
+      .maybeSingle();
+
+    const resolvedEngineUrl =
+      partsEngineUrl !== "" ? partsEngineUrl || null : existingRow?.parts_engine_url ?? null;
+    const resolvedChassisUrl =
+      partsChassisUrl !== "" ? partsChassisUrl || null : existingRow?.parts_chassis_url ?? null;
+
     const { data, error } = await supabaseAdmin
       .from("models")
       .upsert(
         {
           id,
           name,
-          parts_engine_url: partsEngineUrl || null,
-          parts_chassis_url: partsChassisUrl || null,
+          parts_engine_url: resolvedEngineUrl,
+          parts_chassis_url: resolvedChassisUrl,
           updated_at: new Date().toISOString(),
         },
         { onConflict: "id" }
@@ -70,7 +81,14 @@ export async function POST(request: Request) {
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
-    return NextResponse.json(data ?? { id, name, parts_engine_url: partsEngineUrl || null, parts_chassis_url: partsChassisUrl || null });
+    return NextResponse.json(
+      data ?? {
+        id,
+        name,
+        parts_engine_url: resolvedEngineUrl,
+        parts_chassis_url: resolvedChassisUrl,
+      }
+    );
   }
 
   const existing = await readModels();
@@ -80,15 +98,19 @@ export async function POST(request: Request) {
     id,
     name,
   };
-  if (partsEngineUrl) {
-    updated.parts_engine_url = partsEngineUrl;
-  } else {
-    delete updated.parts_engine_url;
+  if (partsEngineUrl !== "") {
+    if (partsEngineUrl) {
+      updated.parts_engine_url = partsEngineUrl;
+    } else {
+      delete updated.parts_engine_url;
+    }
   }
-  if (partsChassisUrl) {
-    updated.parts_chassis_url = partsChassisUrl;
-  } else {
-    delete updated.parts_chassis_url;
+  if (partsChassisUrl !== "") {
+    if (partsChassisUrl) {
+      updated.parts_chassis_url = partsChassisUrl;
+    } else {
+      delete updated.parts_chassis_url;
+    }
   }
 
   const next = [...existing];
