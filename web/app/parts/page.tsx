@@ -300,29 +300,6 @@ export default async function PartsPage({
                     <span className="text-xs text-slate-500">{entry.updated_at ?? ""}</span>
                   </div>
 
-                  {entry.photos?.filter((photo) => photo.url)?.length ? (
-                    <div className="mt-3 grid grid-cols-3 gap-2">
-                      {entry.photos
-                        .filter((photo) => photo.url)
-                        .slice(0, 3)
-                        .map((photo, i) => (
-                        <a
-                          key={`${entry.id}-photo-${i}`}
-                          href={photo.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="h-20 overflow-hidden rounded-lg border border-slate-100 bg-slate-50"
-                        >
-                          <img
-                            src={photo.url}
-                            alt={photo.label ?? entry.name}
-                            className="h-full w-full object-cover"
-                          />
-                        </a>
-                      ))}
-                    </div>
-                  ) : null}
-
                   {entry.steps?.length ? (
                     <div className="mt-4 space-y-3">
                       {entry.steps.map((step, i) => (
@@ -330,25 +307,59 @@ export default async function PartsPage({
                           key={`${entry.id}-step-${i}`}
                           className="rounded-xl border border-slate-100 bg-slate-50 p-3 text-sm text-slate-700"
                         >
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold">
-                              {step.order}. {step.title}
-                            </div>
-                            {step.torque ? (
-                              <span className="text-xs text-slate-500">토크: {step.torque}</span>
-                            ) : null}
-                          </div>
-                        {step.desc ? (
-                          <p className="mt-1 whitespace-pre-line">{step.desc}</p>
-                        ) : null}
-                          {step.tools ? (
-                            <p className="mt-1 text-xs text-slate-500">공구: {step.tools}</p>
-                          ) : null}
-                        {step.note ? (
-                          <p className="mt-1 text-xs text-amber-600 whitespace-pre-line">
-                            주의: {step.note}
-                          </p>
-                        ) : null}
+                          {(() => {
+                            const photo =
+                              step.photoIds?.length && entry.photos?.length
+                                ? entry.photos.find((candidate) =>
+                                    step.photoIds?.includes(
+                                      candidate.id ?? ""
+                                    )
+                                  )
+                                : undefined;
+                            return (
+                              <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="font-semibold">
+                                      {step.order}. {step.title}
+                                    </div>
+                                    {step.torque ? (
+                                      <span className="text-xs text-slate-500">
+                                        토크: {step.torque}
+                                      </span>
+                                    ) : null}
+                                  </div>
+                                  {step.desc ? (
+                                    <p className="mt-1 whitespace-pre-line">{step.desc}</p>
+                                  ) : null}
+                                  {step.tools ? (
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      공구: {step.tools}
+                                    </p>
+                                  ) : null}
+                                  {step.note ? (
+                                    <p className="mt-1 text-xs text-amber-600 whitespace-pre-line">
+                                      주의: {step.note}
+                                    </p>
+                                  ) : null}
+                                </div>
+                                {photo?.url ? (
+                                  <a
+                                    href={photo.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="h-20 w-24 shrink-0 overflow-hidden rounded-lg border border-slate-200 bg-white"
+                                  >
+                                    <img
+                                      src={photo.url}
+                                      alt={photo.label ?? entry.name}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </a>
+                                ) : null}
+                              </div>
+                            );
+                          })()}
                         </div>
                       ))}
                     </div>
