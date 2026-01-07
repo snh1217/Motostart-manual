@@ -1,4 +1,5 @@
-﻿import PartAdminPanel from "./PartAdminPanel";
+﻿import PartFilters from "./PartFilters";
+import PartAdminPanel from "./PartAdminPanel";
 import { loadParts } from "../../lib/parts";
 import type { PartEntry } from "../../lib/types";
 import Link from "next/link";
