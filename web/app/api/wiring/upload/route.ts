@@ -85,23 +85,17 @@ export async function POST(request: Request) {
 
   if (!file || !(file instanceof File)) {
     return NextResponse.json(
-      { error: "업로드할 PDF 파일이 필요합니다." },
+      { error: "업로드할 파일이 필요합니다." },
       { status: 400 }
     );
   }
 
   if (!model) {
-    return NextResponse.json(
-      { error: "모델명을 입력해 주세요." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "모델명을 입력해 주세요." }, { status: 400 });
   }
 
   if (!title) {
-    return NextResponse.json(
-      { error: "회로도 제목을 입력해 주세요." },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "제목을 입력해 주세요." }, { status: 400 });
   }
 
   const originalName = file.name || "wiring.pdf";
@@ -116,12 +110,7 @@ export async function POST(request: Request) {
 
   const safeModel = model.trim().toUpperCase();
   const safeFileName = sanitizeFileName(originalName);
-  const wiringDir = path.resolve(
-    process.cwd(),
-    "public",
-    "wiring",
-    safeModel
-  );
+  const wiringDir = path.resolve(process.cwd(), "public", "wiring", safeModel);
   const filePath = path.join(wiringDir, safeFileName);
 
   await fs.mkdir(wiringDir, { recursive: true });

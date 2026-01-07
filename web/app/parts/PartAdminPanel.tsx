@@ -332,6 +332,28 @@ export default function PartAdminPanel({
     }
   };
 
+  const handlePhotoPaste = async (targetIdx?: number) => {
+    if (!navigator.clipboard || !("read" in navigator.clipboard)) {
+      setUploadMessage("클립보드 읽기가 지원되지 않습니다.");
+      return;
+    }
+    try {
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const imageType = item.types.find((type) => type.startsWith("image/"));
+        if (!imageType) continue;
+        const blob = await item.getType(imageType);
+        const ext = imageType.split("/")[1] || "png";
+        const file = new File([blob], `clipboard.${ext}`, { type: imageType });
+        await handlePhotoUpload(file, targetIdx);
+        return;
+      }
+      setUploadMessage("클립보드에 이미지가 없습니다.");
+    } catch {
+      setUploadMessage("붙여넣기 업로드 실패");
+    }
+  };
+
   const handleVideoUpload = async (file: File | null, targetIdx?: number) => {
     if (!file) return;
     setVideoUploadingIndex(typeof targetIdx === "number" ? targetIdx : null);
@@ -653,6 +675,14 @@ export default function PartAdminPanel({
                       className="hidden"
                     />
                   </label>
+                  <button
+                    type="button"
+                    onClick={() => handlePhotoPaste(idx)}
+                    disabled={uploading}
+                    className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300 disabled:opacity-60"
+                  >
+                    붙여넣기 업로드
+                  </button>
                   <button
                     type="button"
                     onClick={() => removePhoto(idx)}
