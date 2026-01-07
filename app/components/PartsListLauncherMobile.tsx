@@ -70,6 +70,7 @@ export default function PartsListLauncherMobile() {
   const openUrl = (url?: string) => {
     if (!url) return;
     Linking.openURL(url);
+    setOpen(false);
   };
 
   return (

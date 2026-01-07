@@ -68,6 +68,7 @@ export default function PartsListLauncher() {
   const openUrl = (url?: string) => {
     if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
+    setOpen(false);
   };
 
   return (
