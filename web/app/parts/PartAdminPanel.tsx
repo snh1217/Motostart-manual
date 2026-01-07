@@ -843,7 +843,7 @@ export default function PartAdminPanel({
                   />
                   <textarea
                     className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
-                    placeholder="주의/비고"
+                    placeholder="비고"
                     rows={1}
                     value={step.note ?? ""}
                     onChange={(e) => updateStep(idx, "note", e.target.value)}

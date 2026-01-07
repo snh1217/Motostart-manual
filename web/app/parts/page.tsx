@@ -1,4 +1,5 @@
-﻿import PartFilters from "./PartFilters";
+﻿import PartCardActions from "./PartCardActions";
+import PartFilters from "./PartFilters";
 import PartAdminPanel from "./PartAdminPanel";
 import { loadParts } from "../../lib/parts";
 import type { PartEntry } from "../../lib/types";
@@ -196,14 +197,7 @@ export default async function PartsPage({
                           >
                             상세
                           </Link>
-                          {isAdmin ? (
-                            <Link
-                              href={`/parts?edit=${encodeURIComponent(entry.id)}`}
-                              className="rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-700 hover:border-slate-300"
-                            >
-                              수정
-                            </Link>
-                          ) : null}
+                          {isAdmin ? <PartCardActions id={entry.id} /> : null}
                         </div>
                       </td>
                     </tr>
@@ -248,14 +242,7 @@ export default async function PartsPage({
                       >
                         상세 보기
                       </Link>
-                      {isAdmin ? (
-                        <Link
-                          href={`/parts?edit=${encodeURIComponent(entry.id)}`}
-                          className="rounded-full border border-slate-200 px-3 py-1 font-semibold text-slate-700 hover:border-slate-300"
-                        >
-                          수정
-                        </Link>
-                      ) : null}
+                      {isAdmin ? <PartCardActions id={entry.id} /> : null}
                     </div>
                   </div>
                 </div>
@@ -339,7 +326,7 @@ export default async function PartsPage({
                                   ) : null}
                                   {step.note ? (
                                     <p className="mt-1 text-xs text-amber-600 whitespace-pre-line">
-                                      주의: {step.note}
+                                      참조: {step.note}
                                     </p>
                                   ) : null}
                                 </div>
@@ -375,22 +362,7 @@ export default async function PartsPage({
                     >
                       상세 보기
                     </Link>
-                    {isAdmin ? (
-                      <Link
-                        href={`/parts?edit=${encodeURIComponent(entry.id)}`}
-                        className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:border-slate-300"
-                      >
-                        수정
-                      </Link>
-                    ) : null}
-                    <Link
-                      href={`/viewer?entryId=${encodeURIComponent(entry.id)}&title=${encodeURIComponent(
-                        entry.name
-                      )}`}
-                      className="rounded-full border border-slate-200 px-3 py-1.5 font-semibold text-slate-700 hover:border-slate-300"
-                    >
-                      관련 매뉴얼 보기
-                    </Link>
+                    {isAdmin ? <PartCardActions id={entry.id} /> : null}
                   </div>
                 </article>
               ))}
@@ -406,7 +378,10 @@ export default async function PartsPage({
       </div>
 
       {isAdmin ? (
-        <details className="rounded-2xl border border-slate-200 bg-white p-4">
+        <details
+          className="rounded-2xl border border-slate-200 bg-white p-4"
+          open={Boolean(editEntry)}
+        >
           <summary className="cursor-pointer list-none">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="space-y-1">
