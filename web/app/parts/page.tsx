@@ -164,7 +164,9 @@ export default async function PartsPage({
                       <td className="px-4 py-3">
                         <div className="font-semibold text-slate-900">{entry.name}</div>
                         {entry.summary ? (
-                          <div className="mt-1 text-xs text-slate-500">{entry.summary}</div>
+                          <div className="mt-1 text-xs text-slate-500 whitespace-pre-line">
+                            {entry.summary}
+                          </div>
                         ) : null}
                       </td>
                       <td className="px-4 py-3">
@@ -232,7 +234,9 @@ export default async function PartsPage({
                     </div>
                     <div className="text-base font-semibold text-slate-900">{entry.name}</div>
                     {entry.summary ? (
-                      <div className="text-sm text-slate-600">{entry.summary}</div>
+                      <div className="text-sm text-slate-600 whitespace-pre-line">
+                        {entry.summary}
+                      </div>
                     ) : null}
                   </div>
                   <div className="flex flex-col items-end gap-2 text-xs text-slate-500">
@@ -276,7 +280,9 @@ export default async function PartsPage({
                       </div>
                       <h2 className="text-lg font-semibold text-slate-900">{entry.name}</h2>
                       {entry.summary ? (
-                        <p className="text-sm text-slate-600">{entry.summary}</p>
+                        <p className="text-sm text-slate-600 whitespace-pre-line">
+                          {entry.summary}
+                        </p>
                       ) : null}
                       {entry.tags?.length ? (
                         <div className="flex flex-wrap gap-1 text-xs text-slate-500">
@@ -294,9 +300,12 @@ export default async function PartsPage({
                     <span className="text-xs text-slate-500">{entry.updated_at ?? ""}</span>
                   </div>
 
-                  {entry.photos?.length ? (
+                  {entry.photos?.filter((photo) => photo.url)?.length ? (
                     <div className="mt-3 grid grid-cols-3 gap-2">
-                      {entry.photos.slice(0, 3).map((photo, i) => (
+                      {entry.photos
+                        .filter((photo) => photo.url)
+                        .slice(0, 3)
+                        .map((photo, i) => (
                         <a
                           key={`${entry.id}-photo-${i}`}
                           href={photo.url}
@@ -329,13 +338,17 @@ export default async function PartsPage({
                               <span className="text-xs text-slate-500">토크: {step.torque}</span>
                             ) : null}
                           </div>
-                          {step.desc ? <p className="mt-1">{step.desc}</p> : null}
+                        {step.desc ? (
+                          <p className="mt-1 whitespace-pre-line">{step.desc}</p>
+                        ) : null}
                           {step.tools ? (
                             <p className="mt-1 text-xs text-slate-500">공구: {step.tools}</p>
                           ) : null}
-                          {step.note ? (
-                            <p className="mt-1 text-xs text-amber-600">주의: {step.note}</p>
-                          ) : null}
+                        {step.note ? (
+                          <p className="mt-1 text-xs text-amber-600 whitespace-pre-line">
+                            주의: {step.note}
+                          </p>
+                        ) : null}
                         </div>
                       ))}
                     </div>

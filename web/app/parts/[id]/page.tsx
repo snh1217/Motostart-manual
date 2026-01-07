@@ -48,18 +48,22 @@ export default async function PartDetailPage({
               ) : null}
             </div>
             <h1 className="text-2xl font-semibold text-slate-900">{entry.name}</h1>
-            {entry.summary ? <p className="text-sm text-slate-600">{entry.summary}</p> : null}
+            {entry.summary ? (
+              <p className="text-sm text-slate-600 whitespace-pre-line">{entry.summary}</p>
+            ) : null}
           </div>
           <div className="text-xs text-slate-500">{entry.updated_at ?? ""}</div>
         </div>
         {isAdmin ? <PartAdminActions id={entry.id} /> : null}
       </header>
 
-      {entry.photos?.length ? (
+      {entry.photos?.filter((photo) => photo.url)?.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">사진</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {entry.photos.map((photo, idx) => (
+            {entry.photos
+              .filter((photo) => photo.url)
+              .map((photo, idx) => (
               <div key={photo.id ?? `${photo.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
                 <img
                   src={photo.url}
@@ -69,24 +73,30 @@ export default async function PartDetailPage({
                 <div className="text-sm font-semibold text-slate-800">
                   {photo.label ?? `사진 ${idx + 1}`}
                 </div>
-                {photo.desc ? <p className="text-xs text-slate-500">{photo.desc}</p> : null}
+                {photo.desc ? (
+                  <p className="text-xs text-slate-500 whitespace-pre-line">{photo.desc}</p>
+                ) : null}
               </div>
             ))}
           </div>
         </section>
       ) : null}
 
-      {entry.videos?.length ? (
+      {entry.videos?.filter((video) => video.url)?.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">동영상</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {entry.videos.map((video, idx) => (
+            {entry.videos
+              .filter((video) => video.url)
+              .map((video, idx) => (
               <div key={video.id ?? `${video.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
                 <video src={video.url} controls className="w-full rounded-xl bg-slate-50" />
                 <div className="text-sm font-semibold text-slate-800">
                   {video.label ?? `동영상 ${idx + 1}`}
                 </div>
-                {video.desc ? <p className="text-xs text-slate-500">{video.desc}</p> : null}
+                {video.desc ? (
+                  <p className="text-xs text-slate-500 whitespace-pre-line">{video.desc}</p>
+                ) : null}
               </div>
             ))}
           </div>
@@ -105,11 +115,15 @@ export default async function PartDetailPage({
                   <div className="text-sm font-semibold text-slate-800">
                     {step.order}. {step.title}
                   </div>
-                  {step.desc ? <p className="mt-2 text-sm text-slate-600">{step.desc}</p> : null}
+                  {step.desc ? (
+                    <p className="mt-2 text-sm text-slate-600 whitespace-pre-line">{step.desc}</p>
+                  ) : null}
                   <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
                     {step.tools ? <span>도구: {step.tools}</span> : null}
                     {step.torque ? <span>토크: {step.torque}</span> : null}
-                    {step.note ? <span>비고: {step.note}</span> : null}
+                    {step.note ? (
+                      <span className="whitespace-pre-line">비고: {step.note}</span>
+                    ) : null}
                   </div>
                 </article>
               ))}
