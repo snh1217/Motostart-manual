@@ -30,7 +30,7 @@ export default async function PartDetailPage({
     <section className="space-y-6">
       <header className="space-y-2">
         <Link href="/parts" className="text-sm font-semibold text-slate-600">
-          ← 부품/절차로 돌아가기
+          부품/절차로 돌아가기
         </Link>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1">
@@ -60,35 +60,33 @@ export default async function PartDetailPage({
           <h2 className="text-base font-semibold text-slate-900">사진</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {entry.photos.map((photo, idx) => (
-              <div
-                key={`${entry.id}-photo-${idx}`}
-                className="rounded-2xl border border-slate-200 bg-white p-3"
-              >
-                <div className="flex items-center justify-between text-xs text-slate-500">
-                  <span>{photo.label ?? `사진 ${idx + 1}`}</span>
-                  {photo.url ? (
-                    <a
-                      href={photo.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
-                    >
-                      원본 보기
-                    </a>
-                  ) : null}
+              <div key={photo.id ?? `${photo.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
+                <img
+                  src={photo.url}
+                  alt={photo.label ?? `사진 ${idx + 1}`}
+                  className="h-48 w-full rounded-xl object-contain bg-slate-50"
+                />
+                <div className="text-sm font-semibold text-slate-800">
+                  {photo.label ?? `사진 ${idx + 1}`}
                 </div>
-                {photo.url ? (
-                  <div className="mt-2 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
-                    <img
-                      src={photo.url}
-                      alt={photo.label ?? entry.name}
-                      className="h-52 w-full object-contain"
-                    />
-                  </div>
-                ) : null}
-                {photo.desc ? (
-                  <p className="mt-2 text-xs text-slate-500">{photo.desc}</p>
-                ) : null}
+                {photo.desc ? <p className="text-xs text-slate-500">{photo.desc}</p> : null}
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
+      {entry.videos?.length ? (
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-slate-900">동영상</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {entry.videos.map((video, idx) => (
+              <div key={video.id ?? `${video.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
+                <video src={video.url} controls className="w-full rounded-xl bg-slate-50" />
+                <div className="text-sm font-semibold text-slate-800">
+                  {video.label ?? `동영상 ${idx + 1}`}
+                </div>
+                {video.desc ? <p className="text-xs text-slate-500">{video.desc}</p> : null}
               </div>
             ))}
           </div>
@@ -97,28 +95,24 @@ export default async function PartDetailPage({
 
       {entry.steps?.length ? (
         <section className="space-y-3">
-          <h2 className="text-base font-semibold text-slate-900">단계</h2>
+          <h2 className="text-base font-semibold text-slate-900">작업 절차</h2>
           <div className="space-y-3">
-            {entry.steps.map((step, idx) => (
-              <div
-                key={`${entry.id}-step-${idx}`}
-                className="rounded-2xl border border-slate-200 bg-white p-4"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="font-semibold text-slate-900">
+            {entry.steps
+              .slice()
+              .sort((a, b) => a.order - b.order)
+              .map((step, idx) => (
+                <article key={`${step.order}-${idx}`} className="rounded-2xl border border-slate-200 bg-white p-4">
+                  <div className="text-sm font-semibold text-slate-800">
                     {step.order}. {step.title}
                   </div>
-                  {step.torque ? (
-                    <span className="text-xs text-slate-500">토크: {step.torque}</span>
-                  ) : null}
-                </div>
-                {step.desc ? <p className="mt-2 text-sm text-slate-700">{step.desc}</p> : null}
-                <div className="mt-2 flex flex-wrap gap-3 text-xs text-slate-500">
-                  {step.tools ? <span>공구: {step.tools}</span> : null}
-                  {step.note ? <span className="text-amber-600">주의: {step.note}</span> : null}
-                </div>
-              </div>
-            ))}
+                  {step.desc ? <p className="mt-2 text-sm text-slate-600">{step.desc}</p> : null}
+                  <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-500">
+                    {step.tools ? <span>도구: {step.tools}</span> : null}
+                    {step.torque ? <span>토크: {step.torque}</span> : null}
+                    {step.note ? <span>비고: {step.note}</span> : null}
+                  </div>
+                </article>
+              ))}
           </div>
         </section>
       ) : null}

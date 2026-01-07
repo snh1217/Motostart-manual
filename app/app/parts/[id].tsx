@@ -1,5 +1,13 @@
-import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, ActivityIndicator } from "react-native";
+ï»¿import { useEffect, useState } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  ActivityIndicator,
+  Pressable,
+  Linking,
+} from "react-native";
 import { useLocalSearchParams } from "expo-router";
 import { buildUrl, fetchJson } from "@/lib/api";
 import type { PartEntry } from "@/lib/types";
@@ -38,7 +46,7 @@ export default function PartDetailScreen() {
   if (!item) {
     return (
       <View style={styles.center}>
-        <Text style={styles.helper}>ºÎÇ° Á¤º¸¸¦ Ã£À» ¼ö ¾ø½À´Ï´Ù.</Text>
+        <Text style={styles.helper}>ë¶€í’ˆ ì •ë³´ë¥¼ ì°¾ì„ ìˆ˜ ì—†ìŠµë‹ˆë‹¤.</Text>
       </View>
     );
   }
@@ -46,21 +54,21 @@ export default function PartDetailScreen() {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>{item.name}</Text>
-      <Text style={styles.meta}>{item.model} ¡¤ {item.system}</Text>
+      <Text style={styles.meta}>{item.model} Â· {item.system}</Text>
       {item.summary ? <Text style={styles.summary}>{item.summary}</Text> : null}
 
       {item.steps?.length ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>ÀÛ¾÷ ÀıÂ÷</Text>
+          <Text style={styles.sectionTitle}>ì‘ì—… ì ˆì°¨</Text>
           {item.steps
             .sort((a, b) => a.order - b.order)
             .map((step) => (
               <View key={step.order} style={styles.stepCard}>
                 <Text style={styles.stepTitle}>{step.order}. {step.title}</Text>
                 {step.desc ? <Text style={styles.stepText}>{step.desc}</Text> : null}
-                {step.tools ? <Text style={styles.stepMeta}>µµ±¸: {step.tools}</Text> : null}
-                {step.torque ? <Text style={styles.stepMeta}>ÅäÅ©: {step.torque}</Text> : null}
-                {step.note ? <Text style={styles.stepMeta}>ºñ°í: {step.note}</Text> : null}
+                {step.tools ? <Text style={styles.stepMeta}>ë„êµ¬: {step.tools}</Text> : null}
+                {step.torque ? <Text style={styles.stepMeta}>í† í¬: {step.torque}</Text> : null}
+                {step.note ? <Text style={styles.stepMeta}>ë¹„ê³ : {step.note}</Text> : null}
               </View>
             ))}
         </View>
@@ -68,12 +76,27 @@ export default function PartDetailScreen() {
 
       {item.photos?.length ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Âü°í »çÁø</Text>
+          <Text style={styles.sectionTitle}>ì°¸ê³  ì‚¬ì§„</Text>
           {item.photos.map((photo, idx) => (
             <View key={photo.id ?? `${photo.url}-${idx}`} style={styles.photoCard}>
-              <Text style={styles.stepTitle}>{photo.label ?? "»çÁø"}</Text>
+              <Text style={styles.stepTitle}>{photo.label ?? "ì‚¬ì§„"}</Text>
               <Text style={styles.stepText}>{photo.url}</Text>
               {photo.desc ? <Text style={styles.stepMeta}>{photo.desc}</Text> : null}
+            </View>
+          ))}
+        </View>
+      ) : null}
+
+      {item.videos?.length ? (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>ë™ì˜ìƒ</Text>
+          {item.videos.map((video, idx) => (
+            <View key={video.id ?? `${video.url}-${idx}`} style={styles.photoCard}>
+              <Text style={styles.stepTitle}>{video.label ?? "ë™ì˜ìƒ"}</Text>
+              <Pressable onPress={() => Linking.openURL(video.url)}>
+                <Text style={styles.linkText}>{video.url}</Text>
+              </Pressable>
+              {video.desc ? <Text style={styles.stepMeta}>{video.desc}</Text> : null}
             </View>
           ))}
         </View>
@@ -144,5 +167,10 @@ const styles = StyleSheet.create({
     borderColor: "#e2e8f0",
     padding: 12,
     backgroundColor: "#fff",
+  },
+  linkText: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#2563eb",
   },
 });

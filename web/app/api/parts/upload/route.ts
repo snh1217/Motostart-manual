@@ -25,6 +25,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "file is required" }, { status: 400 });
   }
 
+  const isImage = file.type.startsWith("image/");
+  const isVideo = file.type.startsWith("video/");
+  if (!isImage && !isVideo) {
+    return NextResponse.json({ error: "ONLY_IMAGE_OR_VIDEO" }, { status: 400 });
+  }
+
   const ext = file.name.split(".").pop() || "bin";
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "_");
   const path = `parts/${model}/${partId}/${Date.now()}-${safeName}`;

@@ -7,6 +7,7 @@ create table if not exists public.parts (
   summary text,
   tags text[],
   photos jsonb, -- [{id,url,label,desc,tags}]
+  videos jsonb, -- [{id,url,label,desc,tags}]
   steps jsonb,  -- [{order,title,desc,tools,torque,note,photoIds:[]}]
   updated_at timestamptz default now()
 );

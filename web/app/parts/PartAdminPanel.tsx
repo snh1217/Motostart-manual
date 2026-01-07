@@ -1,7 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { PartEntry, PartPhoto, PartStep } from "../../lib/types";
+import type { PartEntry, PartPhoto, PartStep, PartVideo } from "../../lib/types";
 import { useRouter } from "next/navigation";
 
 type Status = "idle" | "loading" | "success" | "error";
@@ -14,6 +14,7 @@ const systems = [
 ];
 
 const emptyPhoto = (): PartPhoto => ({ id: "", url: "", label: "", tags: [], desc: "" });
+const emptyVideo = (): PartVideo => ({ id: "", url: "", label: "", tags: [], desc: "" });
 const emptyStep = (): PartStep => ({
   order: 1,
   title: "",
@@ -44,6 +45,7 @@ export default function PartAdminPanel({
     summary: "",
     tags: [],
     photos: [],
+    videos: [],
     steps: [],
   });
 
@@ -66,6 +68,10 @@ export default function PartAdminPanel({
   const [uploadErrors, setUploadErrors] = useState<Record<number, string>>({});
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
   const [expandedPreviews, setExpandedPreviews] = useState<Record<number, boolean>>({});
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [videoUploadMessage, setVideoUploadMessage] = useState("");
+  const [videoUploadingIndex, setVideoUploadingIndex] = useState<number | null>(null);
+  const [videoUploadErrors, setVideoUploadErrors] = useState<Record<number, string>>({});
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -86,12 +92,15 @@ export default function PartAdminPanel({
       summary: initialEntry.summary ?? "",
       tags: initialEntry.tags ?? [],
       photos: initialEntry.photos ?? [],
+      videos: initialEntry.videos ?? [],
       steps: initialEntry.steps ?? [],
     });
     setUploadMessage("");
     setUploadErrors({});
     setPreviewUrls({});
     setExpandedPreviews({});
+    setVideoUploadMessage("");
+    setVideoUploadErrors({});
   }, [initialEntry]);
 
   const updatePhoto = (idx: number, key: keyof PartPhoto, value: string | string[]) => {
@@ -111,6 +120,26 @@ export default function PartAdminPanel({
       const photos = [...(prev.photos ?? [])];
       photos.splice(idx, 1);
       return { ...prev, photos };
+    });
+  };
+
+  const updateVideo = (idx: number, key: keyof PartVideo, value: string | string[]) => {
+    setForm((prev) => {
+      const videos = [...(prev.videos ?? [])];
+      videos[idx] = { ...videos[idx], [key]: value } as PartVideo;
+      return { ...prev, videos };
+    });
+  };
+
+  const addVideo = () => {
+    setForm((prev) => ({ ...prev, videos: [...(prev.videos ?? []), emptyVideo()] }));
+  };
+
+  const removeVideo = (idx: number) => {
+    setForm((prev) => {
+      const videos = [...(prev.videos ?? [])];
+      videos.splice(idx, 1);
+      return { ...prev, videos };
     });
   };
 
@@ -167,6 +196,15 @@ export default function PartAdminPanel({
         id: `ph-${i + 1}`,
         tags: (ph.tags as string[])?.filter(Boolean) ?? [],
       }));
+    const cleanedVideos = (form.videos ?? [])
+      .filter(
+        (vd) => vd.url || vd.label || vd.id || ((vd.tags as string[])?.length ?? 0) > 0
+      )
+      .map((vd, i) => ({
+        ...vd,
+        id: `vd-${i + 1}`,
+        tags: (vd.tags as string[])?.filter(Boolean) ?? [],
+      }));
 
     const cleanedSteps = (form.steps ?? [])
       .filter(
@@ -189,6 +227,7 @@ export default function PartAdminPanel({
       id: form.id?.trim() || `${autoId}-${Date.now()}`,
       tags: form.tags?.filter(Boolean) ?? [],
       photos: cleanedPhotos,
+      videos: cleanedVideos,
       steps: cleanedSteps,
     };
 
@@ -213,12 +252,15 @@ export default function PartAdminPanel({
         summary: "",
         tags: [],
         photos: [],
+        videos: [],
         steps: [],
       });
       setUploadMessage("");
       setUploadErrors({});
       setPreviewUrls({});
       setExpandedPreviews({});
+      setVideoUploadMessage("");
+      setVideoUploadErrors({});
       if (isEditing) {
         router.replace("/parts");
       }
@@ -290,7 +332,60 @@ export default function PartAdminPanel({
     }
   };
 
+  const handleVideoUpload = async (file: File | null, targetIdx?: number) => {
+    if (!file) return;
+    setVideoUploadingIndex(typeof targetIdx === "number" ? targetIdx : null);
+    setVideoUploading(true);
+    setVideoUploadMessage("");
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("model", form.model);
+      formData.append("partId", form.id || "part");
+
+      const res = await fetch("/api/parts/upload", {
+        method: "POST",
+        headers: {
+          Authorization: adminToken ? `Bearer ${adminToken}` : "",
+        },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data?.error ?? "업로드 실패");
+      setForm((prev) => {
+        const videos = [...(prev.videos ?? [])];
+        let nextIndex = typeof targetIdx === "number" ? targetIdx : -1;
+        if (nextIndex < 0) {
+          nextIndex = videos.findIndex((v) => !v.url);
+        }
+        if (nextIndex >= 0) {
+          videos[nextIndex] = { ...videos[nextIndex], url: data.url ?? data.path ?? "" };
+        } else {
+          videos.push({
+            id: `vd-${videos.length + 1}`,
+            url: data.url ?? data.path ?? "",
+            label: "",
+            tags: [],
+          });
+        }
+        return { ...prev, videos };
+      });
+      setVideoUploadMessage("동영상 업로드 완료: URL이 입력되었습니다.");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "업로드 오류";
+      if (typeof targetIdx === "number") {
+        setVideoUploadErrors((prev) => ({ ...prev, [targetIdx]: errorMessage }));
+      } else {
+        setVideoUploadMessage(errorMessage);
+      }
+    } finally {
+      setVideoUploading(false);
+      setVideoUploadingIndex(null);
+    }
+  };
+
   const photoCount = form.photos?.length ?? 0;
+  const videoCount = form.videos?.length ?? 0;
   const stepCount = form.steps?.length ?? 0;
   const photoOptions = (form.photos ?? []).map((photo, index) => ({
     id: photo.id?.trim() || `ph-${index + 1}`,
@@ -407,6 +502,123 @@ export default function PartAdminPanel({
                 })
               }
             />
+          </div>
+        </details>
+
+        <details className="rounded-xl border border-slate-200 p-3">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-700">
+            동영상 {videoCount ? `(${videoCount})` : ""}
+          </summary>
+          <div className="mt-3 space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span>짧은 동영상을 업로드하거나 URL을 입력하세요.</span>
+            </div>
+            {videoUploadMessage ? (
+              <div className="text-xs text-slate-600">{videoUploadMessage}</div>
+            ) : null}
+            {videoCount === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-500">
+                아직 등록된 동영상이 없습니다. "동영상 추가"를 눌러 시작하세요.
+              </div>
+            ) : null}
+            {form.videos?.map((video, idx) => (
+              <div
+                key={`video-${idx}`}
+                className="rounded-lg border border-slate-100 bg-slate-50 p-3 space-y-2"
+              >
+                <div className="flex flex-wrap gap-2 text-xs text-slate-500">
+                  <span>동영상 #{idx + 1}</span>
+                  <label className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300">
+                    파일 선택
+                    <input
+                      type="file"
+                      accept="video/*"
+                      disabled={videoUploading}
+                      onChange={(e) => handleVideoUpload(e.target.files?.[0] ?? null, idx)}
+                      className="hidden"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => removeVideo(idx)}
+                    className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
+                  >
+                    삭제
+                  </button>
+                </div>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <input
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="이름"
+                    value={video.label ?? ""}
+                    onChange={(e) => updateVideo(idx, "label", e.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm"
+                    placeholder="동영상 설명"
+                    value={video.desc ?? ""}
+                    onChange={(e) => updateVideo(idx, "desc", e.target.value)}
+                  />
+                  <input
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
+                    placeholder="URL"
+                    value={video.url}
+                    onChange={(e) => updateVideo(idx, "url", e.target.value)}
+                  />
+                  {videoUploadingIndex === idx ? (
+                    <div className="md:col-span-2 text-xs text-slate-500">업로드 중...</div>
+                  ) : null}
+                  {videoUploadErrors[idx] ? (
+                    <div className="md:col-span-2 text-xs text-amber-600">
+                      업로드 실패: {videoUploadErrors[idx]}
+                    </div>
+                  ) : null}
+                  {video.url ? (
+                    <div className="md:col-span-2 space-y-2">
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                        <a
+                          href={video.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-600 hover:border-slate-300"
+                        >
+                          새 탭에서 보기
+                        </a>
+                      </div>
+                      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+                        <video
+                          src={video.url}
+                          controls
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                  ) : null}
+                  <input
+                    className="rounded-lg border border-slate-200 px-3 py-2 text-sm md:col-span-2"
+                    placeholder="태그 (쉼표 구분)"
+                    value={(video.tags as string[])?.join(",") ?? ""}
+                    onChange={(e) =>
+                      updateVideo(
+                        idx,
+                        "tags",
+                        e.target.value
+                          .split(",")
+                          .map((t) => t.trim())
+                          .filter(Boolean)
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addVideo}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-sm font-semibold text-slate-700 hover:border-slate-300"
+            >
+              동영상 추가
+            </button>
           </div>
         </details>
 

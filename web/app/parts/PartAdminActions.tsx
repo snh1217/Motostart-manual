@@ -17,7 +17,7 @@ export default function PartAdminActions({ id }: { id: string }) {
   }, []);
 
   const handleDelete = async () => {
-    if (!confirm("이 부품을 삭제할까요? 되돌릴 수 없습니다.")) return;
+    if (!confirm("부품 정보를 삭제할까요? 되돌릴 수 없습니다.")) return;
     setStatus("loading");
     setMessage("");
     try {
@@ -57,7 +57,7 @@ export default function PartAdminActions({ id }: { id: string }) {
         {status === "loading" ? "삭제 중..." : "삭제"}
       </button>
       {!adminToken ? (
-        <span className="text-xs text-amber-600">ADMIN_TOKEN이 필요합니다.</span>
+        <span className="text-xs text-amber-600">관리자 토큰이 필요합니다.</span>
       ) : null}
       {message ? <span className="text-xs text-red-600">{message}</span> : null}
     </div>

@@ -1,0 +1,20 @@
+﻿# EAS ignore (repo root)
+.git/
+.gitignore
+**/.DS_Store
+**/*.log
+
+# web app not needed for mobile build
+web/
+
+# mobile build artifacts
+app/node_modules/
+app/.expo/
+app/.expo-shared/
+app/android/.gradle/
+app/android/app/build/
+app/android/build/
+app/ios/Pods/
+app/ios/build/
+app/npm-debug.log
+app/yarn-error.log

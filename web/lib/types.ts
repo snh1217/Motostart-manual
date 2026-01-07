@@ -74,6 +74,14 @@ export type PartPhoto = {
   tags?: string[];
 };
 
+export type PartVideo = {
+  id: string;
+  url: string;
+  label?: string;
+  desc?: string;
+  tags?: string[];
+};
+
 export type PartStep = {
   order: number;
   title: string;
@@ -92,6 +100,7 @@ export type PartEntry = {
   summary?: string;
   tags?: string[];
   photos?: PartPhoto[];
+  videos?: PartVideo[];
   steps?: PartStep[];
   updated_at?: string;
   source?: "db" | "json";

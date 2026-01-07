@@ -3,7 +3,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { hasSupabaseConfig, supabaseAdmin } from "./supabase/server";
 import { isReadOnlyMode, isAdminAuthorized } from "./auth/admin";
-import type { PartEntry, PartPhoto, PartStep } from "./types";
+import type { PartEntry, PartPhoto, PartStep, PartVideo } from "./types";
 
 const partsPath = path.resolve(process.cwd(), "data", "parts.json");
 
@@ -56,6 +56,7 @@ export const loadParts = async (filters?: {
       summary: row.summary ?? undefined,
       tags: row.tags ?? [],
       photos: row.photos ?? [],
+      videos: row.videos ?? [],
       steps: row.steps ?? [],
       updated_at: row.updated_at ?? undefined,
       source: "db" as const,
@@ -115,6 +116,7 @@ export const upsertPart = async (payload: PartEntry, request: Request) => {
     updated_at: payload.updated_at ?? now,
     tags: payload.tags ?? [],
     photos: (payload.photos ?? []) as PartPhoto[],
+    videos: (payload.videos ?? []) as PartVideo[],
     steps: (payload.steps ?? []) as PartStep[],
   };
 
@@ -130,6 +132,7 @@ export const upsertPart = async (payload: PartEntry, request: Request) => {
           summary: normalized.summary ?? null,
           tags: normalized.tags ?? [],
           photos: normalized.photos ?? [],
+          videos: normalized.videos ?? [],
           steps: normalized.steps ?? [],
           updated_at: normalized.updated_at ?? now,
         },

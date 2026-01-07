@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -11,7 +12,7 @@ import {
 import { useRouter } from "expo-router";
 import * as DocumentPicker from "expo-document-picker";
 import { buildUrl, fetchJson } from "@/lib/api";
-import type { ModelEntry, PartEntry, PartPhoto, PartStep } from "@/lib/types";
+import type { ModelEntry, PartEntry, PartPhoto, PartStep, PartVideo } from "@/lib/types";
 import { useAdminAuth } from "@/lib/admin";
 import AdminSection from "@/components/AdminSection";
 
@@ -42,6 +43,7 @@ export default function PartsScreen() {
   const [partTags, setPartTags] = useState("");
   const [stepsJson, setStepsJson] = useState("");
   const [photoUrls, setPhotoUrls] = useState<string[]>([]);
+  const [videoUrls, setVideoUrls] = useState<string[]>([]);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
   const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
@@ -123,6 +125,50 @@ export default function PartsScreen() {
     }
   };
 
+  const uploadVideo = async () => {
+    if (!auth.token) {
+      setUploadMessage("관리자 로그인 후 업로드할 수 있습니다.");
+      return;
+    }
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "video/*",
+        copyToCacheDirectory: false,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      const form = new FormData();
+      form.append("file", {
+        uri: asset.uri,
+        name: asset.name ?? "video.mp4",
+        type: asset.mimeType ?? "video/mp4",
+      } as any);
+      form.append("model", partModel || model || "misc");
+      form.append("partId", partId || "part");
+      const res = await fetch(buildUrl("/api/parts/upload"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: form,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setUploadMessage(data?.error ?? "업로드 실패");
+        return;
+      }
+      const url = data.url ?? data.path;
+      if (url) {
+        setVideoUrls((prev) => [...prev, url]);
+        setUploadMessage("동영상 업로드 완료");
+      } else {
+        setUploadMessage("업로드 실패");
+      }
+    } catch {
+      setUploadMessage("업로드 실패");
+    }
+  };
+
   const handleSave = async () => {
     if (!auth.token) {
       setSaveMessage("관리자 로그인 후 저장할 수 있습니다.");
@@ -143,6 +189,10 @@ export default function PartsScreen() {
       id: `photo-${Date.now()}-${idx}`,
       url,
     }));
+    const videos: PartVideo[] = videoUrls.map((url, idx) => ({
+      id: `video-${Date.now()}-${idx}`,
+      url,
+    }));
 
     const payload: PartEntry = {
       id: partId.trim(),
@@ -155,6 +205,7 @@ export default function PartsScreen() {
         .map((tag) => tag.trim())
         .filter(Boolean),
       photos: photos.length ? photos : undefined,
+      videos: videos.length ? videos : undefined,
       steps,
     };
 
@@ -180,10 +231,43 @@ export default function PartsScreen() {
       setPartTags("");
       setStepsJson("");
       setPhotoUrls([]);
+      setVideoUrls([]);
       loadParts();
     } catch {
       setSaveMessage("저장 실패");
     }
+  };
+
+  const handleDelete = (id: string) => {
+    if (!auth.token) {
+      setSaveMessage("관리자 로그인 후 삭제할 수 있습니다.");
+      return;
+    }
+    Alert.alert("삭제 확인", "부품 정보를 삭제할까요? 되돌릴 수 없습니다.", [
+      { text: "취소", style: "cancel" },
+      {
+        text: "삭제",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            const response = await fetch(buildUrl("/api/parts", { id }), {
+              method: "DELETE",
+              headers: {
+                Authorization: `Bearer ${auth.token}`,
+              },
+            });
+            if (!response.ok) {
+              setSaveMessage("삭제 실패");
+              return;
+            }
+            setSaveMessage("삭제 완료");
+            loadParts();
+          } catch {
+            setSaveMessage("삭제 실패");
+          }
+        },
+      },
+    ]);
   };
 
   return (
@@ -287,6 +371,12 @@ export default function PartsScreen() {
           {photoUrls.length ? (
             <Text style={styles.helper}>업로드된 사진: {photoUrls.length}장</Text>
           ) : null}
+          <Pressable style={styles.secondaryButton} onPress={uploadVideo}>
+            <Text style={styles.secondaryButtonText}>동영상 업로드</Text>
+          </Pressable>
+          {videoUrls.length ? (
+            <Text style={styles.helper}>업로드된 동영상: {videoUrls.length}개</Text>
+          ) : null}
           {uploadMessage ? <Text style={styles.helper}>{uploadMessage}</Text> : null}
           <Pressable style={styles.primaryButton} onPress={handleSave}>
             <Text style={styles.primaryButtonText}>부품 저장</Text>
@@ -307,15 +397,23 @@ export default function PartsScreen() {
         <Text style={styles.sectionTitle}>부품 목록</Text>
         {parts.length ? (
           parts.map((item) => (
-            <Pressable
-              key={item.id}
-              style={styles.listItem}
-              onPress={() => router.push(`/parts/${item.id}`)}
-            >
-              <Text style={styles.itemTitle}>{item.name}</Text>
-              <Text style={styles.itemMeta}>{item.model} · {item.system}</Text>
-              {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
-            </Pressable>
+            <View key={item.id} style={styles.listItem}>
+              <Pressable onPress={() => router.push(`/parts/${item.id}`)}>
+                <Text style={styles.itemTitle}>{item.name}</Text>
+                <Text style={styles.itemMeta}>{item.model} · {item.system}</Text>
+                {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
+              </Pressable>
+              {auth.role === "admin" ? (
+                <View style={styles.itemActions}>
+                  <Pressable
+                    style={styles.deleteButton}
+                    onPress={() => handleDelete(item.id)}
+                  >
+                    <Text style={styles.deleteButtonText}>삭제</Text>
+                  </Pressable>
+                </View>
+              ) : null}
+            </View>
           ))
         ) : (
           <Text style={styles.helper}>표시할 부품이 없습니다.</Text>
@@ -428,6 +526,24 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
+  },
+  itemActions: {
+    marginTop: 8,
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  deleteButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#fecaca",
+    backgroundColor: "#fef2f2",
+  },
+  deleteButtonText: {
+    fontSize: 12,
+    color: "#dc2626",
+    fontWeight: "600",
   },
   itemTitle: {
     fontSize: 15,
