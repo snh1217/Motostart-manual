@@ -31,6 +31,7 @@ export default function PartsScreen() {
   const [model, setModel] = useState("all");
   const [system, setSystem] = useState("all");
   const [query, setQuery] = useState("");
+  const [viewMode, setViewMode] = useState<"data" | "card" | "list">("card");
   const [parts, setParts] = useState<PartEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -317,6 +318,24 @@ export default function PartsScreen() {
         <Pressable style={styles.primaryButton} onPress={loadParts}>
           <Text style={styles.primaryButtonText}>검색</Text>
         </Pressable>
+        <Text style={styles.sectionTitle}>보기 형식</Text>
+        <View style={styles.chipRow}>
+          {[
+            { id: "data", label: "데이터뷰" },
+            { id: "card", label: "카드뷰" },
+            { id: "list", label: "리스트뷰" },
+          ].map((item) => (
+            <Pressable
+              key={item.id}
+              onPress={() => setViewMode(item.id as "data" | "card" | "list")}
+              style={[styles.chip, viewMode === item.id && styles.chipActive]}
+            >
+              <Text style={[styles.chipText, viewMode === item.id && styles.chipTextActive]}>
+                {item.label}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
       <AdminSection auth={auth} />
@@ -396,25 +415,89 @@ export default function PartsScreen() {
       <View style={styles.sectionCard}>
         <Text style={styles.sectionTitle}>부품 목록</Text>
         {parts.length ? (
-          parts.map((item) => (
-            <View key={item.id} style={styles.listItem}>
-              <Pressable onPress={() => router.push(`/parts/${item.id}`)}>
-                <Text style={styles.itemTitle}>{item.name}</Text>
-                <Text style={styles.itemMeta}>{item.model} · {item.system}</Text>
-                {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
-              </Pressable>
-              {auth.role === "admin" ? (
-                <View style={styles.itemActions}>
-                  <Pressable
-                    style={styles.deleteButton}
-                    onPress={() => handleDelete(item.id)}
-                  >
-                    <Text style={styles.deleteButtonText}>삭제</Text>
-                  </Pressable>
+          viewMode === "data" ? (
+            parts.map((item) => (
+              <View key={item.id} style={styles.dataRow}>
+                <View style={styles.dataColumn}>
+                  <Text style={styles.dataLabel}>모델</Text>
+                  <Text style={styles.dataValue}>{item.model}</Text>
                 </View>
-              ) : null}
-            </View>
-          ))
+                <View style={styles.dataColumn}>
+                  <Text style={styles.dataLabel}>시스템</Text>
+                  <Text style={styles.dataValue}>{item.system}</Text>
+                </View>
+                <View style={styles.dataColumnWide}>
+                  <Text style={styles.dataLabel}>부품명</Text>
+                  <Pressable onPress={() => router.push(`/parts/${item.id}`)}>
+                    <Text style={styles.dataTitle}>{item.name}</Text>
+                  </Pressable>
+                  {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
+                </View>
+                {item.tags?.length ? (
+                  <Text style={styles.dataTags}>
+                    #{item.tags.slice(0, 4).join(" #")}
+                  </Text>
+                ) : null}
+                {auth.role === "admin" ? (
+                  <View style={styles.itemActions}>
+                    <Pressable
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(item.id)}
+                    >
+                      <Text style={styles.deleteButtonText}>삭제</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            ))
+          ) : viewMode === "list" ? (
+            parts.map((item) => (
+              <View key={item.id} style={styles.listItem}>
+                <Pressable onPress={() => router.push(`/parts/${item.id}`)}>
+                  <Text style={styles.itemTitle}>{item.name}</Text>
+                  <Text style={styles.itemMeta}>{item.model} · {item.system}</Text>
+                  {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
+                </Pressable>
+                {auth.role === "admin" ? (
+                  <View style={styles.itemActions}>
+                    <Pressable
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(item.id)}
+                    >
+                      <Text style={styles.deleteButtonText}>삭제</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            ))
+          ) : (
+            parts.map((item) => (
+              <View key={item.id} style={styles.cardItem}>
+                <Pressable onPress={() => router.push(`/parts/${item.id}`)}>
+                  <View style={styles.cardHeader}>
+                    <Text style={styles.cardTitle}>{item.name}</Text>
+                    <Text style={styles.cardMeta}>{item.model} · {item.system}</Text>
+                  </View>
+                  {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
+                  {item.tags?.length ? (
+                    <Text style={styles.cardTags}>
+                      #{item.tags.slice(0, 6).join(" #")}
+                    </Text>
+                  ) : null}
+                </Pressable>
+                {auth.role === "admin" ? (
+                  <View style={styles.itemActions}>
+                    <Pressable
+                      style={styles.deleteButton}
+                      onPress={() => handleDelete(item.id)}
+                    >
+                      <Text style={styles.deleteButtonText}>삭제</Text>
+                    </Pressable>
+                  </View>
+                ) : null}
+              </View>
+            ))
+          )
         ) : (
           <Text style={styles.helper}>표시할 부품이 없습니다.</Text>
         )}
@@ -526,6 +609,63 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: "#f1f5f9",
+  },
+  cardItem: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    padding: 12,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
+  cardHeader: {
+    marginBottom: 6,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  cardMeta: {
+    marginTop: 4,
+    fontSize: 12,
+    color: "#64748b",
+  },
+  cardTags: {
+    marginTop: 6,
+    fontSize: 12,
+    color: "#64748b",
+  },
+  dataRow: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#f1f5f9",
+    paddingVertical: 12,
+    gap: 6,
+  },
+  dataColumn: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  dataColumnWide: {
+    gap: 4,
+  },
+  dataLabel: {
+    fontSize: 12,
+    color: "#94a3b8",
+  },
+  dataValue: {
+    fontSize: 12,
+    color: "#0f172a",
+    fontWeight: "600",
+  },
+  dataTitle: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: "#0f172a",
+  },
+  dataTags: {
+    fontSize: 12,
+    color: "#64748b",
   },
   itemActions: {
     marginTop: 8,
