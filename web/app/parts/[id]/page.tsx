@@ -36,6 +36,20 @@ export default async function PartDetailPage({
     }
   }
 
+  const stepsToRender =
+    (resolvedEntry.steps?.length ?? 0) > 1
+      ? resolvedEntry.steps
+      : (resolvedEntry.photos?.length ?? 0) > 1
+        ? resolvedEntry.photos!.map((photo, idx) => ({
+            order: idx + 1,
+            title: photo.label ?? `단계 ${idx + 1}`,
+            desc: photo.desc,
+            tools: undefined,
+            torque: undefined,
+            note: undefined,
+          }))
+        : resolvedEntry.steps ?? [];
+
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
 
@@ -118,11 +132,11 @@ export default async function PartDetailPage({
         </section>
       ) : null}
 
-      {resolvedEntry.steps?.length ? (
+      {stepsToRender.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">작업 절차</h2>
           <div className="space-y-3">
-            {resolvedEntry.steps
+            {stepsToRender
               .slice()
               .sort((a, b) => a.order - b.order)
               .map((step, idx) => (
