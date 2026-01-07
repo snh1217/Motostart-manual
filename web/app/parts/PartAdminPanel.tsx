@@ -263,6 +263,7 @@ export default function PartAdminPanel({
       setVideoUploadErrors({});
       if (isEditing) {
         router.replace("/parts");
+        router.refresh();
       }
     } catch (err) {
       setStatus("error");

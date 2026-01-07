@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cookies } from "next/headers";
-import { loadParts } from "../../../lib/parts";
+import { loadParts, loadPartsFromFile } from "../../../lib/parts";
 import { SESSION_COOKIE, parseSessionValue } from "../../../lib/auth/session";
 import PartAdminActions from "../PartAdminActions";
 
@@ -22,6 +22,19 @@ export default async function PartDetailPage({
 }) {
   const entry = (await loadParts({ id: params.id })).at(0);
   if (!entry) notFound();
+
+  let resolvedEntry = entry;
+  if ((entry.steps?.length ?? 0) <= 1) {
+    const fileEntries = await loadPartsFromFile();
+    const fileEntry = fileEntries.find((item) => item.id === entry.id);
+    if (fileEntry && (fileEntry.steps?.length ?? 0) > (entry.steps?.length ?? 0)) {
+      resolvedEntry = {
+        ...entry,
+        steps: fileEntry.steps,
+        photos: entry.photos?.length ? entry.photos : fileEntry.photos,
+      };
+    }
+  }
 
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
@@ -47,9 +60,11 @@ export default async function PartDetailPage({
                 </span>
               ) : null}
             </div>
-            <h1 className="text-2xl font-semibold text-slate-900">{entry.name}</h1>
-            {entry.summary ? (
-              <p className="text-sm text-slate-600 whitespace-pre-line">{entry.summary}</p>
+            <h1 className="text-2xl font-semibold text-slate-900">{resolvedEntry.name}</h1>
+            {resolvedEntry.summary ? (
+              <p className="text-sm text-slate-600 whitespace-pre-line">
+                {resolvedEntry.summary}
+              </p>
             ) : null}
           </div>
           <div className="text-xs text-slate-500">{entry.updated_at ?? ""}</div>
@@ -57,11 +72,11 @@ export default async function PartDetailPage({
         {isAdmin ? <PartAdminActions id={entry.id} /> : null}
       </header>
 
-      {entry.photos?.filter((photo) => photo.url)?.length ? (
+      {resolvedEntry.photos?.filter((photo) => photo.url)?.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">사진</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {entry.photos
+            {resolvedEntry.photos
               .filter((photo) => photo.url)
               .map((photo, idx) => (
               <div key={photo.id ?? `${photo.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
@@ -82,11 +97,11 @@ export default async function PartDetailPage({
         </section>
       ) : null}
 
-      {entry.videos?.filter((video) => video.url)?.length ? (
+      {resolvedEntry.videos?.filter((video) => video.url)?.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">동영상</h2>
           <div className="grid gap-3 sm:grid-cols-2">
-            {entry.videos
+            {resolvedEntry.videos
               .filter((video) => video.url)
               .map((video, idx) => (
               <div key={video.id ?? `${video.url}-${idx}`} className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3">
@@ -103,11 +118,11 @@ export default async function PartDetailPage({
         </section>
       ) : null}
 
-      {entry.steps?.length ? (
+      {resolvedEntry.steps?.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">작업 절차</h2>
           <div className="space-y-3">
-            {entry.steps
+            {resolvedEntry.steps
               .slice()
               .sort((a, b) => a.order - b.order)
               .map((step, idx) => (
@@ -122,7 +137,7 @@ export default async function PartDetailPage({
                     {step.tools ? <span>도구: {step.tools}</span> : null}
                     {step.torque ? <span>토크: {step.torque}</span> : null}
                     {step.note ? (
-                      <span className="whitespace-pre-line">비고: {step.note}</span>
+                      <span className="whitespace-pre-line">참조: {step.note}</span>
                     ) : null}
                   </div>
                 </article>
