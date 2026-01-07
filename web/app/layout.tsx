@@ -2,6 +2,7 @@
 import Link from "next/link";
 import NavMenu from "./NavMenu";
 import AppBridge from "./AppBridge";
+import PartsListLauncher from "./PartsListLauncher";
 import "./globals.css";
 
 export default function RootLayout({ children }: { children: ReactNode }) {
@@ -24,7 +25,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="text-center text-sm font-semibold tracking-[0.35em] text-slate-700">
               MANUAL HUB
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <PartsListLauncher />
               <NavMenu />
             </div>
           </nav>

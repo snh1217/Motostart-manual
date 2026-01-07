@@ -5,6 +5,7 @@ import { Tabs } from "expo-router";
 import Colors from "@/constants/Colors";
 import { useColorScheme } from "@/components/useColorScheme";
 import { useClientOnlyValue } from "@/components/useClientOnlyValue";
+import PartsListLauncherMobile from "@/components/PartsListLauncherMobile";
 
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>["name"];
@@ -24,6 +25,7 @@ export default function TabLayout() {
         unmountOnBlur: false,
         lazy: false,
         tabBarLabelStyle: { fontSize: 11 },
+        headerRight: () => <PartsListLauncherMobile />,
       }}
     >
       <Tabs.Screen
