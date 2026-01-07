@@ -49,6 +49,7 @@ function RootLayoutNav() {
       <Stack>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="viewer" options={{ title: "뷰어" }} />
+        <Stack.Screen name="parts/[id]" options={{ title: "부품 상세" }} />
       </Stack>
     </ThemeProvider>
   );

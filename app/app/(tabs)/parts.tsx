@@ -8,8 +8,10 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { useRouter } from "expo-router";
+import * as DocumentPicker from "expo-document-picker";
 import { buildUrl, fetchJson } from "@/lib/api";
-import type { CaseRow, ModelEntry } from "@/lib/types";
+import type { ModelEntry, PartEntry, PartPhoto, PartStep } from "@/lib/types";
 import { useAdminAuth } from "@/lib/admin";
 import AdminSection from "@/components/AdminSection";
 
@@ -21,23 +23,27 @@ const SYSTEMS = [
   { id: "other", label: "기타" },
 ];
 
-export default function CasesScreen() {
+export default function PartsScreen() {
+  const router = useRouter();
   const auth = useAdminAuth();
   const [models, setModels] = useState<ModelEntry[]>([]);
   const [model, setModel] = useState("all");
   const [system, setSystem] = useState("all");
   const [query, setQuery] = useState("");
-  const [cases, setCases] = useState<CaseRow[]>([]);
+  const [parts, setParts] = useState<PartEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [newCase, setNewCase] = useState<CaseRow>({
-    model: "",
-    system: "engine",
-    symptom: "",
-    action: "",
-  });
+  const [partId, setPartId] = useState("");
+  const [partModel, setPartModel] = useState("");
+  const [partSystem, setPartSystem] = useState("engine");
+  const [partName, setPartName] = useState("");
+  const [partSummary, setPartSummary] = useState("");
+  const [partTags, setPartTags] = useState("");
+  const [stepsJson, setStepsJson] = useState("");
+  const [photoUrls, setPhotoUrls] = useState<string[]>([]);
   const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [uploadMessage, setUploadMessage] = useState<string | null>(null);
 
   useEffect(() => {
     fetchJson<{ models: ModelEntry[] }>(buildUrl("/api/models"))
@@ -51,50 +57,130 @@ export default function CasesScreen() {
     return ["all", ...unique];
   }, [models]);
 
-  const loadCases = async () => {
+  const loadParts = async () => {
     setLoading(true);
     setError(null);
     try {
-      const url = buildUrl("/api/cases", {
-        model,
-        system,
+      const url = buildUrl("/api/parts", {
+        model: model === "all" ? undefined : model,
+        system: system === "all" ? undefined : system,
         q: query.trim() || undefined,
       });
-      const data = await fetchJson<{ items: CaseRow[] }>(url);
-      setCases(data.items ?? []);
+      const data = await fetchJson<{ items: PartEntry[] }>(url);
+      setParts(data.items ?? []);
     } catch {
-      setError("정비사례를 불러오지 못했습니다.");
-      setCases([]);
+      setError("부품 목록을 불러오지 못했습니다.");
+      setParts([]);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    loadCases();
+    loadParts();
   }, [model, system]);
+
+  const uploadPhoto = async () => {
+    if (!auth.token) {
+      setUploadMessage("관리자 로그인 후 업로드할 수 있습니다.");
+      return;
+    }
+    if (!partId.trim()) {
+      setUploadMessage("부품 ID를 먼저 입력해 주세요.");
+      return;
+    }
+    const pick = await DocumentPicker.getDocumentAsync({
+      type: ["image/png", "image/jpeg"],
+    });
+    if (pick.canceled || !pick.assets?.length) return;
+    const file = pick.assets[0];
+    const formData = new FormData();
+    formData.append("file", {
+      uri: file.uri,
+      name: file.name ?? "photo.jpg",
+      type: file.mimeType ?? "application/octet-stream",
+    } as unknown as Blob);
+    formData.append("model", partModel.trim() || "misc");
+    formData.append("partId", partId.trim());
+
+    try {
+      const response = await fetch(buildUrl("/api/parts/upload"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${auth.token}`,
+        },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data?.url) {
+        setUploadMessage("업로드 실패");
+        return;
+      }
+      setPhotoUrls((prev) => [...prev, data.url]);
+      setUploadMessage("업로드 완료");
+    } catch {
+      setUploadMessage("업로드 실패");
+    }
+  };
 
   const handleSave = async () => {
     if (!auth.token) {
       setSaveMessage("관리자 로그인 후 저장할 수 있습니다.");
       return;
     }
+
+    let steps: PartStep[] | undefined;
+    if (stepsJson.trim()) {
+      try {
+        steps = JSON.parse(stepsJson) as PartStep[];
+      } catch {
+        setSaveMessage("작업 절차 JSON 형식이 올바르지 않습니다.");
+        return;
+      }
+    }
+
+    const photos: PartPhoto[] = photoUrls.map((url, idx) => ({
+      id: `photo-${Date.now()}-${idx}`,
+      url,
+    }));
+
+    const payload: PartEntry = {
+      id: partId.trim(),
+      model: partModel.trim(),
+      system: partSystem,
+      name: partName.trim(),
+      summary: partSummary.trim() || undefined,
+      tags: partTags
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean),
+      photos: photos.length ? photos : undefined,
+      steps,
+    };
+
     try {
-      const response = await fetch(buildUrl("/api/cases"), {
+      const response = await fetch(buildUrl("/api/parts"), {
         method: "POST",
         headers: {
           "content-type": "application/json",
           Authorization: `Bearer ${auth.token}`,
         },
-        body: JSON.stringify(newCase),
+        body: JSON.stringify(payload),
       });
       if (!response.ok) {
         setSaveMessage("저장 실패");
         return;
       }
       setSaveMessage("저장 완료");
-      setNewCase({ model: "", system: "engine", symptom: "", action: "" });
-      loadCases();
+      setPartId("");
+      setPartModel("");
+      setPartSystem("engine");
+      setPartName("");
+      setPartSummary("");
+      setPartTags("");
+      setStepsJson("");
+      setPhotoUrls([]);
+      loadParts();
     } catch {
       setSaveMessage("저장 실패");
     }
@@ -102,8 +188,8 @@ export default function CasesScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>정비사례</Text>
-      <Text style={styles.subtitle}>현장 사례를 빠르게 찾아보세요.</Text>
+      <Text style={styles.title}>부품/절차</Text>
+      <Text style={styles.subtitle}>모델별 부품 정보와 절차를 확인하세요.</Text>
 
       <View style={styles.card}>
         <Text style={styles.sectionTitle}>모델</Text>
@@ -139,12 +225,12 @@ export default function CasesScreen() {
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="증상/조치 키워드 검색"
+          placeholder="부품명/태그 검색"
           style={styles.input}
-          onSubmitEditing={loadCases}
+          onSubmitEditing={loadParts}
           returnKeyType="search"
         />
-        <Pressable style={styles.primaryButton} onPress={loadCases}>
+        <Pressable style={styles.primaryButton} onPress={loadParts}>
           <Text style={styles.primaryButtonText}>검색</Text>
         </Pressable>
       </View>
@@ -152,45 +238,58 @@ export default function CasesScreen() {
       <AdminSection auth={auth} />
       {auth.role === "admin" ? (
         <View style={styles.card}>
-          <Text style={styles.sectionTitle}>사례 등록</Text>
+          <Text style={styles.sectionTitle}>부품 등록</Text>
           <TextInput
-            value={newCase.model}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, model: value }))}
+            value={partId}
+            onChangeText={setPartId}
+            placeholder="부품 ID"
+            style={styles.input}
+          />
+          <TextInput
+            value={partModel}
+            onChangeText={setPartModel}
             placeholder="모델"
             style={styles.input}
           />
           <TextInput
-            value={newCase.system}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, system: value }))}
+            value={partSystem}
+            onChangeText={setPartSystem}
             placeholder="시스템 (engine/chassis/electrical/other)"
             style={styles.input}
           />
           <TextInput
-            value={newCase.symptom}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, symptom: value }))}
-            placeholder="증상"
+            value={partName}
+            onChangeText={setPartName}
+            placeholder="부품명"
             style={styles.input}
           />
           <TextInput
-            value={newCase.action}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, action: value }))}
-            placeholder="조치"
+            value={partSummary}
+            onChangeText={setPartSummary}
+            placeholder="요약"
             style={styles.input}
           />
           <TextInput
-            value={newCase.cause ?? ""}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, cause: value }))}
-            placeholder="원인(선택)"
+            value={partTags}
+            onChangeText={setPartTags}
+            placeholder="태그 (콤마 구분)"
             style={styles.input}
           />
           <TextInput
-            value={newCase.parts ?? ""}
-            onChangeText={(value) => setNewCase((prev) => ({ ...prev, parts: value }))}
-            placeholder="부품(선택)"
+            value={stepsJson}
+            onChangeText={setStepsJson}
+            placeholder="작업 절차 JSON (선택)"
             style={styles.input}
           />
+          <Pressable style={styles.secondaryButton} onPress={uploadPhoto}>
+            <Text style={styles.secondaryButtonText}>사진 업로드</Text>
+          </Pressable>
+          {photoUrls.length ? (
+            <Text style={styles.helper}>업로드된 사진: {photoUrls.length}장</Text>
+          ) : null}
+          {uploadMessage ? <Text style={styles.helper}>{uploadMessage}</Text> : null}
           <Pressable style={styles.primaryButton} onPress={handleSave}>
-            <Text style={styles.primaryButtonText}>사례 저장</Text>
+            <Text style={styles.primaryButtonText}>부품 저장</Text>
           </Pressable>
           {saveMessage ? <Text style={styles.helper}>{saveMessage}</Text> : null}
         </View>
@@ -205,23 +304,21 @@ export default function CasesScreen() {
       {error ? <Text style={styles.helper}>{error}</Text> : null}
 
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>사례 목록</Text>
-        {cases.length ? (
-          cases.map((item) => (
-            <View key={item.id ?? `${item.model}-${item.symptom}`} style={styles.listItem}>
-              <Text style={styles.itemTitle}>{item.symptom}</Text>
+        <Text style={styles.sectionTitle}>부품 목록</Text>
+        {parts.length ? (
+          parts.map((item) => (
+            <Pressable
+              key={item.id}
+              style={styles.listItem}
+              onPress={() => router.push(`/parts/${item.id}`)}
+            >
+              <Text style={styles.itemTitle}>{item.name}</Text>
               <Text style={styles.itemMeta}>{item.model} · {item.system}</Text>
-              <Text style={styles.itemSub}>{item.action}</Text>
-              {item.cause ? (
-                <Text style={styles.itemNote}>원인: {item.cause}</Text>
-              ) : null}
-              {item.parts ? (
-                <Text style={styles.itemNote}>부품: {item.parts}</Text>
-              ) : null}
-            </View>
+              {item.summary ? <Text style={styles.itemNote}>{item.summary}</Text> : null}
+            </Pressable>
           ))
         ) : (
-          <Text style={styles.helper}>표시할 사례가 없습니다.</Text>
+          <Text style={styles.helper}>표시할 부품이 없습니다.</Text>
         )}
       </View>
     </ScrollView>
@@ -306,6 +403,18 @@ const styles = StyleSheet.create({
     color: "#fff",
     fontWeight: "600",
   },
+  secondaryButton: {
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "#0f172a",
+    marginBottom: 8,
+  },
+  secondaryButtonText: {
+    color: "#0f172a",
+    fontWeight: "600",
+  },
   center: {
     alignItems: "center",
     justifyContent: "center",
@@ -323,16 +432,12 @@ const styles = StyleSheet.create({
   itemTitle: {
     fontSize: 15,
     fontWeight: "600",
+    color: "#0f172a",
   },
   itemMeta: {
     marginTop: 4,
     fontSize: 12,
     color: "#64748b",
-  },
-  itemSub: {
-    marginTop: 6,
-    fontSize: 13,
-    color: "#0f172a",
   },
   itemNote: {
     marginTop: 4,

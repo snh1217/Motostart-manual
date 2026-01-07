@@ -279,20 +279,23 @@ export default function ModelsClient({ models, readOnly }: ModelsClientProps) {
         throw new Error(errorText || "파일 업로드 실패");
       }
 
+      const updatePayload: Record<string, string> = {
+        id: normalizedId,
+        name: modelName.trim(),
+      };
+      if (kind === "engine") {
+        updatePayload.parts_engine_url = uploadData.url;
+      } else {
+        updatePayload.parts_chassis_url = uploadData.url;
+      }
+
       const updateRes = await fetch("/api/models/update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`,
         },
-        body: JSON.stringify({
-          id: normalizedId,
-          name: modelName.trim(),
-          parts_engine_url:
-            kind === "engine" ? uploadData.url : partsEngineUrl.trim(),
-          parts_chassis_url:
-            kind === "chassis" ? uploadData.url : partsChassisUrl.trim(),
-        }),
+        body: JSON.stringify(updatePayload),
       });
       const updateData = await readJsonResponse(updateRes);
       if (!updateRes.ok) {
