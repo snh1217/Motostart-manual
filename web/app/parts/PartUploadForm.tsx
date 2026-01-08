@@ -232,7 +232,7 @@ export default function PartUploadForm() {
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
             >
               {status === "loading" ? "업로드 중..." : "사진 업로드"}
-            </button>\r\n            </div>
+            </button>
             {photoResult ? (
               <div className="text-xs text-slate-600">
                 업로드 URL:{" "}
