@@ -23,7 +23,7 @@ export default function PartUploadForm() {
     if (adminToken) localStorage.setItem("ADMIN_TOKEN", adminToken);
   }, [adminToken]);
 
-  `const uploadData = async (e: React.FormEvent) => {
+  const uploadData = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
       setStatus("error");
