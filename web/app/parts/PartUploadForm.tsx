@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -23,7 +23,7 @@ export default function PartUploadForm() {
     if (adminToken) localStorage.setItem("ADMIN_TOKEN", adminToken);
   }, [adminToken]);
 
-  const uploadData = async (e: React.FormEvent) => {
+  `const uploadData = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file) {
       setStatus("error");
@@ -54,6 +54,61 @@ export default function PartUploadForm() {
       setStatus("error");
       setMessage(err instanceof Error ? err.message : "업로드 중 오류");
     }
+  };
+  const downloadTemplate = () => {
+    const header = [
+      "model",
+      "name",
+      "system",
+      "summary",
+      "tags",
+      "photo_url",
+      "photo_label",
+      "photo_desc",
+      "step_order",
+      "step_title",
+      "step_desc",
+      "step_tools",
+      "step_torque",
+      "step_note",
+    ];
+    const sample = [
+      "368G",
+      "샘플 부품",
+      "engine",
+      "요약 예시",
+      "릴레이,전장",
+      "https://example.com/photo.jpg",
+      "사진 라벨",
+      "사진 설명",
+      "1",
+      "1단계 제목",
+      "1단계 설명",
+      "공구 예시",
+      "10 N·m",
+      "비고 예시",
+    ];
+    const csv = [header, sample]
+      .map((row) =>
+        row
+          .map((value) => {
+            const text = String(value ?? "");
+            return text.includes(",") || text.includes("\n") || text.includes("\"")
+              ? `"${text.replace(/\"/g, "\"\"")}"`
+              : text;
+          })
+          .join(",")
+      )
+      .join("\n");
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "parts_template.csv";
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
   };
 
   const uploadPhoto = async (e: React.FormEvent) => {
@@ -114,13 +169,22 @@ export default function PartUploadForm() {
               onChange={(e) => setFile(e.target.files?.[0] ?? null)}
               className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
             />
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-            >
-              {status === "loading" ? "업로드 중..." : "CSV/XLSX 업로드"}
-            </button>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={downloadTemplate}
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300"
+              >
+                양식 다운로드
+              </button>
+              <button
+                type="submit"
+                disabled={status === "loading"}
+                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+              >
+                {status === "loading" ? "업로드 중..." : "CSV/XLSX 업로드"}
+              </button>
+            </div>
           </form>
 
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
@@ -168,7 +232,7 @@ export default function PartUploadForm() {
               className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
             >
               {status === "loading" ? "업로드 중..." : "사진 업로드"}
-            </button>
+            </button>\r\n            </div>
             {photoResult ? (
               <div className="text-xs text-slate-600">
                 업로드 URL:{" "}
