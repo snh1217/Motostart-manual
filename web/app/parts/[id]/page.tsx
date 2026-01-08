@@ -38,7 +38,7 @@ export default async function PartDetailPage({
 
   const stepsToRender =
     (resolvedEntry.steps?.length ?? 0) > 1
-      ? resolvedEntry.steps
+      ? (resolvedEntry.steps ?? [])
       : (resolvedEntry.photos?.length ?? 0) > 1
         ? resolvedEntry.photos!.map((photo, idx) => ({
             order: idx + 1,
