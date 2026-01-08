@@ -272,6 +272,16 @@ export default async function PartsPage({
                             {entry.summary}
                           </p>
                         ) : null}
+                        {entry.steps?.length ? (
+                          <div className="text-sm text-slate-600">
+                            <p>1. {entry.steps[0].title}</p>
+                            {entry.steps[0].desc ? (
+                              <p className="mt-1 text-xs text-slate-500 whitespace-pre-line">
+                                {entry.steps[0].desc}
+                              </p>
+                            ) : null}
+                          </div>
+                        ) : null}
                         {entry.tags?.length ? (
                           <div className="flex flex-wrap gap-1 text-xs text-slate-500">
                             {entry.tags.slice(0, 6).map((tag, i) => (
