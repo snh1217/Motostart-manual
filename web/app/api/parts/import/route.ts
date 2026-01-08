@@ -141,14 +141,18 @@ export async function POST(request: Request) {
     if (!model || !name) return;
 
     const systemValue = (row.system || "other").toLowerCase();
-    const system = (
-      systemValue === "engine" ||
-      systemValue === "chassis" ||
-      systemValue === "electrical" ||
-      systemValue === "other"
-        ? systemValue
-        : "other"
-    ) as PartEntry["system"];
+    const systemMap: Record<string, PartEntry["system"]> = {
+      engine: "engine",
+      chassis: "chassis",
+      electrical: "electrical",
+      other: "other",
+      엔진: "engine",
+      차대: "chassis",
+      차체: "chassis",
+      전장: "electrical",
+      기타: "other",
+    };
+    const system = systemMap[systemValue] ?? "other";
 
     const key = `${model}||${name}`;
     const existing = groups.get(key) ?? {
