@@ -18,6 +18,8 @@ type DbTranslation = {
   summary_ko?: string;
   text_ko?: string;
   pdf_ko_url?: string | null;
+  pdf_ko_path?: string | null;
+  pdf_original_path?: string | null;
   title?: string | null;
   ko_text?: string | null;
   meta?: Record<string, unknown> | null;
@@ -49,6 +51,7 @@ const toTranslationItem = (row: DbTranslation): TranslationItem => {
       (row.meta?.text_ko as string | undefined),
     pdf_ko_url:
       row.pdf_ko_url ?? (row.meta?.pdf_ko_url as string | undefined),
+    pdf_original_url: row.meta?.pdf_original_url as string | undefined,
     updated_at: row.updated_at ?? row.updatedAt ?? new Date().toISOString().slice(0, 10),
   };
 };
@@ -99,13 +102,26 @@ export async function GET(request: Request) {
         const item = toTranslationItem(typedRow);
         const metaBucket =
           (typedRow.meta?.pdf_ko_bucket as string | undefined) ?? bucketFromEnv;
-        const pdfPath = typedRow.meta?.pdf_ko_path as string | undefined;
+        const pdfPath =
+          typedRow.pdf_ko_path ??
+          (typedRow.meta?.pdf_ko_path as string | undefined);
+        const originalPath =
+          typedRow.pdf_original_path ??
+          (typedRow.meta?.pdf_original_path as string | undefined);
         if (pdfPath && metaBucket) {
-        const { data: signed } = await adminClient.storage
-          .from(metaBucket)
-          .createSignedUrl(pdfPath, 60 * 60 * 24 * 7);
+          const { data: signed } = await adminClient.storage
+            .from(metaBucket)
+            .createSignedUrl(pdfPath, 60 * 60 * 24 * 7);
           if (signed?.signedUrl) {
             item.pdf_ko_url = signed.signedUrl;
+          }
+        }
+        if (originalPath && metaBucket) {
+          const { data: signedOriginal } = await adminClient.storage
+            .from(metaBucket)
+            .createSignedUrl(originalPath, 60 * 60 * 24 * 7);
+          if (signedOriginal?.signedUrl) {
+            item.pdf_original_url = signedOriginal.signedUrl;
           }
         }
         return item;

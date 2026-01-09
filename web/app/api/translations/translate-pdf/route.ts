@@ -209,7 +209,20 @@ export async function POST(request: Request) {
   const pdfBuffer = await renderPdf(translatedText);
 
   const safeEntryId = entryId.replace(/[^a-zA-Z0-9_-]/g, "_");
-  const objectPath = `translations/${safeEntryId}/${Date.now()}-ko.pdf`;
+  const timestamp = Date.now();
+  const objectPath = `translations/${safeEntryId}/${timestamp}-ko.pdf`;
+  const originalPath = `translations/${safeEntryId}/${timestamp}-original.pdf`;
+
+  const { error: originalUploadError } = await supabaseAdmin.storage
+    .from(bucket)
+    .upload(originalPath, rawBuffer, {
+      contentType: "application/pdf",
+      upsert: true,
+    });
+
+  if (originalUploadError) {
+    return NextResponse.json({ error: originalUploadError.message }, { status: 500 });
+  }
 
   const { error: uploadError } = await supabaseAdmin.storage
     .from(bucket)
@@ -236,9 +249,10 @@ export async function POST(request: Request) {
       {
         model,
         entry_id: entryId,
+        pdf_ko_path: objectPath,
+        pdf_original_path: originalPath,
         meta: {
           ...(existing?.meta ?? {}),
-          pdf_ko_path: objectPath,
           pdf_ko_bucket: bucket,
         },
       },
@@ -252,10 +266,15 @@ export async function POST(request: Request) {
   const { data: signed } = await supabaseAdmin.storage
     .from(bucket)
     .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
+  const { data: signedOriginal } = await supabaseAdmin.storage
+    .from(bucket)
+    .createSignedUrl(originalPath, 60 * 60 * 24 * 7);
 
   return NextResponse.json({
     ok: true,
     path: objectPath,
+    originalPath,
     url: signed?.signedUrl ?? null,
+    originalUrl: signedOriginal?.signedUrl ?? null,
   });
 }

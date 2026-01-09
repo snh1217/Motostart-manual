@@ -46,6 +46,7 @@ export type TranslationItem = {
   summary_ko?: string;
   text_ko?: string;
   pdf_ko_url?: string;
+  pdf_original_url?: string;
   updated_at: string;
 };
 
