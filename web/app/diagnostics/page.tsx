@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import ModelSelector from "../ModelSelector";
 import DiagnosticsAdminPanel from "./AdminPanel";
+import DiagnosticsAdminActions from "./DiagnosticsAdminActions";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
 
@@ -26,10 +27,11 @@ const modelOptions = [
 export default async function DiagnosticsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ model?: string }>;
+  searchParams: Promise<{ model?: string; edit?: string }>;
 }) {
   const resolved = await searchParams;
   const selectedModel = resolved?.model ?? "all";
+  const editId = resolved?.edit?.trim() ?? "";
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
   const shouldPrefetch = selectedModel !== "all";
@@ -40,29 +42,39 @@ export default async function DiagnosticsPage({
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">진단기 매뉴얼</h1>
         <p className="text-sm text-slate-600">
-          진단기 화면 캡처를 등록하고, 라인별 설명을 관리합니다.
+          진단기 화면 캡처를 등록하고 라인별 설명을 관리합니다.
         </p>
         <ModelSelector options={modelOptions} selected={selectedModel} />
       </header>
 
       <div className="grid gap-4 md:grid-cols-2">
         {filtered.length ? (
-          filtered.map((item) => <DiagnosticCard key={item.id} item={item} />)
+          filtered.map((item) => (
+            <DiagnosticCard key={item.id} item={item} isAdmin={isAdmin} model={selectedModel} />
+          ))
         ) : (
           <div className="col-span-full rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center text-slate-500">
             {shouldPrefetch
-              ? "등록된 항목이 없습니다."
+              ? "등록된 진단기 항목이 없습니다."
               : "모델을 선택해 주세요."}
           </div>
         )}
       </div>
 
-      {isAdmin ? <DiagnosticsAdminPanel /> : null}
+      {isAdmin ? <DiagnosticsAdminPanel selectedModel={selectedModel} editId={editId} /> : null}
     </section>
   );
 }
 
-function DiagnosticCard({ item }: { item: DiagnosticEntry }) {
+function DiagnosticCard({
+  item,
+  isAdmin,
+  model,
+}: {
+  item: DiagnosticEntry;
+  isAdmin: boolean;
+  model: string;
+}) {
   const sourceLabel = item.source === "db" ? "DB" : item.source === "json" ? "JSON" : null;
   const sourceTone =
     item.source === "db"
@@ -114,13 +126,14 @@ function DiagnosticCard({ item }: { item: DiagnosticEntry }) {
         ) : null}
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
         <Link
           href={`/diagnostics/${item.id}`}
           className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
         >
           상세 보기
         </Link>
+        {isAdmin ? <DiagnosticsAdminActions id={item.id} model={model} /> : null}
       </div>
     </article>
   );

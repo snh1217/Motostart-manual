@@ -46,6 +46,12 @@ export default async function DiagnosticDetailPage({
         />
       </div>
 
+      {item.video_url ? (
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <video src={item.video_url} controls className="w-full rounded-xl bg-slate-50" />
+        </div>
+      ) : null}
+
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-100 text-slate-600">

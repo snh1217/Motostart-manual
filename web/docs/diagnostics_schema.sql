@@ -4,6 +4,7 @@ create table if not exists public.diagnostics (
   title text not null,
   section text,
   image text not null,
+  video_url text,
   lines jsonb not null,
   note text,
   updated_at date default current_date

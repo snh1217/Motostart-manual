@@ -4,6 +4,7 @@ import path from "path";
 import crypto from "crypto";
 import type { DiagnosticEntry } from "../../lib/types";
 import AdminForm from "./AdminForm";
+import { getDiagnosticById } from "../../lib/diagnostics";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -74,7 +75,13 @@ const loadJsonHash = async () => {
   }
 };
 
-export default async function DiagnosticsAdminPanel() {
+export default async function DiagnosticsAdminPanel({
+  selectedModel,
+  editId,
+}: {
+  selectedModel: string;
+  editId?: string;
+}) {
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
   const isDbMode = Boolean(
     process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -82,7 +89,9 @@ export default async function DiagnosticsAdminPanel() {
   const isWriteDisabled = isReadOnly || !isDbMode;
   const modeLabel = isDbMode ? "DB 모드" : "JSON 모드";
   const modeTone = isDbMode ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700";
-  const modeHelp = isDbMode ? "Supabase 연결 중 · 저장 가능" : "Supabase 미연결 · 저장 비활성화";
+  const modeHelp = isDbMode
+    ? "Supabase 연결 중 · 저장 가능"
+    : "Supabase 미연결 · 저장 비활성화";
   const { ok: apiOk, items } = await loadDiagnostics();
   const latestUpdated = await resolveLatestUpdated(items, isDbMode);
   const jsonCount = await loadJsonCount();
@@ -91,14 +100,14 @@ export default async function DiagnosticsAdminPanel() {
   const connectionTone = apiOk ? "bg-emerald-500" : "bg-amber-500";
   const connectionLabel = apiOk ? "연결됨" : "연결 확인 필요";
 
-  // TODO: add content hash comparison for JSON vs DB to detect updates when counts match.
+  const editEntry = editId ? await getDiagnosticById(editId) : null;
 
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-base font-semibold">관리자 입력</h2>
-          <p className="text-sm text-slate-600">ADMIN_TOKEN 필요 · 저장 시 Supabase로 반영됩니다.</p>
+          <p className="text-sm text-slate-600">관리자 로그인 상태에서 저장됩니다.</p>
         </div>
         <div className="text-right text-xs text-slate-500">
           <p>DB: {dbCount}건 / JSON: {jsonCount}건</p>
@@ -114,13 +123,17 @@ export default async function DiagnosticsAdminPanel() {
           {connectionLabel}
         </span>
         {isReadOnly ? (
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">읽기 전용 모드</span>
+          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
+            읽기 전용 모드
+          </span>
         ) : null}
       </div>
       <div className="mt-4">
         <AdminForm
           readOnly={isWriteDisabled}
           saveTargetLabel={isDbMode ? "Supabase DB" : "JSON 파일"}
+          initialEntry={editEntry}
+          selectedModel={selectedModel}
         />
       </div>
     </section>

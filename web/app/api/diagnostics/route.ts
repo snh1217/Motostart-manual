@@ -78,6 +78,7 @@ export async function POST(request: Request) {
       title: body.title,
       section: body.section,
       image: body.image,
+      video_url: body.video_url ?? undefined,
       lines: body.lines as DiagnosticEntry["lines"],
       note: body.note,
       updated_at: body.updated_at ?? now,
@@ -105,4 +106,35 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json({ error: "SERVER_ERROR", detail: `${error}` }, { status: 500 });
   }
+}
+
+export async function DELETE(request: Request) {
+  if (process.env.READ_ONLY_MODE === "1") {
+    return NextResponse.json({ error: "READ_ONLY_MODE" }, { status: 403 });
+  }
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get("id")?.trim();
+  if (!id) {
+    return NextResponse.json({ error: "ID_REQUIRED" }, { status: 400 });
+  }
+
+  if (hasSupabaseConfig && supabaseAdmin) {
+    const { error } = await supabaseAdmin.from("diagnostics").delete().eq("id", id);
+    if (error) {
+      return NextResponse.json({ error: "DB_ERROR" }, { status: 500 });
+    }
+    return NextResponse.json({ ok: true });
+  }
+
+  const items = await readManifest();
+  const next = items.filter((item) => item.id !== id);
+  if (next.length === items.length) {
+    return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
+  }
+  await writeManifest(next);
+  return NextResponse.json({ ok: true, total: next.length });
 }

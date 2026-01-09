@@ -62,6 +62,7 @@ export type DiagnosticEntry = {
   title: string;
   section?: string;
   image: string;
+  video_url?: string;
   lines: DiagnosticLine[];
   note?: string;
   updated_at?: string;
