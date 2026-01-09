@@ -76,7 +76,8 @@ export async function GET(request: Request) {
   const model = modelParam === "all" ? null : modelParam;
 
   if (hasSupabaseConfig && supabaseAdmin) {
-    let dbQuery = supabaseAdmin.from("translations").select("*");
+    const adminClient = supabaseAdmin;
+    let dbQuery = adminClient.from("translations").select("*");
     if (entryId) dbQuery = dbQuery.eq("entry_id", entryId);
     if (model) dbQuery = dbQuery.eq("model", model);
     if (query) {
@@ -100,9 +101,9 @@ export async function GET(request: Request) {
           (typedRow.meta?.pdf_ko_bucket as string | undefined) ?? bucketFromEnv;
         const pdfPath = typedRow.meta?.pdf_ko_path as string | undefined;
         if (pdfPath && metaBucket) {
-          const { data: signed } = await supabaseAdmin.storage
-            .from(metaBucket)
-            .createSignedUrl(pdfPath, 60 * 60 * 24 * 7);
+        const { data: signed } = await adminClient.storage
+          .from(metaBucket)
+          .createSignedUrl(pdfPath, 60 * 60 * 24 * 7);
           if (signed?.signedUrl) {
             item.pdf_ko_url = signed.signedUrl;
           }
@@ -174,7 +175,7 @@ export async function POST(request: Request) {
         pdf_ko_url: payload.pdf_ko_url,
       };
     }
-    const { error } = await supabaseAdmin
+    const { error } = await adminClient
       .from("translations")
       .upsert(upsertPayload, { onConflict: "model,entry_id" });
 
