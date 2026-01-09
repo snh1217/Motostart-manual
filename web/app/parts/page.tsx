@@ -265,6 +265,11 @@ export default async function PartsPage({
                           <span className="rounded-full bg-slate-100 px-2 py-0.5">
                             {systemLabels[entry.system] ?? entry.system}
                           </span>
+                          {entry.videos?.some((video) => video.url) ? (
+                            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700">
+                              동영상 있음
+                            </span>
+                          ) : null}
                         </div>
                         <h2 className="text-lg font-semibold text-slate-900">{entry.name}</h2>
                         {entry.summary ? (
