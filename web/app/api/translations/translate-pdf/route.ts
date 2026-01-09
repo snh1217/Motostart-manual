@@ -109,172 +109,183 @@ const normalizeText = (value: string) =>
   value.replace(/\u0000/g, "").replace(/\s+\n/g, "\n").trim();
 
 export async function POST(request: Request) {
-  if (isReadOnlyMode()) {
-    return NextResponse.json(
-      { error: "읽기 전용 모드에서는 번역할 수 없습니다." },
-      { status: 403 }
-    );
-  }
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json({ error: "관리자 토큰이 필요합니다." }, { status: 401 });
-  }
-  if (!hasSupabaseConfig || !supabaseAdmin) {
-    return NextResponse.json({ error: "Supabase 설정이 필요합니다." }, { status: 500 });
-  }
-
-  const projectId = process.env.GCP_PROJECT_ID;
-  const location = process.env.GCP_LOCATION ?? "us";
-  const processorId = process.env.GCP_PROCESSOR_ID;
-  const bucket = process.env.TRANSLATIONS_PDF_BUCKET;
-  const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
-  if (!projectId || !processorId || !bucket) {
-    return NextResponse.json(
-      { error: "GCP 또는 저장소 환경변수를 확인해 주세요." },
-      { status: 500 }
-    );
-  }
-  if (!credentialsPath && !credentialsJson) {
-    return NextResponse.json(
-      { error: "서비스 계정 키 환경변수가 필요합니다." },
-      { status: 500 }
-    );
-  }
-
-  const formData = await request.formData();
-  const entryId = String(formData.get("entryId") ?? "").trim();
-  const file = formData.get("file");
-  if (!entryId) {
-    return NextResponse.json({ error: "매뉴얼 ID가 필요합니다." }, { status: 400 });
-  }
-  if (!file || typeof file === "string") {
-    return NextResponse.json({ error: "PDF 파일이 필요합니다." }, { status: 400 });
-  }
-  const isPdf =
-    file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
-  if (!isPdf) {
-    return NextResponse.json({ error: "PDF 파일만 업로드할 수 있습니다." }, { status: 400 });
-  }
-
-  const rawBuffer = Buffer.from(await file.arrayBuffer());
-
-  let clientOptions: { credentials?: Record<string, string>; projectId?: string } = {};
-  if (credentialsJson) {
-    try {
-      const parsed = JSON.parse(credentialsJson) as Record<string, string>;
-      clientOptions = {
-        credentials: parsed,
-        projectId: parsed.project_id ?? projectId,
-      };
-    } catch {
+  try {
+    if (isReadOnlyMode()) {
       return NextResponse.json(
-        { error: "서비스 계정 키 JSON 형식이 올바르지 않습니다." },
+        { error: "읽기 전용 모드에서는 번역할 수 없습니다." },
+        { status: 403 }
+      );
+    }
+    if (!isAdminAuthorized(request)) {
+      return NextResponse.json({ error: "관리자 토큰이 필요합니다." }, { status: 401 });
+    }
+    if (!hasSupabaseConfig || !supabaseAdmin) {
+      return NextResponse.json({ error: "Supabase 설정이 필요합니다." }, { status: 500 });
+    }
+
+    const projectId = process.env.GCP_PROJECT_ID;
+    const location = process.env.GCP_LOCATION ?? "us";
+    const processorId = process.env.GCP_PROCESSOR_ID;
+    const bucket = process.env.TRANSLATIONS_PDF_BUCKET;
+    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
+    const credentialsJson = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+    if (!projectId || !processorId || !bucket) {
+      return NextResponse.json(
+        { error: "GCP 또는 저장소 환경변수를 확인해 주세요." },
         { status: 500 }
       );
     }
-  }
+    if (!credentialsPath && !credentialsJson) {
+      return NextResponse.json(
+        { error: "서비스 계정 키 환경변수가 필요합니다." },
+        { status: 500 }
+      );
+    }
 
-  const docClient = new DocumentProcessorServiceClient(clientOptions);
-  const processorName = docClient.processorPath(projectId, location, processorId);
-  const [docResult] = await docClient.processDocument({
-    name: processorName,
-    rawDocument: {
-      content: rawBuffer,
-      mimeType: "application/pdf",
-    },
-  });
+    const formData = await request.formData();
+    const entryId = String(formData.get("entryId") ?? "").trim();
+    const file = formData.get("file");
+    if (!entryId) {
+      return NextResponse.json({ error: "매뉴얼 ID가 필요합니다." }, { status: 400 });
+    }
+    if (!file || typeof file === "string") {
+      return NextResponse.json({ error: "PDF 파일이 필요합니다." }, { status: 400 });
+    }
+    const isPdf =
+      file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
+    if (!isPdf) {
+      return NextResponse.json({ error: "PDF 파일만 업로드할 수 있습니다." }, { status: 400 });
+    }
+    if (file.size > 20 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: "PDF는 20MB 이하만 업로드할 수 있습니다." },
+        { status: 400 }
+      );
+    }
 
-  const extractedText = normalizeText(docResult?.document?.text ?? "");
-  if (!extractedText) {
-    return NextResponse.json({ error: "PDF에서 텍스트를 추출하지 못했습니다." }, { status: 400 });
-  }
+    const rawBuffer = Buffer.from(await file.arrayBuffer());
 
-  const translateClient = new TranslationServiceClient(clientOptions);
-  const parent = `projects/${projectId}/locations/${location}`;
-  const chunks = splitByLength(extractedText, 2500);
-  const translatedChunks: string[] = [];
+    let clientOptions: { credentials?: Record<string, string>; projectId?: string } = {};
+    if (credentialsJson) {
+      try {
+        const parsed = JSON.parse(credentialsJson) as Record<string, string>;
+        clientOptions = {
+          credentials: parsed,
+          projectId: parsed.project_id ?? projectId,
+        };
+      } catch {
+        return NextResponse.json(
+          { error: "서비스 계정 키 JSON 형식이 올바르지 않습니다." },
+          { status: 500 }
+        );
+      }
+    }
 
-  for (const chunk of chunks) {
-    const [translation] = await translateClient.translateText({
-      parent,
-      contents: [chunk],
-      mimeType: "text/plain",
-      targetLanguageCode: "ko",
-    });
-    const translatedText = translation.translations?.[0]?.translatedText ?? "";
-    translatedChunks.push(translatedText);
-  }
-
-  const translatedText = normalizeText(translatedChunks.join("\n"));
-  const pdfBuffer = await renderPdf(translatedText);
-
-  const safeEntryId = entryId.replace(/[^a-zA-Z0-9_-]/g, "_");
-  const timestamp = Date.now();
-  const objectPath = `translations/${safeEntryId}/${timestamp}-ko.pdf`;
-  const originalPath = `translations/${safeEntryId}/${timestamp}-original.pdf`;
-
-  const { error: originalUploadError } = await supabaseAdmin.storage
-    .from(bucket)
-    .upload(originalPath, rawBuffer, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
-
-  if (originalUploadError) {
-    return NextResponse.json({ error: originalUploadError.message }, { status: 500 });
-  }
-
-  const { error: uploadError } = await supabaseAdmin.storage
-    .from(bucket)
-    .upload(objectPath, pdfBuffer, {
-      contentType: "application/pdf",
-      upsert: true,
-    });
-
-  if (uploadError) {
-    return NextResponse.json({ error: uploadError.message }, { status: 500 });
-  }
-
-  const model = inferModel(entryId);
-  const { data: existing } = await supabaseAdmin
-    .from("translations")
-    .select("meta")
-    .eq("model", model)
-    .eq("entry_id", entryId)
-    .maybeSingle();
-
-  const { error: upsertError } = await supabaseAdmin
-    .from("translations")
-    .upsert(
-      {
-        model,
-        entry_id: entryId,
-        pdf_ko_path: objectPath,
-        pdf_original_path: originalPath,
-        meta: {
-          ...(existing?.meta ?? {}),
-          pdf_ko_bucket: bucket,
-        },
+    const docClient = new DocumentProcessorServiceClient(clientOptions);
+    const processorName = docClient.processorPath(projectId, location, processorId);
+    const [docResult] = await docClient.processDocument({
+      name: processorName,
+      rawDocument: {
+        content: rawBuffer,
+        mimeType: "application/pdf",
       },
-      { onConflict: "model,entry_id" }
-    );
+    });
 
-  if (upsertError) {
-    return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    const extractedText = normalizeText(docResult?.document?.text ?? "");
+    if (!extractedText) {
+      return NextResponse.json({ error: "PDF에서 텍스트를 추출하지 못했습니다." }, { status: 400 });
+    }
+
+    const translateClient = new TranslationServiceClient(clientOptions);
+    const parent = `projects/${projectId}/locations/${location}`;
+    const chunks = splitByLength(extractedText, 2500);
+    const translatedChunks: string[] = [];
+
+    for (const chunk of chunks) {
+      const [translation] = await translateClient.translateText({
+        parent,
+        contents: [chunk],
+        mimeType: "text/plain",
+        targetLanguageCode: "ko",
+      });
+      const translatedText = translation.translations?.[0]?.translatedText ?? "";
+      translatedChunks.push(translatedText);
+    }
+
+    const translatedText = normalizeText(translatedChunks.join("\n"));
+    const pdfBuffer = await renderPdf(translatedText);
+
+    const safeEntryId = entryId.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const timestamp = Date.now();
+    const objectPath = `translations/${safeEntryId}/${timestamp}-ko.pdf`;
+    const originalPath = `translations/${safeEntryId}/${timestamp}-original.pdf`;
+
+    const { error: originalUploadError } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(originalPath, rawBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (originalUploadError) {
+      return NextResponse.json({ error: originalUploadError.message }, { status: 500 });
+    }
+
+    const { error: uploadError } = await supabaseAdmin.storage
+      .from(bucket)
+      .upload(objectPath, pdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    }
+
+    const model = inferModel(entryId);
+    const { data: existing } = await supabaseAdmin
+      .from("translations")
+      .select("meta")
+      .eq("model", model)
+      .eq("entry_id", entryId)
+      .maybeSingle();
+
+    const { error: upsertError } = await supabaseAdmin
+      .from("translations")
+      .upsert(
+        {
+          model,
+          entry_id: entryId,
+          pdf_ko_path: objectPath,
+          pdf_original_path: originalPath,
+          meta: {
+            ...(existing?.meta ?? {}),
+            pdf_ko_bucket: bucket,
+          },
+        },
+        { onConflict: "model,entry_id" }
+      );
+
+    if (upsertError) {
+      return NextResponse.json({ error: upsertError.message }, { status: 500 });
+    }
+
+    const { data: signed } = await supabaseAdmin.storage
+      .from(bucket)
+      .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
+    const { data: signedOriginal } = await supabaseAdmin.storage
+      .from(bucket)
+      .createSignedUrl(originalPath, 60 * 60 * 24 * 7);
+
+    return NextResponse.json({
+      ok: true,
+      path: objectPath,
+      originalPath,
+      url: signed?.signedUrl ?? null,
+      originalUrl: signedOriginal?.signedUrl ?? null,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "번역 처리 실패";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
-
-  const { data: signed } = await supabaseAdmin.storage
-    .from(bucket)
-    .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
-  const { data: signedOriginal } = await supabaseAdmin.storage
-    .from(bucket)
-    .createSignedUrl(originalPath, 60 * 60 * 24 * 7);
-
-  return NextResponse.json({
-    ok: true,
-    path: objectPath,
-    originalPath,
-    url: signed?.signedUrl ?? null,
-    originalUrl: signedOriginal?.signedUrl ?? null,
-  });
 }

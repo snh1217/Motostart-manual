@@ -61,13 +61,21 @@ export default function PdfTranslateForm({ readOnly = false }: PdfTranslateFormP
         },
         body: formData,
       });
-      const data = await response.json();
+      const rawText = await response.text();
+      let data: Record<string, unknown> = {};
+      if (rawText) {
+        try {
+          data = JSON.parse(rawText) as Record<string, unknown>;
+        } catch {
+          data = { error: rawText };
+        }
+      }
       if (!response.ok) {
-        throw new Error(data?.error ?? "PDF 번역 실패");
+        throw new Error((data?.error as string) ?? "PDF 번역 실패");
       }
       setStatus("success");
       setMessage("PDF 번역이 완료되었습니다.");
-      setResultUrl(data?.url ?? null);
+      setResultUrl((data?.url as string) ?? null);
       setFile(null);
       (event.target as HTMLFormElement).reset();
     } catch (error) {
