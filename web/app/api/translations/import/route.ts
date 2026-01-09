@@ -1,4 +1,4 @@
-import { promises as fs } from "fs";
+﻿import { promises as fs } from "fs";
 import path from "path";
 import { NextResponse } from "next/server";
 import Papa from "papaparse";
@@ -19,12 +19,19 @@ const headerMap: Record<string, keyof TranslationItem> = {
   entryid: "entryId",
   "메뉴얼id": "entryId",
   "메뉴얼아이디": "entryId",
+  "메뉴얼식별자": "entryId",
+  "번역제목": "title_ko",
   "한글제목": "title_ko",
   titleko: "title_ko",
+  "번역요약": "summary_ko",
   "한글요약": "summary_ko",
   summaryko: "summary_ko",
+  "번역본문": "text_ko",
   "한글본문": "text_ko",
   textko: "text_ko",
+  "번역pdf": "pdf_ko_url",
+  "pdfurl": "pdf_ko_url",
+  "pdfko": "pdf_ko_url",
 };
 
 const normalizeRow = (row: Record<string, unknown>): Record<string, string> => {
@@ -83,7 +90,12 @@ const inferModel = (entryId: string): string => {
   const upper = entryId.toUpperCase();
   if (upper.includes("350D")) return "350D";
   if (upper.includes("368G")) return "368G";
+  if (upper.includes("368E")) return "368E";
   if (upper.includes("125M")) return "125M";
+  if (upper.includes("125D")) return "125D";
+  if (upper.includes("125E")) return "125E";
+  if (upper.includes("125C")) return "125C";
+  if (upper.includes("310M")) return "310M";
   return "UNKNOWN";
 };
 
@@ -136,25 +148,47 @@ export async function POST(request: Request) {
   const today = new Date().toISOString().slice(0, 10);
 
   if (hasSupabaseConfig && supabaseAdmin) {
+    const entryIds = Array.from(
+      new Set(rows.map((row) => row.entryId).filter(Boolean))
+    );
+    const existingMetaMap = new Map<string, Record<string, unknown>>();
+
+    if (entryIds.length) {
+      const { data: existingRows } = await supabaseAdmin
+        .from("translations")
+        .select("entry_id,meta")
+        .in("entry_id", entryIds);
+      existingRows?.forEach((row) => {
+        if (row.entry_id) {
+          existingMetaMap.set(row.entry_id, (row.meta as Record<string, unknown>) ?? {});
+        }
+      });
+    }
+
     const payload = rows
       .filter((row) => row.entryId)
-      .map((row) => ({
-        model: inferModel(row.entryId),
-        entry_id: row.entryId,
-        title_ko: row.title_ko || null,
-        summary_ko: row.summary_ko || null,
-        text_ko: row.text_ko || null,
-      }));
+      .map((row) => {
+        const existingMeta = existingMetaMap.get(row.entryId) ?? {};
+        return {
+          model: inferModel(row.entryId),
+          entry_id: row.entryId,
+          title_ko: row.title_ko || null,
+          summary_ko: row.summary_ko || null,
+          text_ko: row.text_ko || null,
+          meta: row.pdf_ko_url
+            ? { ...existingMeta, pdf_ko_url: row.pdf_ko_url }
+            : Object.keys(existingMeta).length
+              ? existingMeta
+              : null,
+        };
+      });
 
     if (payload.length) {
       const { error } = await supabaseAdmin.from("translations").upsert(payload, {
         onConflict: "model,entry_id",
       });
       if (error) {
-        return NextResponse.json(
-          { error: error.message },
-          { status: 500 }
-        );
+        return NextResponse.json({ error: error.message }, { status: 500 });
       }
     }
 
@@ -167,9 +201,7 @@ export async function POST(request: Request) {
   }
 
   const existing = await readTranslations();
-  const translationMap = new Map(
-    existing.map((item) => [item.entryId, item])
-  );
+  const translationMap = new Map(existing.map((item) => [item.entryId, item]));
 
   let imported = 0;
   let updated = 0;
@@ -186,6 +218,7 @@ export async function POST(request: Request) {
       title_ko: row.title_ko || undefined,
       summary_ko: row.summary_ko || undefined,
       text_ko: row.text_ko || undefined,
+      pdf_ko_url: row.pdf_ko_url || undefined,
       updated_at: today,
     };
 

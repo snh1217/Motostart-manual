@@ -1,9 +1,12 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { headers } from "next/headers";
 import { promises as fs } from "fs";
 import path from "path";
 import UploadForm from "./UploadForm";
-import type { TranslationItem } from "../../lib/types";
+import PdfTranslateForm from "./PdfTranslateForm";
+import TranslationsTable from "./TranslationsTable";
+import type { TranslationItem, ModelCode } from "../../lib/types";
+import { sortModelCodes } from "../../lib/modelSort";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -15,11 +18,25 @@ const buildApiUrl = async (query: string) => {
   return host ? `${proto}://${host}/api/translations?${query}` : `/api/translations?${query}`;
 };
 
-const loadTranslations = async (query: string): Promise<TranslationItem[]> => {
-  if (!query.trim()) return [];
+const loadModelOptions = async (): Promise<ModelCode[]> => {
+  try {
+    const modelsPath = path.resolve(process.cwd(), "data", "models.json");
+    const raw = await fs.readFile(modelsPath, "utf8");
+    const sanitized = raw.replace(/^\uFEFF/, "");
+    const parsed = JSON.parse(sanitized) as Array<{ id: ModelCode }>;
+    if (!Array.isArray(parsed)) return [];
+    return sortModelCodes(parsed).map((item) => item.id);
+  } catch {
+    return [];
+  }
+};
+
+const loadTranslations = async (query: string, model: string): Promise<TranslationItem[]> => {
+  if (!query.trim() && model === "all") return [];
   try {
     const params = new URLSearchParams();
-    params.set("q", query.trim());
+    if (query.trim()) params.set("q", query.trim());
+    if (model !== "all") params.set("model", model);
     const apiUrl = await buildApiUrl(params.toString());
     const response = await fetch(apiUrl, { cache: "no-store" });
     if (response.ok) {
@@ -35,7 +52,15 @@ const loadTranslations = async (query: string): Promise<TranslationItem[]> => {
     const raw = await fs.readFile(filePath, "utf8");
     const sanitized = raw.replace(/^\uFEFF/, "");
     const parsed = JSON.parse(sanitized);
-    return Array.isArray(parsed) ? (parsed as TranslationItem[]) : [];
+    const items = Array.isArray(parsed) ? (parsed as TranslationItem[]) : [];
+    return items.filter((item) => {
+      if (model !== "all" && !item.entryId.toUpperCase().includes(model)) return false;
+      if (query.trim()) {
+        const haystack = [item.entryId, item.title_ko].filter(Boolean).join(" ").toLowerCase();
+        if (!haystack.includes(query.toLowerCase())) return false;
+      }
+      return true;
+    });
   } catch {
     return [];
   }
@@ -44,25 +69,25 @@ const loadTranslations = async (query: string): Promise<TranslationItem[]> => {
 export default async function TranslationsPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ q?: string }>;
+  searchParams?: Promise<{ q?: string; model?: string }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = resolvedSearchParams?.q ?? "";
+  const selectedModel = resolvedSearchParams?.model ?? "all";
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
+  const modelOptions = await loadModelOptions();
 
-  const translations = await loadTranslations(query);
-  const filtered = translations;
+  const translations = await loadTranslations(query, selectedModel);
+  const returnTo = `/translations?${new URLSearchParams({ q: query, model: selectedModel }).toString()}`;
 
   return (
     <section className="space-y-8">
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">번역 관리</h1>
-        <p className="text-slate-600">
-          번역 템플릿을 다운로드하고 한글 번역/메모를 관리합니다.
-        </p>
+        <p className="text-slate-600">번역 템플릿을 다운로드하고 항목을 관리합니다.</p>
         {isReadOnly ? (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2 text-sm text-amber-700">
-            읽기 전용 모드입니다. 업로드와 편집은 비활성화되었습니다.
+            읽기 전용 모드입니다. 업로드와 편집이 비활성화됩니다.
           </div>
         ) : null}
       </header>
@@ -94,13 +119,35 @@ export default async function TranslationsPage({
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold">PDF 자동 번역</h2>
+        <p className="mt-1 text-sm text-slate-600">
+          원본 PDF를 올리면 한국어 PDF를 생성해 저장합니다.
+        </p>
+        <div className="mt-4">
+          <PdfTranslateForm readOnly={isReadOnly} />
+        </div>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <form method="get" className="flex flex-col gap-3 sm:flex-row">
           <input
             name="q"
             defaultValue={query}
-            placeholder="메뉴얼 ID 또는 한글 제목 검색"
+            placeholder="매뉴얼 ID 또는 제목 검색"
             className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           />
+          <select
+            name="model"
+            defaultValue={selectedModel}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm"
+          >
+            <option value="all">전체 모델</option>
+            {modelOptions.map((model) => (
+              <option key={model} value={model}>
+                {model}
+              </option>
+            ))}
+          </select>
           <button
             type="submit"
             className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white"
@@ -113,43 +160,16 @@ export default async function TranslationsPage({
             </span>
           ) : (
             <Link
-              href="/translations/new"
+              href={`/translations/new?${new URLSearchParams({ returnTo }).toString()}`}
               className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
             >
-              새 번역 작성
+              새 번역 생성
             </Link>
           )}
         </form>
 
-        <div className="mt-4 overflow-x-auto rounded-2xl border border-slate-200 bg-white">
-          <table className="min-w-[640px] text-left text-sm sm:min-w-full">
-            <thead className="bg-slate-100 text-slate-600">
-              <tr>
-                <th className="px-4 py-3 font-semibold">메뉴얼 ID</th>
-                <th className="px-4 py-3 font-semibold">한글 제목</th>
-                <th className="px-4 py-3 font-semibold">업데이트</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length ? (
-                filtered.map((item) => (
-                  <tr key={item.entryId} className="border-t border-slate-100">
-                    <td className="px-4 py-3 font-medium text-slate-800">{item.entryId}</td>
-                    <td className="px-4 py-3 text-slate-700">{item.title_ko ?? "-"}</td>
-                    <td className="px-4 py-3 text-slate-500">{item.updated_at}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-4 py-6 text-center text-slate-500" colSpan={3}>
-                    {query.trim()
-                      ? "조건에 맞는 항목이 없습니다."
-                      : "검색어를 입력해 주세요."}
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+        <div className="mt-4">
+          <TranslationsTable items={translations} readOnly={isReadOnly} returnTo={returnTo} />
         </div>
       </section>
     </section>

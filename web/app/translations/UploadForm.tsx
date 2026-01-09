@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -41,7 +41,7 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
 
     if (!adminToken.trim()) {
       setStatus("error");
-      setMessage("관리자코드를 입력해 주세요.");
+      setMessage("관리자 코드를 입력해 주세요.");
       return;
     }
 
@@ -89,7 +89,7 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
           type="password"
           value={adminToken}
           onChange={(event) => setAdminToken(event.target.value)}
-          placeholder="관리자코드"
+          placeholder="관리자 코드"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -106,7 +106,7 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
             disabled={status === "loading" || readOnly}
             className="min-w-[72px] whitespace-nowrap rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
           >
-            {status === "loading" ? "업로드 중..." : "업로드"}
+            {status === "loading" ? "업로드 중.." : "업로드"}
           </button>
         </div>
       </div>
@@ -117,7 +117,7 @@ export default function UploadForm({ readOnly = false }: UploadFormProps) {
           }`}
         >
           {message}
-          {result ? ` (추가 ${result.imported}건 / 총 ${result.total}건)` : ""}
+          {result ? ` (추가 ${result.imported}건/ 총 ${result.total}건)` : ""}
         </div>
       ) : null}
     </form>

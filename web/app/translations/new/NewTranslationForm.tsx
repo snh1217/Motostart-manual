@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -9,6 +9,10 @@ type Props = {
   returnTo: string;
   model?: string;
   readOnly?: boolean;
+  initialTitleKo?: string;
+  initialSummaryKo?: string;
+  initialTextKo?: string;
+  initialPdfUrl?: string;
 };
 
 export default function NewTranslationForm({
@@ -17,10 +21,15 @@ export default function NewTranslationForm({
   returnTo,
   model,
   readOnly = false,
+  initialTitleKo,
+  initialSummaryKo,
+  initialTextKo,
+  initialPdfUrl,
 }: Props) {
-  const [titleKo, setTitleKo] = useState("");
-  const [summaryKo, setSummaryKo] = useState("");
-  const [textKo, setTextKo] = useState("");
+  const [titleKo, setTitleKo] = useState(initialTitleKo ?? "");
+  const [summaryKo, setSummaryKo] = useState(initialSummaryKo ?? "");
+  const [textKo, setTextKo] = useState(initialTextKo ?? "");
+  const [pdfUrl, setPdfUrl] = useState(initialPdfUrl ?? "");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">(
     "idle"
   );
@@ -32,10 +41,17 @@ export default function NewTranslationForm({
     if (stored) setAdminToken(stored);
   }, []);
 
+  useEffect(() => {
+    setTitleKo(initialTitleKo ?? "");
+    setSummaryKo(initialSummaryKo ?? "");
+    setTextKo(initialTextKo ?? "");
+    setPdfUrl(initialPdfUrl ?? "");
+  }, [initialTitleKo, initialSummaryKo, initialTextKo, initialPdfUrl]);
+
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(entryId);
-      setMessage("메뉴얼 ID를 복사했습니다.");
+      setMessage("매뉴얼 ID를 복사했습니다.");
     } catch {
       setMessage("복사에 실패했습니다.");
     }
@@ -79,6 +95,7 @@ export default function NewTranslationForm({
           title_ko: titleKo,
           summary_ko: summaryKo,
           text_ko: textKo,
+          pdf_ko_url: pdfUrl.trim() || undefined,
         }),
       });
 
@@ -105,7 +122,7 @@ export default function NewTranslationForm({
         </div>
       ) : null}
       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <div className="text-xs text-slate-500">메뉴얼 ID</div>
+        <div className="text-xs text-slate-500">매뉴얼 ID</div>
         <div className="mt-1 flex flex-wrap items-center gap-2">
           <input
             readOnly
@@ -134,7 +151,7 @@ export default function NewTranslationForm({
           value={adminToken}
           onChange={(event) => setAdminToken(event.target.value)}
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
-          placeholder="관리자코드"
+          placeholder="관리자 코드"
           disabled={readOnly}
         />
       </div>
@@ -163,7 +180,7 @@ export default function NewTranslationForm({
           onChange={(event) => setSummaryKo(event.target.value)}
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           rows={3}
-          placeholder="요약 내용을 입력하세요."
+          placeholder="요약 내용을 입력하세요"
           disabled={readOnly}
         />
       </div>
@@ -178,7 +195,21 @@ export default function NewTranslationForm({
           onChange={(event) => setTextKo(event.target.value)}
           className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
           rows={8}
-          placeholder="본문 내용을 입력하세요."
+          placeholder="본문 내용을 입력하세요"
+          disabled={readOnly}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-semibold text-slate-700" htmlFor="pdfUrl">
+          번역 PDF URL (선택)
+        </label>
+        <input
+          id="pdfUrl"
+          value={pdfUrl}
+          onChange={(event) => setPdfUrl(event.target.value)}
+          className="w-full rounded-xl border border-slate-200 px-4 py-2 text-sm"
+          placeholder="https://.../translated.pdf"
           disabled={readOnly}
         />
       </div>
@@ -189,7 +220,7 @@ export default function NewTranslationForm({
           disabled={status === "saving" || readOnly}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {status === "saving" ? "저장 중..." : "저장"}
+          {status === "saving" ? "저장 중.." : "저장"}
         </button>
         <Link
           href={returnTo}
@@ -210,4 +241,3 @@ export default function NewTranslationForm({
     </form>
   );
 }
-
