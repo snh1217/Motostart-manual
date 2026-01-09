@@ -142,28 +142,44 @@ export async function POST(request: Request) {
       );
     }
 
-    const formData = await request.formData();
-    const entryId = String(formData.get("entryId") ?? "").trim();
-    const file = formData.get("file");
+    let entryId = "";
+    let originalPath: string | null = null;
+    let rawBuffer: Buffer | null = null;
+
+    const contentType = request.headers.get("content-type") ?? "";
+    if (contentType.includes("application/json")) {
+      const payload = (await request.json()) as {
+        entryId?: string;
+        originalPath?: string;
+      };
+      entryId = payload.entryId?.trim() ?? "";
+      originalPath = payload.originalPath ?? null;
+    } else {
+      const formData = await request.formData();
+      entryId = String(formData.get("entryId") ?? "").trim();
+      const file = formData.get("file");
+      if (file && typeof file !== "string") {
+        const isPdf =
+          file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
+        if (!isPdf) {
+          return NextResponse.json(
+            { error: "PDF 파일만 업로드할 수 있습니다." },
+            { status: 400 }
+          );
+        }
+        if (file.size > 20 * 1024 * 1024) {
+          return NextResponse.json(
+            { error: "PDF는 20MB 이하만 업로드할 수 있습니다." },
+            { status: 400 }
+          );
+        }
+        rawBuffer = Buffer.from(await file.arrayBuffer());
+      }
+    }
+
     if (!entryId) {
       return NextResponse.json({ error: "매뉴얼 ID가 필요합니다." }, { status: 400 });
     }
-    if (!file || typeof file === "string") {
-      return NextResponse.json({ error: "PDF 파일이 필요합니다." }, { status: 400 });
-    }
-    const isPdf =
-      file.type.includes("pdf") || file.name.toLowerCase().endsWith(".pdf");
-    if (!isPdf) {
-      return NextResponse.json({ error: "PDF 파일만 업로드할 수 있습니다." }, { status: 400 });
-    }
-    if (file.size > 20 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: "PDF는 20MB 이하만 업로드할 수 있습니다." },
-        { status: 400 }
-      );
-    }
-
-    const rawBuffer = Buffer.from(await file.arrayBuffer());
 
     let clientOptions: { credentials?: Record<string, string>; projectId?: string } = {};
     if (credentialsJson) {
@@ -183,6 +199,24 @@ export async function POST(request: Request) {
 
     const docClient = new DocumentProcessorServiceClient(clientOptions);
     const processorName = docClient.processorPath(projectId, location, processorId);
+    let originalFilePath = originalPath;
+    if (!rawBuffer) {
+      if (!originalPath) {
+        return NextResponse.json({ error: "PDF 파일 경로가 필요합니다." }, { status: 400 });
+      }
+      const { data: download, error: downloadError } = await supabaseAdmin.storage
+        .from(bucket)
+        .download(originalPath);
+      if (downloadError || !download) {
+        return NextResponse.json(
+          { error: downloadError?.message ?? "원본 PDF를 찾지 못했습니다." },
+          { status: 500 }
+        );
+      }
+      const arrayBuffer = await download.arrayBuffer();
+      rawBuffer = Buffer.from(arrayBuffer);
+    }
+
     const [docResult] = await docClient.processDocument({
       name: processorName,
       rawDocument: {
@@ -215,20 +249,22 @@ export async function POST(request: Request) {
     const translatedText = normalizeText(translatedChunks.join("\n"));
     const pdfBuffer = await renderPdf(translatedText);
 
-    const safeEntryId = entryId.replace(/[^a-zA-Z0-9_-]/g, "_");
+    const safeEntryIdValue = entryId.replace(/[^a-zA-Z0-9_-]/g, "_");
     const timestamp = Date.now();
-    const objectPath = `translations/${safeEntryId}/${timestamp}-ko.pdf`;
-    const originalPath = `translations/${safeEntryId}/${timestamp}-original.pdf`;
+    const objectPath = `translations/${safeEntryIdValue}/${timestamp}-ko.pdf`;
 
-    const { error: originalUploadError } = await supabaseAdmin.storage
-      .from(bucket)
-      .upload(originalPath, rawBuffer, {
-        contentType: "application/pdf",
-        upsert: true,
-      });
+    if (!originalFilePath) {
+      originalFilePath = `translations/${safeEntryIdValue}/${timestamp}-original.pdf`;
+      const { error: originalUploadError } = await supabaseAdmin.storage
+        .from(bucket)
+        .upload(originalFilePath, rawBuffer, {
+          contentType: "application/pdf",
+          upsert: true,
+        });
 
-    if (originalUploadError) {
-      return NextResponse.json({ error: originalUploadError.message }, { status: 500 });
+      if (originalUploadError) {
+        return NextResponse.json({ error: originalUploadError.message }, { status: 500 });
+      }
     }
 
     const { error: uploadError } = await supabaseAdmin.storage
@@ -256,8 +292,8 @@ export async function POST(request: Request) {
         {
           model,
           entry_id: entryId,
-          pdf_ko_path: objectPath,
-          pdf_original_path: originalPath,
+        pdf_ko_path: objectPath,
+        pdf_original_path: originalFilePath,
           meta: {
             ...(existing?.meta ?? {}),
             pdf_ko_bucket: bucket,
@@ -275,12 +311,12 @@ export async function POST(request: Request) {
       .createSignedUrl(objectPath, 60 * 60 * 24 * 7);
     const { data: signedOriginal } = await supabaseAdmin.storage
       .from(bucket)
-      .createSignedUrl(originalPath, 60 * 60 * 24 * 7);
+      .createSignedUrl(originalFilePath, 60 * 60 * 24 * 7);
 
     return NextResponse.json({
       ok: true,
       path: objectPath,
-      originalPath,
+      originalPath: originalFilePath,
       url: signed?.signedUrl ?? null,
       originalUrl: signedOriginal?.signedUrl ?? null,
     });

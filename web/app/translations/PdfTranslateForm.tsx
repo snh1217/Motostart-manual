@@ -48,19 +48,65 @@ export default function PdfTranslateForm({ readOnly = false }: PdfTranslateFormP
     setMessage("");
     setResultUrl(null);
 
-    const formData = new FormData();
-    formData.append("entryId", entryId.trim());
-    formData.append("file", file);
-
     try {
       localStorage.setItem("ADMIN_TOKEN", adminToken);
+      const uploadResponse = await fetch("/api/translations/upload-pdf", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({
+          entryId: entryId.trim(),
+          filename: file.name,
+          contentType: file.type || "application/pdf",
+        }),
+      });
+
+      const uploadText = await uploadResponse.text();
+      let uploadData: Record<string, unknown> = {};
+      if (uploadText) {
+        try {
+          uploadData = JSON.parse(uploadText) as Record<string, unknown>;
+        } catch {
+          uploadData = { error: uploadText };
+        }
+      }
+      if (!uploadResponse.ok) {
+        throw new Error((uploadData?.error as string) ?? "업로드 준비 실패");
+      }
+
+      const signedUrl = uploadData?.signedUrl as string | undefined;
+      const originalPath = uploadData?.path as string | undefined;
+      const contentType = (uploadData?.contentType as string) ?? "application/pdf";
+      if (!signedUrl || !originalPath) {
+        throw new Error("업로드 URL을 가져오지 못했습니다.");
+      }
+
+      const uploadToStorage = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType,
+        },
+        body: file,
+      });
+
+      if (!uploadToStorage.ok) {
+        throw new Error("스토리지 업로드에 실패했습니다.");
+      }
+
       const response = await fetch("/api/translations/translate-pdf", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: `Bearer ${adminToken}`,
         },
-        body: formData,
+        body: JSON.stringify({
+          entryId: entryId.trim(),
+          originalPath,
+        }),
       });
+
       const rawText = await response.text();
       let data: Record<string, unknown> = {};
       if (rawText) {
