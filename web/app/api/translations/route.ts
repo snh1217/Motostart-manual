@@ -156,6 +156,7 @@ export async function POST(request: Request) {
   const model = payload.model ?? inferModel(payload.entryId);
 
   if (hasSupabaseConfig && supabaseAdmin) {
+    const adminClient = supabaseAdmin;
     const upsertPayload: Record<string, unknown> = {
       model,
       entry_id: payload.entryId,
@@ -164,7 +165,7 @@ export async function POST(request: Request) {
       text_ko: payload.text_ko ?? null,
     };
     if (payload.pdf_ko_url) {
-      const { data: existing } = await supabaseAdmin
+      const { data: existing } = await adminClient
         .from("translations")
         .select("meta")
         .eq("model", model)
