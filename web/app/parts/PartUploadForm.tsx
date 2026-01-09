@@ -120,23 +120,50 @@ export default function PartUploadForm() {
     }
     setStatus("loading");
     setMessage("");
-    const formData = new FormData();
-    formData.append("file", photoFile);
-    formData.append("model", photoModel);
-    formData.append("partId", photoPartId);
 
     try {
-      const res = await fetch("/api/parts/upload", {
+      const prep = await fetch("/api/parts/upload-url", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: adminToken ? `Bearer ${adminToken}` : "",
         },
-        body: formData,
+        body: JSON.stringify({
+          model: photoModel,
+          partId: photoPartId,
+          filename: photoFile.name,
+          contentType: photoFile.type || "application/octet-stream",
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "업로드 실패");
+      const prepText = await prep.text();
+      let prepData: Record<string, unknown> = {};
+      if (prepText) {
+        try {
+          prepData = JSON.parse(prepText) as Record<string, unknown>;
+        } catch {
+          prepData = { error: prepText };
+        }
+      }
+      if (!prep.ok) throw new Error((prepData?.error as string) ?? "업로드 준비 실패");
+      const signedUrl = prepData?.signedUrl as string | undefined;
+      const publicUrl = prepData?.publicUrl as string | undefined;
+      const contentType = (prepData?.contentType as string) ?? photoFile.type;
+      if (!signedUrl || !publicUrl) {
+        throw new Error("업로드 URL을 가져오지 못했습니다.");
+      }
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType || "application/octet-stream",
+          "x-upsert": "true",
+        },
+        body: photoFile,
+      });
+      if (!uploadRes.ok) throw new Error("스토리지 업로드 실패");
+
       setStatus("success");
-      setPhotoResult(data.url ?? data.path ?? null);
+      setPhotoResult(publicUrl ?? null);
       setMessage("사진 업로드 완료: URL을 복사해 CSV에 기입하세요.");
     } catch (err) {
       setStatus("error");

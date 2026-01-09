@@ -286,20 +286,50 @@ export default function PartAdminPanel({
     setUploading(true);
     setUploadMessage("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("model", form.model);
-      formData.append("partId", form.id || "part");
-
-      const res = await fetch("/api/parts/upload", {
+      const uploadPrep = await fetch("/api/parts/upload-url", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: adminToken ? `Bearer ${adminToken}` : "",
         },
-        body: formData,
+        body: JSON.stringify({
+          model: form.model,
+          partId: form.id || "part",
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "업로드 실패");
+      const uploadPrepText = await uploadPrep.text();
+      let uploadPrepData: Record<string, unknown> = {};
+      if (uploadPrepText) {
+        try {
+          uploadPrepData = JSON.parse(uploadPrepText) as Record<string, unknown>;
+        } catch {
+          uploadPrepData = { error: uploadPrepText };
+        }
+      }
+      if (!uploadPrep.ok) {
+        throw new Error((uploadPrepData?.error as string) ?? "업로드 준비 실패");
+      }
+
+      const signedUrl = uploadPrepData?.signedUrl as string | undefined;
+      const publicUrl = uploadPrepData?.publicUrl as string | undefined;
+      const contentType = (uploadPrepData?.contentType as string) ?? file.type;
+      if (!signedUrl || !publicUrl) {
+        throw new Error("업로드 URL을 가져오지 못했습니다.");
+      }
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType || "application/octet-stream",
+          "x-upsert": "true",
+        },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        throw new Error("스토리지 업로드에 실패했습니다.");
+      }
       // 업로드된 URL을 해당 사진에 채웁니다.
       setForm((prev) => {
         const photos = [...(prev.photos ?? [])];
@@ -308,11 +338,11 @@ export default function PartAdminPanel({
           nextIndex = photos.findIndex((p) => !p.url);
         }
         if (nextIndex >= 0) {
-          photos[nextIndex] = { ...photos[nextIndex], url: data.url ?? data.path ?? "" };
+          photos[nextIndex] = { ...photos[nextIndex], url: publicUrl };
         } else {
           photos.push({
             id: `ph-${photos.length + 1}`,
-            url: data.url ?? data.path ?? "",
+            url: publicUrl,
             label: "",
             tags: [],
           });
@@ -361,20 +391,50 @@ export default function PartAdminPanel({
     setVideoUploading(true);
     setVideoUploadMessage("");
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("model", form.model);
-      formData.append("partId", form.id || "part");
-
-      const res = await fetch("/api/parts/upload", {
+      const uploadPrep = await fetch("/api/parts/upload-url", {
         method: "POST",
         headers: {
+          "Content-Type": "application/json",
           Authorization: adminToken ? `Bearer ${adminToken}` : "",
         },
-        body: formData,
+        body: JSON.stringify({
+          model: form.model,
+          partId: form.id || "part",
+          filename: file.name,
+          contentType: file.type || "application/octet-stream",
+        }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data?.error ?? "업로드 실패");
+      const uploadPrepText = await uploadPrep.text();
+      let uploadPrepData: Record<string, unknown> = {};
+      if (uploadPrepText) {
+        try {
+          uploadPrepData = JSON.parse(uploadPrepText) as Record<string, unknown>;
+        } catch {
+          uploadPrepData = { error: uploadPrepText };
+        }
+      }
+      if (!uploadPrep.ok) {
+        throw new Error((uploadPrepData?.error as string) ?? "업로드 준비 실패");
+      }
+
+      const signedUrl = uploadPrepData?.signedUrl as string | undefined;
+      const publicUrl = uploadPrepData?.publicUrl as string | undefined;
+      const contentType = (uploadPrepData?.contentType as string) ?? file.type;
+      if (!signedUrl || !publicUrl) {
+        throw new Error("업로드 URL을 가져오지 못했습니다.");
+      }
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": contentType || "application/octet-stream",
+          "x-upsert": "true",
+        },
+        body: file,
+      });
+      if (!uploadRes.ok) {
+        throw new Error("스토리지 업로드에 실패했습니다.");
+      }
       setForm((prev) => {
         const videos = [...(prev.videos ?? [])];
         let nextIndex = typeof targetIdx === "number" ? targetIdx : -1;
@@ -382,11 +442,11 @@ export default function PartAdminPanel({
           nextIndex = videos.findIndex((v) => !v.url);
         }
         if (nextIndex >= 0) {
-          videos[nextIndex] = { ...videos[nextIndex], url: data.url ?? data.path ?? "" };
+          videos[nextIndex] = { ...videos[nextIndex], url: publicUrl };
         } else {
           videos.push({
             id: `vd-${videos.length + 1}`,
-            url: data.url ?? data.path ?? "",
+            url: publicUrl,
             label: "",
             tags: [],
           });
