@@ -272,6 +272,7 @@ export default async function PartsPage({
                           ) : null}
                         </div>
                         <h2 className="text-lg font-semibold text-slate-900">{entry.name}</h2>
+                        <div className="text-xs text-slate-400">ID: {entry.id}</div>
                         {entry.summary ? (
                           <p className="text-sm text-slate-600 whitespace-pre-line">
                             {entry.summary}

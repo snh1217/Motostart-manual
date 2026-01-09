@@ -75,6 +75,7 @@ export default async function PartDetailPage({
               ) : null}
             </div>
             <h1 className="text-2xl font-semibold text-slate-900">{resolvedEntry.name}</h1>
+            <div className="text-xs text-slate-400">ID: {resolvedEntry.id}</div>
             {resolvedEntry.summary ? (
               <p className="text-sm text-slate-600 whitespace-pre-line">
                 {resolvedEntry.summary}
