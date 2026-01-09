@@ -114,7 +114,13 @@ export default async function ViewerPage({
             <iframe title={title} src={src} className="h-full w-full" />
           </div>
           <div className="h-[80vh] w-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-6">
-            {translation ? (
+            {translation?.pdf_ko_url ? (
+              <iframe
+                title={`${title} 번역본`}
+                src={translation.pdf_ko_url}
+                className="h-full w-full"
+              />
+            ) : translation ? (
               <div className="space-y-4">
                 <div>
                   <div className="text-xs text-slate-400">번역 제목</div>
