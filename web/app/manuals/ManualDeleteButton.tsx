@@ -61,7 +61,7 @@ export default function ManualDeleteButton({
       const text = await res.text();
       const data = (text ? parseJson(text) : null) as DeleteResponse | null;
       if (!res.ok || !data?.ok) {
-        throw new Error(data?.error ?? text || "삭제 실패");
+        throw new Error((data?.error ?? text) || "삭제 실패");
       }
       if (data?.storageError) {
         window.alert(`DB 삭제 완료. 파일 삭제 오류: ${data.storageError}`);
