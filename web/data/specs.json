@@ -876,5 +876,229 @@
     "category": "oil",
     "item": "후론트 쇼바 오일 씰 1244200-035000 오일 용량",
     "value": "411ml"
+  },
+  {
+    "id": "spec-125d-oil-kf4bdb8f2",
+    "model": "125D",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "900ml / 950ml"
+  },
+  {
+    "id": "spec-125d-oil-k2cc05164",
+    "model": "125D",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "900ml"
+  },
+  {
+    "id": "spec-125d-oil-routine",
+    "model": "125D",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "160ml"
+  },
+  {
+    "id": "spec-125d-torque-k5997ff97",
+    "model": "125D",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m\n미션 드레인: 20N.m"
+  },
+  {
+    "id": "spec-125e-oil-kf4bdb8f2",
+    "model": "125E",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "0.9L / 0.95L"
+  },
+  {
+    "id": "spec-125e-oil-k2cc05164",
+    "model": "125E",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "0.78L"
+  },
+  {
+    "id": "spec-125e-oil-routine",
+    "model": "125E",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "0.16L"
+  },
+  {
+    "id": "spec-125e-torque-k5997ff97",
+    "model": "125E",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m (125 공통)\n휠 액슬 너트: 110N.m"
+  },
+  {
+    "id": "spec-125m-oil-kf4bdb8f2",
+    "model": "125M",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "900ml / 950ml"
+  },
+  {
+    "id": "spec-125m-oil-k2cc05164",
+    "model": "125M",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "900ml"
+  },
+  {
+    "id": "spec-125m-oil-routine",
+    "model": "125M",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "160ml"
+  },
+  {
+    "id": "spec-125m-torque-k5997ff97",
+    "model": "125M",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m\n미션 드레인: 20N.m"
+  },
+  {
+    "id": "spec-310m-oil-kf4bdb8f2",
+    "model": "310M",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "1.7L / 1.75L"
+  },
+  {
+    "id": "spec-310m-oil-k2cc05164",
+    "model": "310M",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "1.64L"
+  },
+  {
+    "id": "spec-310m-oil-routine",
+    "model": "310M",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "200ml"
+  },
+  {
+    "id": "spec-310m-torque-k5997ff97",
+    "model": "310M",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m\n미션 드레인: 20N.m"
+  },
+  {
+    "id": "spec-350d-oil-kf4bdb8f2",
+    "model": "350D",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "1.55L / 1.75L"
+  },
+  {
+    "id": "spec-350d-oil-k2cc05164",
+    "model": "350D",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "1.44L"
+  },
+  {
+    "id": "spec-350d-oil-routine",
+    "model": "350D",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "200ml"
+  },
+  {
+    "id": "spec-350d-torque-k5997ff97",
+    "model": "350D",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m\n미션 드레인: 20N.m"
+  },
+  {
+    "id": "spec-125c-oil-kf4bdb8f2",
+    "model": "125C",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "1.0L / 1.05L"
+  },
+  {
+    "id": "spec-125c-oil-k2cc05164",
+    "model": "125C",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "860ml"
+  },
+  {
+    "id": "spec-125c-oil-routine",
+    "model": "125C",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "160ml"
+  },
+  {
+    "id": "spec-125c-torque-k5997ff97",
+    "model": "125C",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m (125 공통)\n상단 핀 볼트: 12±1.5N.m"
+  },
+  {
+    "id": "spec-368g-oil-kf4bdb8f2",
+    "model": "368G",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "1.55L / 1.75L"
+  },
+  {
+    "id": "spec-368g-oil-k2cc05164",
+    "model": "368G",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "1.48L"
+  },
+  {
+    "id": "spec-368g-oil-routine",
+    "model": "368G",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "200ml"
+  },
+  {
+    "id": "spec-368g-torque-k5997ff97",
+    "model": "368G",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 25N.m (350/368 공통)\n미션 드레인: 20N.m"
+  },
+  {
+    "id": "spec-368e-oil-kf4bdb8f2",
+    "model": "368E",
+    "category": "oil",
+    "item": "엔진 오일량 (교환/필터포함)",
+    "value": "1.55L / 1.75L"
+  },
+  {
+    "id": "spec-368e-oil-k2cc05164",
+    "model": "368E",
+    "category": "oil",
+    "item": "냉각수 용량 (전체)",
+    "value": "1.54L"
+  },
+  {
+    "id": "spec-368e-oil-routine",
+    "model": "368E",
+    "category": "oil",
+    "item": "미션 오일량 (Routine)",
+    "value": "200ml"
+  },
+  {
+    "id": "spec-368e-torque-k5997ff97",
+    "model": "368E",
+    "category": "torque",
+    "item": "주요 볼트 토크값",
+    "value": "엔진 드레인: 24±4N.m\n미션 드레인: 20±2.5N.m"
   }
 ]
