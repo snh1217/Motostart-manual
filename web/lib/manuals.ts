@@ -79,7 +79,13 @@ export const getManualFileUrl = (file: string) => {
   if (file.startsWith("http://") || file.startsWith("https://")) {
     url = file;
   } else if (file.startsWith("/")) {
-    url = base ? `${base}${file}` : file;
+    if (base) {
+      url = `${base}${file}`;
+    } else if (process.env.SUPABASE_URL) {
+      url = `${process.env.SUPABASE_URL}/storage/v1/object/public${file}`;
+    } else {
+      url = file;
+    }
   } else {
     url = base ? `${base}/manuals/splits/${file}` : `/manuals/splits/${file}`;
   }

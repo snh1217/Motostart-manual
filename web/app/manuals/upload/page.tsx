@@ -1,3 +1,4 @@
+﻿import Link from "next/link";
 import UploadManualForm from "./UploadManualForm";
 
 export default function ManualUploadPage() {
@@ -6,7 +7,15 @@ export default function ManualUploadPage() {
   return (
     <section className="space-y-6">
       <header className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">매뉴얼 업로드</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-semibold tracking-tight">매뉴얼 업로드</h1>
+          <Link
+            href="/manuals"
+            className="rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+          >
+            매뉴얼 목록으로
+          </Link>
+        </div>
         <p className="text-sm text-slate-600">
           PDF 업로드 후 매뉴얼 목록에 등록됩니다. (Supabase manuals 테이블 사용)
         </p>

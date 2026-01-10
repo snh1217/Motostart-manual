@@ -1,6 +1,7 @@
 ﻿"use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type UploadManualFormProps = {
   readOnly?: boolean;
@@ -22,6 +23,7 @@ const manualTypes = ["engine", "chassis", "user", "wiring"] as const;
 type ManualType = (typeof manualTypes)[number];
 
 export default function UploadManualForm({ readOnly = false }: UploadManualFormProps) {
+  const router = useRouter();
   const [file, setFile] = useState<File | null>(null);
   const [model, setModel] = useState("");
   const [manualType, setManualType] = useState<ManualType>("engine");
@@ -59,6 +61,22 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     return parsed.toString();
   };
 
+  const resetForm = (form: HTMLFormElement) => {
+    setFile(null);
+    setModel("");
+    setManualType("engine");
+    setSection("");
+    setTitle("");
+    setLanguage("ko");
+    setDocDate("");
+    setDocCode("");
+    setSourcePdf("");
+    setPagesStart("1");
+    setPagesEnd("1");
+    setEntryId("");
+    form.reset();
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (readOnly) {
@@ -90,9 +108,10 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
 
     const safePagesStart = toNumberString(pagesStart, "1");
     const safePagesEnd = toNumberString(pagesEnd, safePagesStart);
+    const modelValue = model.trim().toUpperCase();
 
     const initPayload = {
-      model: model.trim(),
+      model: modelValue,
       manual_type: manualType,
       section: section.trim(),
       title: title.trim(),
@@ -173,19 +192,8 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
 
       setStatus("success");
       setMessage("매뉴얼 업로드 완료");
-      setFile(null);
-      setModel("");
-      setManualType("engine");
-      setSection("");
-      setTitle("");
-      setLanguage("ko");
-      setDocDate("");
-      setDocCode("");
-      setSourcePdf("");
-      setPagesStart("1");
-      setPagesEnd("1");
-      setEntryId("");
-      (event.target as HTMLFormElement).reset();
+      resetForm(event.target as HTMLFormElement);
+      router.push(`/manuals?model=${encodeURIComponent(modelValue)}`);
     } catch (error) {
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "업로드 오류");
