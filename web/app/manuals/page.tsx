@@ -159,6 +159,14 @@ export default async function ManualsPage({
         <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-600">
           `public/manuals/manifest.json` 파일을 확인해 주세요.
         </div>
+        <div>
+          <Link
+            href="/manuals"
+            className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+          >
+            모델 선택으로 돌아가기
+          </Link>
+        </div>
       </section>
     );
   }
