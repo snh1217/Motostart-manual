@@ -52,8 +52,10 @@ export default function DiagnosticsAdminForm({
   const [section, setSection] = useState("");
   const [image, setImage] = useState(defaultImage);
   const [imagePreview, setImagePreview] = useState("");
-  const [videoUrl, setVideoUrl] = useState("");
-  const [videoPreview, setVideoPreview] = useState("");
+  const [videoColdUrl, setVideoColdUrl] = useState("");
+  const [videoColdPreview, setVideoColdPreview] = useState("");
+  const [videoHotUrl, setVideoHotUrl] = useState("");
+  const [videoHotPreview, setVideoHotPreview] = useState("");
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<DiagnosticLine[]>([
     { label: "항목", value: "값" },
@@ -77,11 +79,13 @@ export default function DiagnosticsAdminForm({
       setTitle(initialEntry.title ?? "");
       setSection(initialEntry.section ?? "");
       setImage(initialEntry.image ?? defaultImage);
-      setVideoUrl(initialEntry.video_url ?? "");
+      setVideoColdUrl(initialEntry.video_cold_url ?? "");
+      setVideoHotUrl(initialEntry.video_hot_url ?? "");
       setNote(initialEntry.note ?? "");
       setLines(initialEntry.lines?.length ? initialEntry.lines : [{ label: "항목", value: "값" }]);
       setImagePreview("");
-      setVideoPreview("");
+      setVideoColdPreview("");
+      setVideoHotPreview("");
       return;
     }
     if (selectedModel && selectedModel !== "all") {
@@ -117,8 +121,10 @@ export default function DiagnosticsAdminForm({
     setSection("");
     setImage(defaultImage);
     setImagePreview("");
-    setVideoUrl("");
-    setVideoPreview("");
+    setVideoColdUrl("");
+    setVideoColdPreview("");
+    setVideoHotUrl("");
+    setVideoHotPreview("");
     setNote("");
     setLines([{ label: "항목", value: "값" }]);
   };
@@ -180,13 +186,20 @@ export default function DiagnosticsAdminForm({
     }
   };
 
-  const handleVideoUpload = async (file?: File | null) => {
+  const handleVideoUpload = async (
+    file?: File | null,
+    target?: "cold" | "hot"
+  ) => {
     if (!file) return;
     try {
       setVideoUploading(true);
       setMessage("");
       const url = await uploadFile(file);
-      setVideoUrl(url);
+      if (target === "hot") {
+        setVideoHotUrl(url);
+      } else {
+        setVideoColdUrl(url);
+      }
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "동영상 업로드 실패");
       setStatus("error");
@@ -219,7 +232,8 @@ export default function DiagnosticsAdminForm({
       title: title.trim(),
       section: section.trim() || undefined,
       image: image.trim(),
-      video_url: videoUrl.trim() || undefined,
+      video_cold_url: videoColdUrl.trim() || undefined,
+      video_hot_url: videoHotUrl.trim() || undefined,
       note: note.trim() || undefined,
       lines: lines.filter((l) => l.label && l.value),
     };
@@ -338,7 +352,7 @@ export default function DiagnosticsAdminForm({
         </div>
 
         <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <div className="text-xs font-semibold text-slate-600">동영상 업로드</div>
+          <div className="text-xs font-semibold text-slate-600">동영상 업로드 (냉간시)</div>
           <input
             type="file"
             accept="video/*"
@@ -346,22 +360,53 @@ export default function DiagnosticsAdminForm({
             onChange={(e) => {
               const file = e.target.files?.[0] ?? null;
               if (file) {
-                setVideoPreview(URL.createObjectURL(file));
-                handleVideoUpload(file);
+                setVideoColdPreview(URL.createObjectURL(file));
+                handleVideoUpload(file, "cold");
               }
             }}
             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
           />
           <input
             className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-            placeholder="동영상 URL (직접 입력 가능)"
-            value={videoUrl}
-            onChange={(e) => setVideoUrl(e.target.value)}
+            placeholder="냉간시 URL (직접 입력 가능)"
+            value={videoColdUrl}
+            onChange={(e) => setVideoColdUrl(e.target.value)}
             disabled={readOnly}
           />
-          {(videoPreview || videoUrl) ? (
+          {videoColdPreview || videoColdUrl ? (
             <video
-              src={videoPreview || videoUrl}
+              src={videoColdPreview || videoColdUrl}
+              controls
+              className="h-40 w-full rounded-md bg-slate-100"
+            />
+          ) : null}
+        </div>
+
+        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+          <div className="text-xs font-semibold text-slate-600">동영상 업로드 (열간시)</div>
+          <input
+            type="file"
+            accept="video/*"
+            disabled={readOnly || videoUploading}
+            onChange={(e) => {
+              const file = e.target.files?.[0] ?? null;
+              if (file) {
+                setVideoHotPreview(URL.createObjectURL(file));
+                handleVideoUpload(file, "hot");
+              }
+            }}
+            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+          />
+          <input
+            className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+            placeholder="열간시 URL (직접 입력 가능)"
+            value={videoHotUrl}
+            onChange={(e) => setVideoHotUrl(e.target.value)}
+            disabled={readOnly}
+          />
+          {videoHotPreview || videoHotUrl ? (
+            <video
+              src={videoHotPreview || videoHotUrl}
               controls
               className="h-40 w-full rounded-md bg-slate-100"
             />

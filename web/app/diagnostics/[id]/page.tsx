@@ -46,9 +46,20 @@ export default async function DiagnosticDetailPage({
         />
       </div>
 
-      {item.video_url ? (
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <video src={item.video_url} controls className="w-full rounded-xl bg-slate-50" />
+      {item.video_cold_url || item.video_hot_url ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          {item.video_cold_url ? (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-semibold text-slate-600">냉간시</div>
+              <video src={item.video_cold_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+            </div>
+          ) : null}
+          {item.video_hot_url ? (
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="text-xs font-semibold text-slate-600">열간시</div>
+              <video src={item.video_hot_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+            </div>
+          ) : null}
         </div>
       ) : null}
 
