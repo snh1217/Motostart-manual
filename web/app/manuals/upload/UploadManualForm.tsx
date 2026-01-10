@@ -1,4 +1,4 @@
-"use client";
+ï»¿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -63,25 +63,25 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     event.preventDefault();
     if (readOnly) {
       setStatus("error");
-      setMessage("ÀĞ±â Àü¿ë ¸ğµå¿¡¼­´Â ¾÷·ÎµåÇÒ ¼ö ¾ø½À´Ï´Ù.");
+      setMessage("ì½ê¸° ì „ìš© ëª¨ë“œì—ì„œëŠ” ì—…ë¡œë“œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
       return;
     }
 
     if (!file) {
       setStatus("error");
-      setMessage("PDF ÆÄÀÏÀ» ¼±ÅÃÇØ ÁÖ¼¼¿ä.");
+      setMessage("PDF íŒŒì¼ì„ ì„ íƒí•´ ì£¼ì„¸ìš”.");
       return;
     }
 
     if (!model.trim() || !title.trim() || !section.trim()) {
       setStatus("error");
-      setMessage("¸ğµ¨, ¼½¼Ç, Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
+      setMessage("ëª¨ë¸, ì„¹ì…˜, ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.");
       return;
     }
 
     if (!adminToken.trim()) {
       setStatus("error");
-      setMessage("ADMIN_TOKENÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
+      setMessage("ADMIN_TOKENì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.");
       return;
     }
 
@@ -122,7 +122,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       const initData = (initText ? parseJson(initText) : null) as UploadInitResponse | null;
 
       if (!initResponse.ok || !initData?.signedUrl || !initData.file) {
-        throw new Error(initData?.error ?? initText || "¾÷·Îµå URL »ı¼º ½ÇÆĞ");
+        throw new Error(initData?.error ?? initText || "ì—…ë¡œë“œ URL ìƒì„± ì‹¤íŒ¨");
       }
 
       const uploadResponse = await fetch(initData.signedUrl, {
@@ -134,7 +134,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       });
 
       if (!uploadResponse.ok) {
-        throw new Error("ÆÄÀÏ ¾÷·Îµå ½ÇÆĞ");
+        throw new Error("íŒŒì¼ ì—…ë¡œë“œ ì‹¤íŒ¨");
       }
 
       const finalizePayload = {
@@ -168,11 +168,11 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
         | null;
 
       if (!finalizeResponse.ok || !finalizeData?.ok) {
-        throw new Error(finalizeData?.error ?? finalizeText || "¸Å´º¾ó ÀúÀå ½ÇÆĞ");
+        throw new Error(finalizeData?.error ?? finalizeText || "ë§¤ë‰´ì–¼ ì €ì¥ ì‹¤íŒ¨");
       }
 
       setStatus("success");
-      setMessage("¸Å´º¾ó ¾÷·Îµå ¿Ï·á");
+      setMessage("ë§¤ë‰´ì–¼ ì—…ë¡œë“œ ì™„ë£Œ");
       setFile(null);
       setModel("");
       setManualType("engine");
@@ -188,7 +188,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       (event.target as HTMLFormElement).reset();
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "¾÷·Îµå ¿À·ù");
+      setMessage(error instanceof Error ? error.message : "ì—…ë¡œë“œ ì˜¤ë¥˜");
     }
   };
 
@@ -199,7 +199,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={model}
           onChange={(event) => setModel(event.target.value)}
-          placeholder="¸ğµ¨ ÄÚµå (¿¹: 350D)"
+          placeholder="ëª¨ë¸ ì½”ë“œ (ì˜ˆ: 350D)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -209,16 +209,16 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         >
-          <option value="engine">¿£Áø</option>
-          <option value="chassis">Â÷´ë</option>
-          <option value="user">»ç¿ëÀÚ</option>
-          <option value="wiring">È¸·Îµµ</option>
+          <option value="engine">ì—”ì§„</option>
+          <option value="chassis">ì°¨ëŒ€</option>
+          <option value="user">ì‚¬ìš©ì</option>
+          <option value="wiring">íšŒë¡œë„</option>
         </select>
         <input
           type="text"
           value={section}
           onChange={(event) => setSection(event.target.value)}
-          placeholder="¼½¼Ç (¿¹: Lubrication System)"
+          placeholder="ì„¹ì…˜ (ì˜ˆ: Lubrication System)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -226,7 +226,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="Á¦¸ñ"
+          placeholder="ì œëª©"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -234,7 +234,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={language}
           onChange={(event) => setLanguage(event.target.value)}
-          placeholder="¾ğ¾î (ko/en)"
+          placeholder="ì–¸ì–´ (ko/en)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -242,7 +242,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={docDate}
           onChange={(event) => setDocDate(event.target.value)}
-          placeholder="¹®¼­ ³¯Â¥ (¿¹: 2025-02-12)"
+          placeholder="ë¬¸ì„œ ë‚ ì§œ (ì˜ˆ: 2025-02-12)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -250,7 +250,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={docCode}
           onChange={(event) => setDocCode(event.target.value)}
-          placeholder="¹®¼­ ÄÚµå"
+          placeholder="ë¬¸ì„œ ì½”ë“œ"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -258,7 +258,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={sourcePdf}
           onChange={(event) => setSourcePdf(event.target.value)}
-          placeholder="¿øº» PDF ÆÄÀÏ¸í"
+          placeholder="ì›ë³¸ PDF íŒŒì¼ëª…"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -266,7 +266,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={entryId}
           onChange={(event) => setEntryId(event.target.value)}
-          placeholder="ID (ºñ¿öµÎ¸é ÀÚµ¿ »ı¼º)"
+          placeholder="ID (ë¹„ì›Œë‘ë©´ ìë™ ìƒì„±)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -276,7 +276,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="number"
           value={pagesStart}
           onChange={(event) => setPagesStart(event.target.value)}
-          placeholder="½ÃÀÛ ÆäÀÌÁö"
+          placeholder="ì‹œì‘ í˜ì´ì§€"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -284,7 +284,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="number"
           value={pagesEnd}
           onChange={(event) => setPagesEnd(event.target.value)}
-          placeholder="³¡ ÆäÀÌÁö"
+          placeholder="ë í˜ì´ì§€"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -310,7 +310,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           disabled={status === "loading" || readOnly}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {status === "loading" ? "¾÷·Îµå Áß..." : "¾÷·Îµå"}
+          {status === "loading" ? "ì—…ë¡œë“œ ì¤‘..." : "ì—…ë¡œë“œ"}
         </button>
       </div>
       {message ? (
