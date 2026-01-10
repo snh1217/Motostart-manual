@@ -300,6 +300,14 @@ export default async function ManualsPage({
                                   원본
                                 </a>
                                 {isAdmin ? (
+                                  <Link
+                                    href={`/manuals/edit?id=${encodeURIComponent(entry.id)}&model=${encodeURIComponent(selectedModel)}`}
+                                    className="rounded-full border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300"
+                                  >
+                                    수정
+                                  </Link>
+                                ) : null}
+                                {isAdmin ? (
                                   <ManualDeleteButton
                                     id={entry.id}
                                     file={entry.file}
