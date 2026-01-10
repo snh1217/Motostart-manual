@@ -31,12 +31,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
   const [section, setSection] = useState("");
   const [title, setTitle] = useState("");
   const [language, setLanguage] = useState("ko");
-  const [docDate, setDocDate] = useState("");
-  const [docCode, setDocCode] = useState("");
   const [sourcePdf, setSourcePdf] = useState("");
-  const [pagesStart, setPagesStart] = useState("1");
-  const [pagesEnd, setPagesEnd] = useState("1");
-  const [entryId, setEntryId] = useState("");
   const [adminToken, setAdminToken] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">(
     "idle"
@@ -60,12 +55,6 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     }
   };
 
-  const toNumberString = (value: string, fallback: string) => {
-    const parsed = Number(value);
-    if (Number.isNaN(parsed) || parsed <= 0) return fallback;
-    return parsed.toString();
-  };
-
   const resetForm = (form: HTMLFormElement) => {
     setFile(null);
     setModel("");
@@ -73,12 +62,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     setSection("");
     setTitle("");
     setLanguage("ko");
-    setDocDate("");
-    setDocCode("");
     setSourcePdf("");
-    setPagesStart("1");
-    setPagesEnd("1");
-    setEntryId("");
     setPageCount(null);
     setPageCountStatus("idle");
     form.reset();
@@ -95,11 +79,6 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       const pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
       const count = pdf.getPageCount();
       setPageCount(count);
-
-      if (pagesStart.trim() === "1" && pagesEnd.trim() === "1") {
-        setPagesStart("1");
-        setPagesEnd(count.toString());
-      }
       setPageCountStatus("idle");
     } catch {
       setPageCountStatus("error");
@@ -135,9 +114,9 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     setStatus("loading");
     setMessage("");
 
-    const safePagesStart = toNumberString(pagesStart, "1");
-    const safePagesEnd = toNumberString(pagesEnd, safePagesStart);
     const modelValue = model.trim().toUpperCase();
+    const pageStartValue = "1";
+    const pageEndValue = pageCount ? pageCount.toString() : "1";
 
     const initPayload = {
       model: modelValue,
@@ -145,12 +124,12 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       section: section.trim(),
       title: title.trim(),
       language: language.trim() || "ko",
-      doc_date: docDate.trim(),
-      doc_code: docCode.trim(),
+      doc_date: "",
+      doc_code: "",
       source_pdf: sourcePdf.trim(),
-      pages_start: safePagesStart,
-      pages_end: safePagesEnd,
-      id: entryId.trim(),
+      pages_start: pageStartValue,
+      pages_end: pageEndValue,
+      id: "",
       filename: file.name,
       contentType: file.type || "application/pdf",
     };
@@ -277,51 +256,9 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
         />
         <input
           type="text"
-          value={docDate}
-          onChange={(event) => setDocDate(event.target.value)}
-          placeholder="문서 날짜 (예: 2025-02-12)"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <input
-          type="text"
-          value={docCode}
-          onChange={(event) => setDocCode(event.target.value)}
-          placeholder="문서 코드"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <input
-          type="text"
           value={sourcePdf}
           onChange={(event) => setSourcePdf(event.target.value)}
-          placeholder="원본 PDF 파일명"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <input
-          type="text"
-          value={entryId}
-          onChange={(event) => setEntryId(event.target.value)}
-          placeholder="ID (비워두면 자동 생성)"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-      </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <input
-          type="number"
-          value={pagesStart}
-          onChange={(event) => setPagesStart(event.target.value)}
-          placeholder="시작 페이지"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <input
-          type="number"
-          value={pagesEnd}
-          onChange={(event) => setPagesEnd(event.target.value)}
-          placeholder="끝 페이지"
+          placeholder="원본 PDF 파일명 (선택)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -355,7 +292,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           <p className="text-xs text-slate-500">PDF 페이지 수를 확인 중...</p>
         ) : null}
         {pageCountStatus === "error" ? (
-          <p className="text-xs text-red-600">페이지 수 자동 확인 실패 (직접 입력해 주세요).</p>
+          <p className="text-xs text-red-600">페이지 수 자동 확인 실패 (직접 입력이 필요합니다).</p>
         ) : null}
         {pageCountStatus === "idle" && pageCount ? (
           <p className="text-xs text-slate-500">감지된 페이지 수: {pageCount}p</p>
