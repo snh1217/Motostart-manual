@@ -75,6 +75,15 @@ function DiagnosticCard({
   isAdmin: boolean;
   model: string;
 }) {
+  const images = item.images?.length ? item.images : [item.image];
+  const previewLines = item.lines.map((line) => {
+    const legacy = line as unknown as { label?: string; value?: string };
+    return {
+      source: line.source ?? legacy.label ?? "",
+      data: line.data ?? legacy.value ?? "",
+      note: line.note ?? "",
+    };
+  });
   const sourceLabel = item.source === "db" ? "DB" : item.source === "json" ? "JSON" : null;
   const sourceTone =
     item.source === "db"
@@ -105,7 +114,7 @@ function DiagnosticCard({
 
       <div className="mt-3 overflow-hidden rounded-xl border border-slate-100 bg-slate-50">
         <Image
-          src={item.image}
+          src={images[0]}
           alt={item.title}
           width={800}
           height={450}
@@ -114,15 +123,15 @@ function DiagnosticCard({
       </div>
 
       <div className="mt-3 space-y-1 text-sm text-slate-700">
-        {item.lines.slice(0, 3).map((line, idx) => (
+        {previewLines.slice(0, 3).map((line, idx) => (
           <p key={idx}>
-            <span className="font-semibold">{line.label}: </span>
-            {line.value}
+            <span className="font-semibold">{line.source}: </span>
+            {line.data}
             {line.note ? <span className="text-slate-500"> ({line.note})</span> : null}
           </p>
         ))}
-        {item.lines.length > 3 ? (
-          <p className="text-xs text-slate-500">+{item.lines.length - 3}건</p>
+        {previewLines.length > 3 ? (
+          <p className="text-xs text-slate-500">+{previewLines.length - 3}건</p>
         ) : null}
       </div>
 

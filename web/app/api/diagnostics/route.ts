@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
-import type { DiagnosticEntry } from "../../../lib/types";
+import type { DiagnosticEntry, DiagnosticLine } from "../../../lib/types";
 import { isAdminAuthorized } from "../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../lib/supabase/server";
 
@@ -67,9 +67,43 @@ export async function POST(request: Request) {
 
   try {
     const body = (await request.json()) as Partial<DiagnosticEntry>;
-    if (!body.id || !body.model || !body.title || !body.image || !Array.isArray(body.lines)) {
+    if (!body.id || !body.model || !body.title || !Array.isArray(body.lines)) {
       return NextResponse.json({ error: "INVALID_PAYLOAD" }, { status: 400 });
     }
+
+    const images = Array.isArray(body.images)
+      ? body.images.filter((url) => typeof url === "string" && url.trim())
+      : body.image
+        ? [body.image]
+        : [];
+    if (!images.length) {
+      return NextResponse.json({ error: "IMAGE_REQUIRED" }, { status: 400 });
+    }
+
+    const normalizedLines = body.lines.map((line) => {
+      const source =
+        typeof (line as DiagnosticLine).source === "string"
+          ? (line as DiagnosticLine).source
+          : typeof (line as { label?: string }).label === "string"
+            ? (line as { label?: string }).label ?? ""
+            : "";
+      const translation =
+        typeof (line as DiagnosticLine).translation === "string"
+          ? (line as DiagnosticLine).translation
+          : "";
+      const data =
+        typeof (line as DiagnosticLine).data === "string"
+          ? (line as DiagnosticLine).data
+          : typeof (line as { value?: string }).value === "string"
+            ? (line as { value?: string }).value ?? ""
+            : "";
+      const analysis =
+        typeof (line as DiagnosticLine).analysis === "string"
+          ? (line as DiagnosticLine).analysis
+          : "";
+      const note = typeof (line as DiagnosticLine).note === "string" ? (line as DiagnosticLine).note : "";
+      return { source, translation, data, analysis, note };
+    });
 
     const now = new Date().toISOString().slice(0, 10);
     const incoming: DiagnosticEntry = {
@@ -77,10 +111,11 @@ export async function POST(request: Request) {
       model: body.model as DiagnosticEntry["model"],
       title: body.title,
       section: body.section,
-      image: body.image,
+      image: images[0],
+      images: images.length ? images : undefined,
       video_cold_url: body.video_cold_url ?? undefined,
       video_hot_url: body.video_hot_url ?? undefined,
-      lines: body.lines as DiagnosticEntry["lines"],
+      lines: normalizedLines as DiagnosticEntry["lines"],
       note: body.note,
       updated_at: body.updated_at ?? now,
     };

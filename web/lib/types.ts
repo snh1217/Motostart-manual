@@ -51,8 +51,10 @@ export type TranslationItem = {
 };
 
 export type DiagnosticLine = {
-  label: string;
-  value: string;
+  source: string;
+  translation?: string;
+  data: string;
+  analysis?: string;
   note?: string;
 };
 
@@ -62,6 +64,7 @@ export type DiagnosticEntry = {
   title: string;
   section?: string;
   image: string;
+  images?: string[];
   video_cold_url?: string;
   video_hot_url?: string;
   lines: DiagnosticLine[];

@@ -16,6 +16,17 @@ export default async function DiagnosticDetailPage({
   const id = resolved?.id ?? "";
   const item: DiagnosticEntry | null = await getDiagnosticById(id);
   if (!item) return notFound();
+  const images = item.images?.length ? item.images : [item.image];
+  const lines = item.lines.map((line) => {
+    const legacy = line as unknown as { label?: string; value?: string };
+    return {
+      source: line.source ?? legacy.label ?? "",
+      translation: line.translation ?? "",
+      data: line.data ?? legacy.value ?? "",
+      analysis: line.analysis ?? "",
+      note: line.note ?? "",
+    };
+  });
 
   return (
     <section className="space-y-6">
@@ -36,14 +47,21 @@ export default async function DiagnosticDetailPage({
         </div>
       </header>
 
-      <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <Image
-          src={item.image}
-          alt={item.title}
-          width={1200}
-          height={800}
-          className="w-full bg-white object-contain"
-        />
+      <div className="grid gap-3 md:grid-cols-2">
+        {images.map((url, idx) => (
+          <div
+            key={`${url}-${idx}`}
+            className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+          >
+            <Image
+              src={url}
+              alt={`${item.title} ${idx + 1}`}
+              width={1200}
+              height={800}
+              className="w-full bg-white object-contain"
+            />
+          </div>
+        ))}
       </div>
 
       {item.video_cold_url || item.video_hot_url ? (
@@ -67,17 +85,21 @@ export default async function DiagnosticDetailPage({
         <table className="min-w-full text-left text-sm">
           <thead className="bg-slate-100 text-slate-600">
             <tr>
-              <th className="px-4 py-3 font-semibold">항목</th>
-              <th className="px-4 py-3 font-semibold">값</th>
+              <th className="px-4 py-3 font-semibold">원문 항목</th>
+              <th className="px-4 py-3 font-semibold">번역 항목</th>
+              <th className="px-4 py-3 font-semibold">데이터</th>
+              <th className="px-4 py-3 font-semibold">데이터 분석</th>
               <th className="px-4 py-3 font-semibold">비고</th>
             </tr>
           </thead>
           <tbody>
-            {item.lines.map((line, idx) => (
+            {lines.map((line, idx) => (
               <tr key={idx} className="border-t border-slate-100">
-                <td className="px-4 py-3 font-semibold text-slate-800">{line.label}</td>
-                <td className="px-4 py-3 text-slate-700">{line.value}</td>
-                <td className="px-4 py-3 text-slate-500">{line.note ?? "-"}</td>
+                <td className="px-4 py-3 font-semibold text-slate-800">{line.source}</td>
+                <td className="px-4 py-3 text-slate-700">{line.translation || "-"}</td>
+                <td className="px-4 py-3 text-slate-700">{line.data}</td>
+                <td className="px-4 py-3 text-slate-700">{line.analysis || "-"}</td>
+                <td className="px-4 py-3 text-slate-500">{line.note || "-"}</td>
               </tr>
             ))}
           </tbody>

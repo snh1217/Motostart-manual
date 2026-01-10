@@ -11,6 +11,11 @@ type AdminFormProps = {
   selectedModel?: string;
 };
 
+type ImageSlot = {
+  url: string;
+  preview: string;
+};
+
 const defaultImage = "/diagnostics/placeholder.png";
 
 const normalizeSlug = (value: string) =>
@@ -38,6 +43,26 @@ const parseJsonResponse = async (response: Response) => {
   }
 };
 
+const normalizeLine = (line: Partial<DiagnosticLine> & Record<string, unknown>): DiagnosticLine => {
+  const source =
+    typeof line.source === "string"
+      ? line.source
+      : typeof line.label === "string"
+        ? line.label
+        : "";
+  const translation = typeof line.translation === "string" ? line.translation : "";
+  const data =
+    typeof line.data === "string"
+      ? line.data
+      : typeof line.value === "string"
+        ? line.value
+        : "";
+  const analysis = typeof line.analysis === "string" ? line.analysis : "";
+  const note = typeof line.note === "string" ? line.note : "";
+
+  return { source, translation, data, analysis, note };
+};
+
 export default function DiagnosticsAdminForm({
   readOnly,
   saveTargetLabel,
@@ -50,15 +75,14 @@ export default function DiagnosticsAdminForm({
   const [model, setModel] = useState<ModelCode>("368G");
   const [title, setTitle] = useState("");
   const [section, setSection] = useState("");
-  const [image, setImage] = useState(defaultImage);
-  const [imagePreview, setImagePreview] = useState("");
+  const [images, setImages] = useState<ImageSlot[]>([{ url: "", preview: "" }]);
   const [videoColdUrl, setVideoColdUrl] = useState("");
   const [videoColdPreview, setVideoColdPreview] = useState("");
   const [videoHotUrl, setVideoHotUrl] = useState("");
   const [videoHotPreview, setVideoHotPreview] = useState("");
   const [note, setNote] = useState("");
   const [lines, setLines] = useState<DiagnosticLine[]>([
-    { label: "항목", value: "값" },
+    { source: "", translation: "", data: "", analysis: "", note: "" },
   ]);
   const [status, setStatus] = useState<"idle" | "loading" | "error" | "success">("idle");
   const [message, setMessage] = useState<string>("");
@@ -74,16 +98,28 @@ export default function DiagnosticsAdminForm({
 
   useEffect(() => {
     if (initialEntry) {
+      const initialImages = Array.isArray(initialEntry.images)
+        ? initialEntry.images
+        : initialEntry.image
+          ? [initialEntry.image]
+          : [];
       setId(initialEntry.id ?? "");
       setModel(initialEntry.model ?? "368G");
       setTitle(initialEntry.title ?? "");
       setSection(initialEntry.section ?? "");
-      setImage(initialEntry.image ?? defaultImage);
+      setImages(
+        initialImages.length
+          ? initialImages.map((url) => ({ url, preview: "" }))
+          : [{ url: "", preview: "" }]
+      );
       setVideoColdUrl(initialEntry.video_cold_url ?? "");
       setVideoHotUrl(initialEntry.video_hot_url ?? "");
       setNote(initialEntry.note ?? "");
-      setLines(initialEntry.lines?.length ? initialEntry.lines : [{ label: "항목", value: "값" }]);
-      setImagePreview("");
+      setLines(
+        initialEntry.lines?.length
+          ? initialEntry.lines.map((line) => normalizeLine(line as DiagnosticLine))
+          : [{ source: "", translation: "", data: "", analysis: "", note: "" }]
+      );
       setVideoColdPreview("");
       setVideoHotPreview("");
       return;
@@ -109,8 +145,23 @@ export default function DiagnosticsAdminForm({
     setLines((prev) => prev.map((line, i) => (i === idx ? { ...line, [key]: value } : line)));
   };
 
-  const addLine = () => setLines((prev) => [...prev, { label: "", value: "" }]);
+  const addLine = () =>
+    setLines((prev) => [...prev, { source: "", translation: "", data: "", analysis: "", note: "" }]);
   const removeLine = (idx: number) => setLines((prev) => prev.filter((_, i) => i !== idx));
+
+  const updateImageSlot = (idx: number, payload: Partial<ImageSlot>) => {
+    setImages((prev) =>
+      prev.map((slot, index) => (index === idx ? { ...slot, ...payload } : slot))
+    );
+  };
+
+  const addImageSlot = () => setImages((prev) => [...prev, { url: "", preview: "" }]);
+  const removeImageSlot = (idx: number) => {
+    setImages((prev) => {
+      if (prev.length === 1) return prev;
+      return prev.filter((_, index) => index !== idx);
+    });
+  };
 
   const resetForm = () => {
     const nextModel =
@@ -119,14 +170,13 @@ export default function DiagnosticsAdminForm({
     setModel(nextModel);
     setTitle("");
     setSection("");
-    setImage(defaultImage);
-    setImagePreview("");
+    setImages([{ url: "", preview: "" }]);
     setVideoColdUrl("");
     setVideoColdPreview("");
     setVideoHotUrl("");
     setVideoHotPreview("");
     setNote("");
-    setLines([{ label: "항목", value: "값" }]);
+    setLines([{ source: "", translation: "", data: "", analysis: "", note: "" }]);
   };
 
   const uploadFile = async (file: File) => {
@@ -145,7 +195,7 @@ export default function DiagnosticsAdminForm({
 
     const prepData = await parseJsonResponse(prep);
     if (!prep.ok) {
-      throw new Error((prepData?.error as string) ?? "업로드 준비 실패");
+      throw new Error((prepData?.error as string) ?? "업로드 준비에 실패했습니다.");
     }
 
     const signedUrl = prepData?.signedUrl as string | undefined;
@@ -165,19 +215,20 @@ export default function DiagnosticsAdminForm({
     });
 
     if (!uploadRes.ok) {
-      throw new Error("스토리지 업로드에 실패했습니다.");
+      const errorText = await uploadRes.text().catch(() => "");
+      throw new Error(errorText ? `스토리지 업로드 실패: ${errorText}` : "스토리지 업로드에 실패했습니다.");
     }
 
     return publicUrl;
   };
 
-  const handleImageUpload = async (file?: File | null) => {
-    if (!file) return;
+  const handleImageUpload = async (file?: File | null, targetIndex?: number) => {
+    if (!file || targetIndex === undefined) return;
     try {
       setImageUploading(true);
       setMessage("");
       const url = await uploadFile(file);
-      setImage(url);
+      updateImageSlot(targetIndex, { url });
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "이미지 업로드 실패");
       setStatus("error");
@@ -186,10 +237,7 @@ export default function DiagnosticsAdminForm({
     }
   };
 
-  const handleVideoUpload = async (
-    file?: File | null,
-    target?: "cold" | "hot"
-  ) => {
+  const handleVideoUpload = async (file?: File | null, target?: "cold" | "hot") => {
     if (!file) return;
     try {
       setVideoUploading(true);
@@ -220,22 +268,27 @@ export default function DiagnosticsAdminForm({
       setMessage("관리자 로그인 상태를 확인해 주세요.");
       return;
     }
-    if (!model.trim() || !title.trim() || !image.trim()) {
+
+    const cleanedImages = images.map((slot) => slot.url.trim()).filter(Boolean);
+    if (!model.trim() || !title.trim() || cleanedImages.length === 0) {
       setStatus("error");
-      setMessage("필수 항목을 입력하세요.");
+      setMessage("필수 항목을 입력해 주세요.");
       return;
     }
 
-    const payload = {
+    const payload: DiagnosticEntry = {
       id: id.trim(),
       model,
       title: title.trim(),
       section: section.trim() || undefined,
-      image: image.trim(),
+      image: cleanedImages[0],
+      images: cleanedImages.length ? cleanedImages : undefined,
       video_cold_url: videoColdUrl.trim() || undefined,
       video_hot_url: videoHotUrl.trim() || undefined,
       note: note.trim() || undefined,
-      lines: lines.filter((l) => l.label && l.value),
+      lines: lines
+        .map((line) => normalizeLine(line))
+        .filter((line) => line.source && line.data),
     };
 
     try {
@@ -270,7 +323,7 @@ export default function DiagnosticsAdminForm({
     <form onSubmit={handleSubmit} className={`space-y-4 ${readOnly ? "opacity-60" : ""}`}>
       {readOnly ? (
         <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
-          현재 환경에서는 저장이 비활성화되어 있습니다.
+          현재 운영에서 저장이 비활성화되어 있습니다.
         </p>
       ) : null}
 
@@ -315,13 +368,6 @@ export default function DiagnosticsAdminForm({
           placeholder="섹션 (선택)"
           value={section}
           onChange={(e) => setSection(e.target.value)}
-          disabled={readOnly}
-        />
-        <input
-          className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-          placeholder="이미지 URL (직접 입력 가능)"
-          value={image}
-          onChange={(e) => setImage(e.target.value)}
           disabled={readOnly}
         />
       </div>
@@ -390,27 +436,65 @@ export default function DiagnosticsAdminForm({
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-        <div className="text-xs font-semibold text-slate-600">사진 업로드</div>
-        <input
-          type="file"
-          accept="image/*"
-          disabled={readOnly || imageUploading}
-          onChange={(e) => {
-            const file = e.target.files?.[0] ?? null;
-            if (file) {
-              setImagePreview(URL.createObjectURL(file));
-              handleImageUpload(file);
-            }
-          }}
-          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-        />
-        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
-          <img
-            src={imagePreview || image}
-            alt="진단기 이미지"
-            className="h-40 w-full rounded-md object-contain bg-slate-100"
-          />
+      <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="flex items-center justify-between">
+          <div className="text-xs font-semibold text-slate-600">사진 업로드</div>
+          <button
+            type="button"
+            onClick={addImageSlot}
+            className="rounded-lg border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700"
+            disabled={readOnly || imageUploading}
+          >
+            사진 추가
+          </button>
+        </div>
+        <div className="space-y-3">
+          {images.map((slot, idx) => (
+            <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
+                사진 {idx + 1}
+                <button
+                  type="button"
+                  onClick={() => removeImageSlot(idx)}
+                  className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-500"
+                  disabled={readOnly || images.length <= 1}
+                >
+                  제거
+                </button>
+              </div>
+              <div className="mt-2 grid gap-2 md:grid-cols-[1fr_160px]">
+                <div className="space-y-2">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    disabled={readOnly || imageUploading}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] ?? null;
+                      if (file) {
+                        updateImageSlot(idx, { preview: URL.createObjectURL(file) });
+                        handleImageUpload(file, idx);
+                      }
+                    }}
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                  />
+                  <input
+                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+                    placeholder="사진 URL (직접 입력 가능)"
+                    value={slot.url}
+                    onChange={(e) => updateImageSlot(idx, { url: e.target.value })}
+                    disabled={readOnly}
+                  />
+                </div>
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-2">
+                  <img
+                    src={slot.preview || slot.url || defaultImage}
+                    alt={`진단기 사진 ${idx + 1}`}
+                    className="h-32 w-full rounded-md object-contain"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -435,27 +519,41 @@ export default function DiagnosticsAdminForm({
             라인 추가
           </button>
         </div>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {lines.map((line, idx) => (
-            <div key={idx} className="grid gap-2 md:grid-cols-3 md:items-center">
+            <div key={idx} className="grid gap-2 md:grid-cols-5 md:items-center">
               <input
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                placeholder="라벨"
-                value={line.label}
-                onChange={(e) => updateLine(idx, "label", e.target.value)}
+                placeholder="원문 항목"
+                value={line.source}
+                onChange={(e) => updateLine(idx, "source", e.target.value)}
                 disabled={readOnly}
               />
               <input
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                placeholder="값"
-                value={line.value}
-                onChange={(e) => updateLine(idx, "value", e.target.value)}
+                placeholder="번역 항목"
+                value={line.translation ?? ""}
+                onChange={(e) => updateLine(idx, "translation", e.target.value)}
+                disabled={readOnly}
+              />
+              <input
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                placeholder="데이터"
+                value={line.data}
+                onChange={(e) => updateLine(idx, "data", e.target.value)}
+                disabled={readOnly}
+              />
+              <input
+                className="rounded-xl border border-slate-200 px-3 py-2 text-sm"
+                placeholder="데이터 분석"
+                value={line.analysis ?? ""}
+                onChange={(e) => updateLine(idx, "analysis", e.target.value)}
                 disabled={readOnly}
               />
               <div className="flex gap-2">
                 <input
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm"
-                  placeholder="비고 (선택)"
+                  placeholder="비고"
                   value={line.note ?? ""}
                   onChange={(e) => updateLine(idx, "note", e.target.value)}
                   disabled={readOnly}
@@ -465,7 +563,7 @@ export default function DiagnosticsAdminForm({
                   onClick={() => removeLine(idx)}
                   className="rounded-lg border border-slate-200 px-2 py-2 text-xs text-slate-500"
                   disabled={readOnly || lines.length <= 1}
-                  aria-label="라인 삭제"
+                  aria-label="라인 제거"
                 >
                   삭제
                 </button>
