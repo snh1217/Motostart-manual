@@ -141,6 +141,11 @@ export default function NavMenu() {
         <div className="absolute right-0 mt-2 w-56 max-w-[90vw] rounded-2xl border border-slate-200 bg-white p-2 shadow-sm">
           {items
             .filter((item) => (item.adminOnly ? isAdmin : true))
+            .filter(
+              (item) =>
+                item.href !== "/translations" ||
+                process.env.NEXT_PUBLIC_TRANSLATIONS_ENABLED === "1"
+            )
             .map((item) => (
               <Link
                 key={item.href}

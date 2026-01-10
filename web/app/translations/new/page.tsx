@@ -1,6 +1,8 @@
 ﻿import { headers } from "next/headers";
 import NewTranslationForm from "./NewTranslationForm";
 import type { TranslationItem } from "../../../lib/types";
+import { translationsEnabled } from "../../../lib/featureFlags";
+import { notFound } from "next/navigation";
 
 const buildApiUrl = async (query: string) => {
   const headerList = await headers();
@@ -29,6 +31,9 @@ export default async function NewTranslationPage({
 }: {
   searchParams?: Promise<{ entryId?: string; title?: string; returnTo?: string; model?: string }>;
 }) {
+  if (!translationsEnabled) {
+    notFound();
+  }
   const resolvedParams = searchParams ? await searchParams : undefined;
   const entryId = resolvedParams?.entryId ?? "";
   const title = resolvedParams?.title ?? "";

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../lib/supabase/server";
 import type { TranslationItem } from "../../../lib/types";
+import { translationsEnabled } from "../../../lib/featureFlags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -72,6 +73,9 @@ const cacheHeaders = {
 };
 
 export async function GET(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   const { searchParams } = new URL(request.url);
   const entryId = searchParams.get("entryId")?.trim() ?? "";
   const query = searchParams.get("q")?.trim() ?? "";
@@ -144,6 +148,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 저장할 수 없습니다." },

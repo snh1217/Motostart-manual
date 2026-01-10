@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
 import type { TranslationItem } from "../../../../lib/types";
+import { translationsEnabled } from "../../../../lib/featureFlags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -27,6 +28,9 @@ const readTranslationsFromFile = async (): Promise<TranslationItem[]> => {
 };
 
 export async function POST(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 삭제할 수 없습니다." },

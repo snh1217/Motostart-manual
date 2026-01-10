@@ -7,6 +7,7 @@ import { DocumentProcessorServiceClient } from "@google-cloud/documentai";
 import { TranslationServiceClient } from "@google-cloud/translate";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
+import { translationsEnabled } from "../../../../lib/featureFlags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -109,6 +110,9 @@ const normalizeText = (value: string) =>
   value.replace(/\u0000/g, "").replace(/\s+\n/g, "\n").trim();
 
 export async function POST(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   try {
     if (isReadOnlyMode()) {
       return NextResponse.json(

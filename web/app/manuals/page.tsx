@@ -7,6 +7,8 @@ import { sortModelCodes } from "../../lib/modelSort";
 import { promises as fs } from "fs";
 import path from "path";
 import { cache } from "react";
+import { cookies } from "next/headers";
+import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
 
 const allowedModels: ModelCode[] = [
   "125C",
@@ -94,6 +96,8 @@ export default async function ManualsPage({
 }: {
   searchParams?: Promise<{ model?: string; highlight?: string }>;
 }) {
+  const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
+  const isAdmin = role === "admin";
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const modelParam = resolvedSearchParams?.model ?? "";
   const highlight = resolvedSearchParams?.highlight ?? "";
@@ -112,10 +116,18 @@ export default async function ManualsPage({
   if (!selectedModel) {
     return (
       <section className="space-y-8">
-        <header className="space-y-2">
-          <h1 className="text-2xl font-semibold tracking-tight">매뉴얼</h1>
-          <p className="text-slate-600">모델을 선택해 매뉴얼을 확인하세요.</p>
-        </header>
+      <header className="space-y-2">
+        <h1 className="text-2xl font-semibold tracking-tight">매뉴얼</h1>
+        <p className="text-slate-600">모델을 선택해 매뉴얼을 확인하세요.</p>
+        {isAdmin ? (
+          <Link
+            href="/manuals/upload"
+            className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+          >
+            매뉴얼 업로드
+          </Link>
+        ) : null}
+      </header>
         <section className="rounded-2xl border border-slate-200 bg-white p-6">
           <ModelSelector options={selectorOptions} selected="" title="모델 선택" />
         </section>
@@ -176,6 +188,14 @@ export default async function ManualsPage({
       <header className="space-y-2">
         <h1 className="text-2xl font-semibold tracking-tight">매뉴얼</h1>
         <p className="text-slate-600">모델 {selectedModel} 매뉴얼 목록입니다.</p>
+        {isAdmin ? (
+          <Link
+            href="/manuals/upload"
+            className="inline-flex items-center rounded-full border border-slate-200 px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300"
+          >
+            매뉴얼 업로드
+          </Link>
+        ) : null}
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">

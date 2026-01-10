@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
+import { translationsEnabled } from "../../../../lib/featureFlags";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -8,6 +9,9 @@ export const dynamic = "force-dynamic";
 const safeEntryId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, "_");
 
 export async function POST(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },

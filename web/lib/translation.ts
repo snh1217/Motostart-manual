@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import path from "path";
 import { cache } from "react";
 import type { TranslationItem } from "./types";
+import { translationsEnabled } from "./featureFlags";
 
 const resolveTranslationsPath = async () => {
   const cwd = process.cwd();
@@ -23,6 +24,7 @@ const resolveTranslationsPath = async () => {
 };
 
 export const loadTranslations = cache(async (): Promise<TranslationItem[]> => {
+  if (!translationsEnabled) return [];
   try {
     const translationsPath = await resolveTranslationsPath();
     const raw = await fs.readFile(translationsPath, "utf8");

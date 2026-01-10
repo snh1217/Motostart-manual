@@ -7,6 +7,8 @@ import PdfTranslateForm from "./PdfTranslateForm";
 import TranslationsTable from "./TranslationsTable";
 import type { TranslationItem, ModelCode } from "../../lib/types";
 import { sortModelCodes } from "../../lib/modelSort";
+import { translationsEnabled } from "../../lib/featureFlags";
+import { notFound } from "next/navigation";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -71,6 +73,9 @@ export default async function TranslationsPage({
 }: {
   searchParams?: Promise<{ q?: string; model?: string }>;
 }) {
+  if (!translationsEnabled) {
+    notFound();
+  }
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = resolvedSearchParams?.q ?? "";
   const selectedModel = resolvedSearchParams?.model ?? "all";

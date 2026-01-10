@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import type { TranslationItem } from "../../../../lib/types";
 import { isAdminAuthorized, isReadOnlyMode } from "../../../../lib/auth/admin";
 import { hasSupabaseConfig, supabaseAdmin } from "../../../../lib/supabase/server";
+import { translationsEnabled } from "../../../../lib/featureFlags";
 
 const normalizeHeader = (header: string): string => {
   return header
@@ -100,6 +101,9 @@ const inferModel = (entryId: string): string => {
 };
 
 export async function POST(request: Request) {
+  if (!translationsEnabled) {
+    return NextResponse.json({ error: "TRANSLATIONS_DISABLED" }, { status: 404 });
+  }
   if (isReadOnlyMode()) {
     return NextResponse.json(
       { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
