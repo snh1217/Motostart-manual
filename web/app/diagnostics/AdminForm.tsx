@@ -98,6 +98,7 @@ export default function DiagnosticsAdminForm({
 
   useEffect(() => {
     if (initialEntry) {
+      const legacyVideo = (initialEntry as { video_url?: string })?.video_url ?? "";
       const initialImages = Array.isArray(initialEntry.images)
         ? initialEntry.images
         : initialEntry.image
@@ -112,8 +113,10 @@ export default function DiagnosticsAdminForm({
           ? initialImages.map((url) => ({ url, preview: "" }))
           : [{ url: "", preview: "" }]
       );
-      setVideoColdUrl(initialEntry.video_cold_url ?? "");
-      setVideoHotUrl(initialEntry.video_hot_url ?? "");
+      const coldVideo = initialEntry.video_cold_url ?? "";
+      const hotVideo = initialEntry.video_hot_url ?? "";
+      setVideoColdUrl(coldVideo || (hotVideo ? "" : legacyVideo));
+      setVideoHotUrl(hotVideo);
       setNote(initialEntry.note ?? "");
       setLines(
         initialEntry.lines?.length

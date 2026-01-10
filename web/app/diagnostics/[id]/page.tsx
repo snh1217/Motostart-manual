@@ -17,6 +17,12 @@ export default async function DiagnosticDetailPage({
   const item: DiagnosticEntry | null = await getDiagnosticById(id);
   if (!item) return notFound();
   const images = item.images?.length ? item.images : [item.image];
+  const legacyVideo = (item as { video_url?: string })?.video_url ?? "";
+  const videoUrls = [
+    item.video_cold_url,
+    item.video_hot_url,
+    legacyVideo && !item.video_cold_url && !item.video_hot_url ? legacyVideo : undefined,
+  ].filter(Boolean) as string[];
   const lines = item.lines.map((line) => {
     const legacy = line as unknown as { label?: string; value?: string };
     return {
@@ -47,38 +53,84 @@ export default async function DiagnosticDetailPage({
         </div>
       </header>
 
-      <div className="grid gap-3 md:grid-cols-2">
-        {images.map((url, idx) => (
-          <div
-            key={`${url}-${idx}`}
-            className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-          >
-            <Image
-              src={url}
-              alt={`${item.title} ${idx + 1}`}
-              width={1200}
-              height={800}
-              className="w-full bg-white object-contain"
-            />
-          </div>
-        ))}
-      </div>
-
-      {item.video_cold_url || item.video_hot_url ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          {item.video_cold_url ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-slate-600">냉간시</div>
-              <video src={item.video_cold_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
-            </div>
-          ) : null}
-          {item.video_hot_url ? (
-            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-              <div className="text-xs font-semibold text-slate-600">열간시</div>
-              <video src={item.video_hot_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
-            </div>
-          ) : null}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">
+            사진 ({images.length}장)
+          </h2>
         </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {images.map((url, idx) => (
+            <a
+              key={`${url}-${idx}`}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+            >
+              <Image
+                src={url}
+                alt={`${item.title} ${idx + 1}`}
+                width={1200}
+                height={800}
+                className="w-full bg-white object-contain"
+              />
+              <span className="mt-2 block text-xs text-slate-500">원본 열기</span>
+            </a>
+          ))}
+        </div>
+      </section>
+
+      {videoUrls.length ? (
+        <section className="space-y-3">
+          <h2 className="text-base font-semibold text-slate-900">
+            동영상 ({videoUrls.length}개)
+          </h2>
+          <div className="grid gap-3 md:grid-cols-2">
+            {item.video_cold_url ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="text-xs font-semibold text-slate-600">냉간시</div>
+                <video src={item.video_cold_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+                <a
+                  href={item.video_cold_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-xs text-slate-500 underline"
+                >
+                  새 탭에서 보기
+                </a>
+              </div>
+            ) : null}
+            {item.video_hot_url ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="text-xs font-semibold text-slate-600">열간시</div>
+                <video src={item.video_hot_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+                <a
+                  href={item.video_hot_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-xs text-slate-500 underline"
+                >
+                  새 탭에서 보기
+                </a>
+              </div>
+            ) : null}
+            {!item.video_cold_url && !item.video_hot_url && legacyVideo ? (
+              <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                <div className="text-xs font-semibold text-slate-600">동영상</div>
+                <video src={legacyVideo} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+                <a
+                  href={legacyVideo}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-2 inline-block text-xs text-slate-500 underline"
+                >
+                  새 탭에서 보기
+                </a>
+              </div>
+            ) : null}
+          </div>
+        </section>
       ) : null}
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
