@@ -6,10 +6,25 @@ type UploadManualFormProps = {
   readOnly?: boolean;
 };
 
+type UploadInitResponse = {
+  signedUrl?: string;
+  file?: string;
+  error?: string;
+};
+
+type FinalizeResponse = {
+  ok?: boolean;
+  error?: string;
+};
+
+const manualTypes = ["engine", "chassis", "user", "wiring"] as const;
+
+type ManualType = (typeof manualTypes)[number];
+
 export default function UploadManualForm({ readOnly = false }: UploadManualFormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [model, setModel] = useState("");
-  const [manualType, setManualType] = useState("engine");
+  const [manualType, setManualType] = useState<ManualType>("engine");
   const [section, setSection] = useState("");
   const [title, setTitle] = useState("");
   const [language, setLanguage] = useState("ko");
@@ -30,71 +45,150 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     if (stored) setAdminToken(stored);
   }, []);
 
+  const parseJson = (text: string) => {
+    try {
+      return JSON.parse(text) as unknown;
+    } catch {
+      return null;
+    }
+  };
+
+  const toNumberString = (value: string, fallback: string) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed) || parsed <= 0) return fallback;
+    return parsed.toString();
+  };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (readOnly) {
       setStatus("error");
-      setMessage("ì½ê¸° ì „ìš© ëª¨ë“œì—ì„œëŠ” ì—…ë¡œë“œí•  ìˆ˜ ì—†ìŠµë‹ˆë‹¤.");
+      setMessage("ÀĞ±â Àü¿ë ¸ğµå¿¡¼­´Â ¾÷·ÎµåÇÒ ¼ö ¾ø½À´Ï´Ù.");
       return;
     }
 
     if (!file) {
       setStatus("error");
-      setMessage("PDF íŒŒì¼ì„ ì„ íƒí•´ ì£¼ì„¸ìš”.");
+      setMessage("PDF ÆÄÀÏÀ» ¼±ÅÃÇØ ÁÖ¼¼¿ä.");
       return;
     }
 
     if (!model.trim() || !title.trim() || !section.trim()) {
       setStatus("error");
-      setMessage("ëª¨ë¸, ì„¹ì…˜, ì œëª©ì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.");
+      setMessage("¸ğµ¨, ¼½¼Ç, Á¦¸ñÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
       return;
     }
 
     if (!adminToken.trim()) {
       setStatus("error");
-      setMessage("ADMIN_TOKENì„ ì…ë ¥í•´ ì£¼ì„¸ìš”.");
+      setMessage("ADMIN_TOKENÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
       return;
     }
 
     setStatus("loading");
     setMessage("");
 
-    const formData = new FormData();
-    formData.append("file", file);
-    formData.append("model", model.trim());
-    formData.append("manual_type", manualType);
-    formData.append("section", section.trim());
-    formData.append("title", title.trim());
-    formData.append("language", language.trim());
-    formData.append("doc_date", docDate.trim());
-    formData.append("doc_code", docCode.trim());
-    formData.append("source_pdf", sourcePdf.trim());
-    formData.append("pages_start", pagesStart.trim());
-    formData.append("pages_end", pagesEnd.trim());
-    formData.append("id", entryId.trim());
+    const safePagesStart = toNumberString(pagesStart, "1");
+    const safePagesEnd = toNumberString(pagesEnd, safePagesStart);
+
+    const initPayload = {
+      model: model.trim(),
+      manual_type: manualType,
+      section: section.trim(),
+      title: title.trim(),
+      language: language.trim() || "ko",
+      doc_date: docDate.trim(),
+      doc_code: docCode.trim(),
+      source_pdf: sourcePdf.trim(),
+      pages_start: safePagesStart,
+      pages_end: safePagesEnd,
+      id: entryId.trim(),
+      filename: file.name,
+      contentType: file.type || "application/pdf",
+    };
 
     try {
       localStorage.setItem("ADMIN_TOKEN", adminToken);
-      const response = await fetch("/api/manuals/upload", {
+      const initResponse = await fetch("/api/manuals/upload", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${adminToken}`,
+          "Content-Type": "application/json",
         },
-        body: formData,
+        body: JSON.stringify(initPayload),
       });
 
-      const data = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(data?.error ?? "ì—…ë¡œë“œ ì‹¤íŒ¨");
+      const initText = await initResponse.text();
+      const initData = (initText ? parseJson(initText) : null) as UploadInitResponse | null;
+
+      if (!initResponse.ok || !initData?.signedUrl || !initData.file) {
+        throw new Error(initData?.error ?? initText || "¾÷·Îµå URL »ı¼º ½ÇÆĞ");
+      }
+
+      const uploadResponse = await fetch(initData.signedUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type || "application/pdf",
+        },
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error("ÆÄÀÏ ¾÷·Îµå ½ÇÆĞ");
+      }
+
+      const finalizePayload = {
+        finalize: true,
+        file: initData.file,
+        model: initPayload.model,
+        manual_type: initPayload.manual_type,
+        section: initPayload.section,
+        title: initPayload.title,
+        language: initPayload.language,
+        doc_date: initPayload.doc_date,
+        doc_code: initPayload.doc_code,
+        source_pdf: initPayload.source_pdf,
+        pages_start: initPayload.pages_start,
+        pages_end: initPayload.pages_end,
+        id: initPayload.id,
+      };
+
+      const finalizeResponse = await fetch("/api/manuals/upload", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${adminToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(finalizePayload),
+      });
+
+      const finalizeText = await finalizeResponse.text();
+      const finalizeData = (finalizeText ? parseJson(finalizeText) : null) as
+        | FinalizeResponse
+        | null;
+
+      if (!finalizeResponse.ok || !finalizeData?.ok) {
+        throw new Error(finalizeData?.error ?? finalizeText || "¸Å´º¾ó ÀúÀå ½ÇÆĞ");
       }
 
       setStatus("success");
-      setMessage("ë§¤ë‰´ì–¼ ì—…ë¡œë“œ ì™„ë£Œ");
+      setMessage("¸Å´º¾ó ¾÷·Îµå ¿Ï·á");
       setFile(null);
+      setModel("");
+      setManualType("engine");
+      setSection("");
+      setTitle("");
+      setLanguage("ko");
+      setDocDate("");
+      setDocCode("");
+      setSourcePdf("");
+      setPagesStart("1");
+      setPagesEnd("1");
+      setEntryId("");
       (event.target as HTMLFormElement).reset();
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "ì—…ë¡œë“œ ì˜¤ë¥˜");
+      setMessage(error instanceof Error ? error.message : "¾÷·Îµå ¿À·ù");
     }
   };
 
@@ -105,26 +199,26 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={model}
           onChange={(event) => setModel(event.target.value)}
-          placeholder="ëª¨ë¸ ì½”ë“œ (ì˜ˆ: 350D)"
+          placeholder="¸ğµ¨ ÄÚµå (¿¹: 350D)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
         <select
           value={manualType}
-          onChange={(event) => setManualType(event.target.value)}
+          onChange={(event) => setManualType(event.target.value as ManualType)}
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         >
-          <option value="engine">ì—”ì§„</option>
-          <option value="chassis">ì°¨ëŒ€</option>
-          <option value="user">ì‚¬ìš©ì</option>
-          <option value="wiring">íšŒë¡œë„</option>
+          <option value="engine">¿£Áø</option>
+          <option value="chassis">Â÷´ë</option>
+          <option value="user">»ç¿ëÀÚ</option>
+          <option value="wiring">È¸·Îµµ</option>
         </select>
         <input
           type="text"
           value={section}
           onChange={(event) => setSection(event.target.value)}
-          placeholder="ì„¹ì…˜ (ì˜ˆ: Lubrication System)"
+          placeholder="¼½¼Ç (¿¹: Lubrication System)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -132,7 +226,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
-          placeholder="ì œëª©"
+          placeholder="Á¦¸ñ"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -140,7 +234,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={language}
           onChange={(event) => setLanguage(event.target.value)}
-          placeholder="ì–¸ì–´ (ko/en)"
+          placeholder="¾ğ¾î (ko/en)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -148,7 +242,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={docDate}
           onChange={(event) => setDocDate(event.target.value)}
-          placeholder="ë¬¸ì„œì¼ (ì˜ˆ: 2025-02-12)"
+          placeholder="¹®¼­ ³¯Â¥ (¿¹: 2025-02-12)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -156,7 +250,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={docCode}
           onChange={(event) => setDocCode(event.target.value)}
-          placeholder="ë¬¸ì„œ ì½”ë“œ"
+          placeholder="¹®¼­ ÄÚµå"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -164,7 +258,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={sourcePdf}
           onChange={(event) => setSourcePdf(event.target.value)}
-          placeholder="ì›ë³¸ PDF íŒŒì¼ëª…"
+          placeholder="¿øº» PDF ÆÄÀÏ¸í"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -172,7 +266,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="text"
           value={entryId}
           onChange={(event) => setEntryId(event.target.value)}
-          placeholder="ID (ë¹„ì›Œë‘ë©´ ìë™ ìƒì„±)"
+          placeholder="ID (ºñ¿öµÎ¸é ÀÚµ¿ »ı¼º)"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -182,7 +276,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="number"
           value={pagesStart}
           onChange={(event) => setPagesStart(event.target.value)}
-          placeholder="ì‹œì‘ í˜ì´ì§€"
+          placeholder="½ÃÀÛ ÆäÀÌÁö"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -190,7 +284,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           type="number"
           value={pagesEnd}
           onChange={(event) => setPagesEnd(event.target.value)}
-          placeholder="ë í˜ì´ì§€"
+          placeholder="³¡ ÆäÀÌÁö"
           className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
           disabled={readOnly}
         />
@@ -216,7 +310,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           disabled={status === "loading" || readOnly}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {status === "loading" ? "ì—…ë¡œë“œ ì¤‘..." : "ì—…ë¡œë“œ"}
+          {status === "loading" ? "¾÷·Îµå Áß..." : "¾÷·Îµå"}
         </button>
       </div>
       {message ? (
