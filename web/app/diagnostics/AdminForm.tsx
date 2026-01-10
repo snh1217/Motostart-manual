@@ -328,30 +328,6 @@ export default function DiagnosticsAdminForm({
 
       <div className="grid gap-3 md:grid-cols-2">
         <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
-          <div className="text-xs font-semibold text-slate-600">사진 업로드</div>
-          <input
-            type="file"
-            accept="image/*"
-            disabled={readOnly || imageUploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null;
-              if (file) {
-                setImagePreview(URL.createObjectURL(file));
-                handleImageUpload(file);
-              }
-            }}
-            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
-          />
-          <div className="rounded-lg border border-slate-200 bg-white p-2">
-            <img
-              src={imagePreview || image}
-              alt="진단기 이미지"
-              className="h-40 w-full rounded-md object-contain bg-slate-100"
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
           <div className="text-xs font-semibold text-slate-600">동영상 업로드 (냉간시)</div>
           <input
             type="file"
@@ -411,6 +387,30 @@ export default function DiagnosticsAdminForm({
               className="h-40 w-full rounded-md bg-slate-100"
             />
           ) : null}
+        </div>
+      </div>
+
+      <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+        <div className="text-xs font-semibold text-slate-600">사진 업로드</div>
+        <input
+          type="file"
+          accept="image/*"
+          disabled={readOnly || imageUploading}
+          onChange={(e) => {
+            const file = e.target.files?.[0] ?? null;
+            if (file) {
+              setImagePreview(URL.createObjectURL(file));
+              handleImageUpload(file);
+            }
+          }}
+          className="mt-2 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"
+        />
+        <div className="mt-2 rounded-lg border border-slate-200 bg-white p-2">
+          <img
+            src={imagePreview || image}
+            alt="진단기 이미지"
+            className="h-40 w-full rounded-md object-contain bg-slate-100"
+          />
         </div>
       </div>
 
