@@ -45,7 +45,7 @@ export default function SpecsClient({
     "idle"
   );
   const [message, setMessage] = useState("");
-  const parseJsonResponse = async (response: Response) => {
+  const parseJsonResponse = async (response: Response): Promise<Record<string, unknown>> => {
     const text = await response.text();
     if (!text) return {};
     try {
@@ -53,6 +53,11 @@ export default function SpecsClient({
     } catch {
       return { error: text };
     }
+  };
+
+  const getErrorMessage = (payload: Record<string, unknown>, fallback: string) => {
+    const value = payload?.error;
+    return typeof value === "string" ? value : fallback;
   };
 
   useEffect(() => {
@@ -177,7 +182,7 @@ export default function SpecsClient({
 
       const data = await parseJsonResponse(response);
       if (!response.ok) {
-        throw new Error(data?.error ?? "업로드 실패");
+        throw new Error(getErrorMessage(data, "업로드 실패"));
       }
 
       setStatus("success");
@@ -231,7 +236,7 @@ export default function SpecsClient({
 
       const data = await parseJsonResponse(response);
       if (!response.ok) {
-        throw new Error(data?.error ?? "삭제 실패");
+        throw new Error(getErrorMessage(data, "삭제 실패"));
       }
 
       setStatus("success");
