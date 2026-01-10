@@ -78,6 +78,9 @@ export default async function ViewerPage({
     ? (await loadTranslation(entryId, model)) ?? (await getTranslationByEntryId(entryId))
     : null;
 
+  const manualListHref =
+    model && model !== "UNKNOWN" ? `/manuals?model=${encodeURIComponent(model)}` : "/manuals";
+
   const returnTo = entryId && file
     ? `/viewer?entryId=${encodeURIComponent(entryId)}&file=${encodeURIComponent(file)}&title=${encodeURIComponent(title)}&page=${encodeURIComponent(page ?? "")}`
     : "/viewer";
@@ -92,6 +95,12 @@ export default async function ViewerPage({
       </header>
 
       <div className="flex flex-wrap items-center gap-3 text-sm">
+        <Link
+          href={manualListHref}
+          className="rounded-full border border-slate-200 bg-white px-4 py-2 font-medium text-slate-700 transition hover:border-slate-300"
+        >
+          목록으로
+        </Link>
         {src ? (
           <a
             href={src}
