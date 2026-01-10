@@ -122,7 +122,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
       const initData = (initText ? parseJson(initText) : null) as UploadInitResponse | null;
 
       if (!initResponse.ok || !initData?.signedUrl || !initData.file) {
-        throw new Error(initData?.error ?? initText || "업로드 URL 생성 실패");
+        throw new Error((initData?.error ?? initText) || "업로드 URL 생성 실패");
       }
 
       const uploadResponse = await fetch(initData.signedUrl, {
@@ -168,7 +168,7 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
         | null;
 
       if (!finalizeResponse.ok || !finalizeData?.ok) {
-        throw new Error(finalizeData?.error ?? finalizeText || "매뉴얼 저장 실패");
+        throw new Error((finalizeData?.error ?? finalizeText) || "매뉴얼 저장 실패");
       }
 
       setStatus("success");
