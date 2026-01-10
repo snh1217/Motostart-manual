@@ -45,6 +45,15 @@ export default function SpecsClient({
     "idle"
   );
   const [message, setMessage] = useState("");
+  const parseJsonResponse = async (response: Response) => {
+    const text = await response.text();
+    if (!text) return {};
+    try {
+      return JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      return { error: text };
+    }
+  };
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -166,7 +175,7 @@ export default function SpecsClient({
         body: formData,
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       if (!response.ok) {
         throw new Error(data?.error ?? "업로드 실패");
       }
@@ -220,13 +229,13 @@ export default function SpecsClient({
         body: JSON.stringify({ ids }),
       });
 
-      const data = await response.json();
+      const data = await parseJsonResponse(response);
       if (!response.ok) {
         throw new Error(data?.error ?? "삭제 실패");
       }
 
       setStatus("success");
-      setMessage(`삭제 완료: ${data.deleted}건`);
+      setMessage(`삭제 완료: ${data.deleted ?? 0}건`);
       setSelectedIds(new Set());
       setRows((prev) => prev.filter((row) => !ids.includes(row.id)));
     } catch (error) {
