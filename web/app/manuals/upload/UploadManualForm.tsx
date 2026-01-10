@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { PDFDocument } from "pdf-lib";
 
 type UploadManualFormProps = {
   readOnly?: boolean;
@@ -41,6 +42,10 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     "idle"
   );
   const [message, setMessage] = useState("");
+  const [pageCount, setPageCount] = useState<number | null>(null);
+  const [pageCountStatus, setPageCountStatus] = useState<"idle" | "loading" | "error">(
+    "idle"
+  );
 
   useEffect(() => {
     const stored = localStorage.getItem("ADMIN_TOKEN");
@@ -74,7 +79,31 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
     setPagesStart("1");
     setPagesEnd("1");
     setEntryId("");
+    setPageCount(null);
+    setPageCountStatus("idle");
     form.reset();
+  };
+
+  const handleFileChange = async (nextFile: File | null) => {
+    setFile(nextFile);
+    setPageCount(null);
+    if (!nextFile) return;
+
+    setPageCountStatus("loading");
+    try {
+      const buffer = await nextFile.arrayBuffer();
+      const pdf = await PDFDocument.load(buffer, { ignoreEncryption: true });
+      const count = pdf.getPageCount();
+      setPageCount(count);
+
+      if (pagesStart.trim() === "1" && pagesEnd.trim() === "1") {
+        setPagesStart("1");
+        setPagesEnd(count.toString());
+      }
+      setPageCountStatus("idle");
+    } catch {
+      setPageCountStatus("error");
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -297,29 +326,40 @@ export default function UploadManualForm({ readOnly = false }: UploadManualFormP
           disabled={readOnly}
         />
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <input
-          type="password"
-          value={adminToken}
-          onChange={(event) => setAdminToken(event.target.value)}
-          placeholder="ADMIN_TOKEN"
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <input
-          type="file"
-          accept=".pdf"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
-          disabled={readOnly}
-        />
-        <button
-          type="submit"
-          disabled={status === "loading" || readOnly}
-          className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
-        >
-          {status === "loading" ? "업로드 중..." : "업로드"}
-        </button>
+      <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <input
+            type="password"
+            value={adminToken}
+            onChange={(event) => setAdminToken(event.target.value)}
+            placeholder="ADMIN_TOKEN"
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            disabled={readOnly}
+          />
+          <input
+            type="file"
+            accept=".pdf"
+            onChange={(event) => handleFileChange(event.target.files?.[0] ?? null)}
+            className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm"
+            disabled={readOnly}
+          />
+          <button
+            type="submit"
+            disabled={status === "loading" || readOnly}
+            className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          >
+            {status === "loading" ? "업로드 중..." : "업로드"}
+          </button>
+        </div>
+        {pageCountStatus === "loading" ? (
+          <p className="text-xs text-slate-500">PDF 페이지 수를 확인 중...</p>
+        ) : null}
+        {pageCountStatus === "error" ? (
+          <p className="text-xs text-red-600">페이지 수 자동 확인 실패 (직접 입력해 주세요).</p>
+        ) : null}
+        {pageCountStatus === "idle" && pageCount ? (
+          <p className="text-xs text-slate-500">감지된 페이지 수: {pageCount}p</p>
+        ) : null}
       </div>
       {message ? (
         <div
