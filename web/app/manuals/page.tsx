@@ -9,6 +9,7 @@ import path from "path";
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { SESSION_COOKIE, parseSessionValue } from "../../lib/auth/session";
+import ManualDeleteButton from "./ManualDeleteButton";
 
 const allowedModels: ModelCode[] = [
   "125C",
@@ -290,6 +291,13 @@ export default async function ManualsPage({
                                 >
                                   원본
                                 </a>
+                                {isAdmin ? (
+                                  <ManualDeleteButton
+                                    id={entry.id}
+                                    file={entry.file}
+                                    title={entry.title}
+                                  />
+                                ) : null}
                               </div>
                             </div>
                           </div>
