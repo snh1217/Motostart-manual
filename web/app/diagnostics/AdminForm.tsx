@@ -92,6 +92,8 @@ export default function DiagnosticsAdminForm({
   const [message, setMessage] = useState<string>("");
   const [imageUploading, setImageUploading] = useState(false);
   const [videoUploading, setVideoUploading] = useState(false);
+  const [ocrLoadingIndex, setOcrLoadingIndex] = useState<number | null>(null);
+  const [ocrMessage, setOcrMessage] = useState("");
 
   const isEditing = Boolean(initialEntry?.id);
 
@@ -184,6 +186,63 @@ export default function DiagnosticsAdminForm({
     setVideoHotPreview("");
     setNote("");
     setLines([{ source: "", translation: "", data: "", analysis: "", note: "" }]);
+  };
+
+  const applyOcrText = (text: string) => {
+    const rows = text
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const extracted: DiagnosticLine[] = rows.map((line) => {
+      const parts = line.split(/[:：]/);
+      if (parts.length > 1) {
+        const source = parts.shift() ?? "";
+        return {
+          source: source.trim(),
+          translation: "",
+          data: parts.join(":").trim(),
+          analysis: "",
+          note: "",
+        };
+      }
+      return { source: line, translation: "", data: "", analysis: "", note: "" };
+    });
+
+    setLines((prev) => {
+      const isEmpty =
+        prev.length === 1 &&
+        !prev[0].source &&
+        !prev[0].translation &&
+        !prev[0].data &&
+        !prev[0].analysis &&
+        !prev[0].note;
+      return isEmpty ? extracted : [...prev, ...extracted];
+    });
+  };
+
+  const runOcrForSlot = async (slot: ImageSlot, index: number) => {
+    const src = slot.preview || slot.url;
+    if (!src) {
+      setOcrMessage("텍스트 추출할 사진을 먼저 선택하세요.");
+      return;
+    }
+    try {
+      setOcrLoadingIndex(index);
+      setOcrMessage("텍스트 추출 중입니다...");
+      const { recognize } = await import("tesseract.js");
+      const result = await recognize(src, "eng+kor");
+      const text = result?.data?.text ?? "";
+      if (!text.trim()) {
+        setOcrMessage("추출된 텍스트가 없습니다.");
+        return;
+      }
+      applyOcrText(text);
+      setOcrMessage("텍스트 추출 완료.");
+    } catch (error) {
+      setOcrMessage(error instanceof Error ? error.message : "텍스트 추출 실패");
+    } finally {
+      setOcrLoadingIndex(null);
+    }
   };
 
   const uploadFile = async (file: File) => {
@@ -461,14 +520,24 @@ export default function DiagnosticsAdminForm({
             <div key={idx} className="rounded-xl border border-slate-200 bg-white p-3">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-600">
                 사진 {idx + 1}
-                <button
-                  type="button"
-                  onClick={() => removeImageSlot(idx)}
-                  className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-500"
-                  disabled={readOnly || images.length <= 1}
-                >
-                  제거
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => runOcrForSlot(slot, idx)}
+                    className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-600"
+                    disabled={readOnly || imageUploading || ocrLoadingIndex === idx}
+                  >
+                    {ocrLoadingIndex === idx ? "추출 중..." : "텍스트 추출"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImageSlot(idx)}
+                    className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-500"
+                    disabled={readOnly || images.length <= 1}
+                  >
+                    제거
+                  </button>
+                </div>
               </div>
               <div className="mt-2 grid gap-2 md:grid-cols-[1fr_160px]">
                 <div className="space-y-2">
@@ -504,6 +573,7 @@ export default function DiagnosticsAdminForm({
             </div>
           ))}
         </div>
+        {ocrMessage ? <p className="text-xs text-slate-500">{ocrMessage}</p> : null}
       </div>
 
       <textarea
