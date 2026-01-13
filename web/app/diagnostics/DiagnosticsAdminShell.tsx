@@ -88,6 +88,7 @@ export default function DiagnosticsAdminShell({
             initialEntry={initialEntry}
             selectedModel={selectedModel}
             onSaved={() => setOpen(false)}
+            onCancel={() => setOpen(false)}
           />
         </div>
       ) : null}

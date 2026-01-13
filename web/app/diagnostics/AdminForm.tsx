@@ -10,6 +10,7 @@ type AdminFormProps = {
   initialEntry?: DiagnosticEntry | null;
   selectedModel?: string;
   onSaved?: () => void;
+  onCancel?: () => void;
 };
 
 type ImageSlot = {
@@ -70,6 +71,7 @@ export default function DiagnosticsAdminForm({
   initialEntry,
   selectedModel,
   onSaved,
+  onCancel,
 }: AdminFormProps) {
   const router = useRouter();
   const [adminToken, setAdminToken] = useState("");
@@ -579,7 +581,7 @@ export default function DiagnosticsAdminForm({
         </div>
       </div>
 
-      <div className="pt-2">
+      <div className="pt-2 flex flex-wrap items-center gap-2">
         <button
           type="submit"
           disabled={status === "loading" || readOnly}
@@ -587,6 +589,20 @@ export default function DiagnosticsAdminForm({
         >
           {status === "loading" ? "저장 중..." : "저장"}
         </button>
+        {isEditing ? (
+          <button
+            type="button"
+            onClick={() => {
+              resetForm();
+              onCancel?.();
+              router.replace(`/diagnostics?model=${encodeURIComponent(modelLabel)}`);
+            }}
+            disabled={status === "loading"}
+            className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700"
+          >
+            수정 취소
+          </button>
+        ) : null}
       </div>
 
       {message ? (
