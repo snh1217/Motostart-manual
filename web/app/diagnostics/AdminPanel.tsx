@@ -3,8 +3,8 @@ import { promises as fs } from "fs";
 import path from "path";
 import crypto from "crypto";
 import type { DiagnosticEntry } from "../../lib/types";
-import AdminForm from "./AdminForm";
 import { getDiagnosticById } from "../../lib/diagnostics";
+import DiagnosticsAdminShell from "./DiagnosticsAdminShell";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,39 +103,22 @@ export default async function DiagnosticsAdminPanel({
   const editEntry = editId ? await getDiagnosticById(editId) : null;
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold">관리자 입력</h2>
-          <p className="text-sm text-slate-600">관리자 로그인 상태에서 저장됩니다.</p>
-        </div>
-        <div className="text-right text-xs text-slate-500">
-          <p>DB: {dbCount}건 / JSON: {jsonCount}건</p>
-          <p>최종 업데이트: {latestUpdated}</p>
-          <p>JSON 해시: {jsonHash}</p>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-        <span className={`rounded-full px-2.5 py-1 ${modeTone}`}>{modeLabel}</span>
-        <span className="text-slate-500">{modeHelp}</span>
-        <span className="flex items-center gap-2 rounded-full bg-slate-100 px-2.5 py-1 text-slate-600">
-          <span className={`h-2 w-2 rounded-full ${connectionTone}`} />
-          {connectionLabel}
-        </span>
-        {isReadOnly ? (
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-500">
-            읽기 전용 모드
-          </span>
-        ) : null}
-      </div>
-      <div className="mt-4">
-        <AdminForm
-          readOnly={isWriteDisabled}
-          saveTargetLabel={isDbMode ? "Supabase DB" : "JSON 파일"}
-          initialEntry={editEntry}
-          selectedModel={selectedModel}
-        />
-      </div>
-    </section>
+    <DiagnosticsAdminShell
+      readOnly={isWriteDisabled}
+      saveTargetLabel={isDbMode ? "Supabase DB" : "JSON 파일"}
+      selectedModel={selectedModel}
+      initialEntry={editEntry}
+      initialOpen={Boolean(editEntry)}
+      modeLabel={modeLabel}
+      modeTone={modeTone}
+      modeHelp={modeHelp}
+      connectionTone={connectionTone}
+      connectionLabel={connectionLabel}
+      isReadOnly={isReadOnly}
+      dbCount={dbCount}
+      jsonCount={jsonCount}
+      jsonHash={jsonHash}
+      latestUpdated={latestUpdated}
+    />
   );
 }

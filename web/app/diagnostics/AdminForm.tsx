@@ -9,6 +9,7 @@ type AdminFormProps = {
   saveTargetLabel?: string;
   initialEntry?: DiagnosticEntry | null;
   selectedModel?: string;
+  onSaved?: () => void;
 };
 
 type ImageSlot = {
@@ -68,6 +69,7 @@ export default function DiagnosticsAdminForm({
   saveTargetLabel,
   initialEntry,
   selectedModel,
+  onSaved,
 }: AdminFormProps) {
   const router = useRouter();
   const [adminToken, setAdminToken] = useState("");
@@ -312,6 +314,7 @@ export default function DiagnosticsAdminForm({
       setStatus("success");
       setMessage(`${target}에 저장되었습니다.`);
       resetForm();
+      onSaved?.();
       router.refresh();
       if (isEditing) {
         router.replace(`/diagnostics?model=${encodeURIComponent(modelLabel)}`);
