@@ -191,17 +191,19 @@ export default function DiagnosticsAdminForm({
   const applyOcrText = (text: string) => {
     const rows = text
       .split(/\r?\n/)
-      .map((line) => line.replace(/\s+/g, " ").trim())
+      .map((line) => line.replace(/\s+/g, " ").replace(/[|]/g, "").trim())
       .filter((line) => line.length >= 2)
-      .filter((line) => /[A-Za-z0-9]/.test(line));
+      .filter((line) => /[A-Za-z0-9]/.test(line))
+      .filter((line) => !/^data\s*\(\d+\s*\/\s*\d+\)/i.test(line))
+      .filter((line) => !/^XCM-PT/i.test(line));
     const extracted: DiagnosticLine[] = rows.map((line) => {
-      const parts = line.split(/[:：]/);
-      if (parts.length > 1) {
-        const source = parts.shift() ?? "";
+      const colonIndex = Math.max(line.lastIndexOf(":"), line.lastIndexOf("："));
+      if (colonIndex > 0) {
+        const source = line.slice(0, colonIndex).trim();
         return {
-          source: source.trim(),
+          source,
           translation: "",
-          data: parts.join(":").trim(),
+          data: line.slice(colonIndex + 1).trim(),
           analysis: "",
           note: "",
         };
