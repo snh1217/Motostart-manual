@@ -1,2 +1,4 @@
 # root-level large assets
 /tessdata/
+.DS_Store
+web/docs/
