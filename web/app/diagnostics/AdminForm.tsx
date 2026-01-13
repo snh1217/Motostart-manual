@@ -191,8 +191,9 @@ export default function DiagnosticsAdminForm({
   const applyOcrText = (text: string) => {
     const rows = text
       .split(/\r?\n/)
-      .map((line) => line.trim())
-      .filter(Boolean);
+      .map((line) => line.replace(/\s+/g, " ").trim())
+      .filter((line) => line.length >= 2)
+      .filter((line) => /[A-Za-z0-9]/.test(line));
     const extracted: DiagnosticLine[] = rows.map((line) => {
       const parts = line.split(/[:：]/);
       if (parts.length > 1) {
@@ -201,6 +202,17 @@ export default function DiagnosticsAdminForm({
           source: source.trim(),
           translation: "",
           data: parts.join(":").trim(),
+          analysis: "",
+          note: "",
+        };
+      }
+      const spaced = line.split(/\s{2,}/).filter(Boolean);
+      if (spaced.length > 1) {
+        const source = spaced.shift() ?? "";
+        return {
+          source: source.trim(),
+          translation: "",
+          data: spaced.join(" ").trim(),
           analysis: "",
           note: "",
         };
@@ -220,6 +232,36 @@ export default function DiagnosticsAdminForm({
     });
   };
 
+  const preprocessImage = async (src: string) => {
+    const image = new Image();
+    image.crossOrigin = "anonymous";
+    image.src = src;
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+    });
+
+    const width = image.naturalWidth || image.width;
+    const height = image.naturalHeight || image.height;
+    if (!width || !height) return src;
+
+    const cropLeft = Math.floor(width * 0.08);
+    const cropRight = Math.floor(width * 0.08);
+    const cropTop = Math.floor(height * 0.2);
+    const cropBottom = Math.floor(height * 0.15);
+    const cropWidth = Math.max(1, width - cropLeft - cropRight);
+    const cropHeight = Math.max(1, height - cropTop - cropBottom);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = cropWidth;
+    canvas.height = cropHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return src;
+    ctx.filter = "grayscale(1) contrast(1.6) brightness(1.1)";
+    ctx.drawImage(image, cropLeft, cropTop, cropWidth, cropHeight, 0, 0, cropWidth, cropHeight);
+    return canvas.toDataURL("image/png");
+  };
+
   const runOcrForSlot = async (slot: ImageSlot, index: number) => {
     const src = slot.preview || slot.url;
     if (!src) {
@@ -230,7 +272,14 @@ export default function DiagnosticsAdminForm({
       setOcrLoadingIndex(index);
       setOcrMessage("텍스트 추출 중입니다...");
       const { recognize } = await import("tesseract.js");
-      const result = await recognize(src, "eng+kor");
+      const processed = await preprocessImage(src);
+      const result = await recognize(processed, "eng", {
+        tessedit_pageseg_mode: "6",
+        user_defined_dpi: "300",
+        tessedit_char_whitelist:
+          "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./%:+- ",
+        preserve_interword_spaces: "1",
+      });
       const text = result?.data?.text ?? "";
       if (!text.trim()) {
         setOcrMessage("추출된 텍스트가 없습니다.");
