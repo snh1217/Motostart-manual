@@ -16,13 +16,17 @@ export default async function DiagnosticDetailPage({
   const id = resolved?.id ?? "";
   const item: DiagnosticEntry | null = await getDiagnosticById(id);
   if (!item) return notFound();
-  const images = item.images?.length ? item.images : [item.image];
-  const legacyVideo = (item as { video_url?: string })?.video_url ?? "";
+  const images = (item.images?.length ? item.images : [item.image])
+    .map((url) => url?.trim())
+    .filter((url): url is string => Boolean(url));
+  const legacyVideo = (item as { video_url?: string })?.video_url?.trim() ?? "";
+  const coldVideo = item.video_cold_url?.trim() ?? "";
+  const hotVideo = item.video_hot_url?.trim() ?? "";
   const videoUrls = [
-    item.video_cold_url,
-    item.video_hot_url,
-    legacyVideo && !item.video_cold_url && !item.video_hot_url ? legacyVideo : undefined,
-  ].filter(Boolean) as string[];
+    coldVideo || "",
+    hotVideo || "",
+    !coldVideo && !hotVideo ? legacyVideo : "",
+  ].filter((url): url is string => Boolean(url));
   const lines = item.lines.map((line) => {
     const legacy = line as unknown as { label?: string; value?: string };
     return {
@@ -53,46 +57,18 @@ export default async function DiagnosticDetailPage({
         </div>
       </header>
 
-      <section className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-slate-900">
-            사진 ({images.length}장)
-          </h2>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2">
-          {images.map((url, idx) => (
-            <a
-              key={`${url}-${idx}`}
-              href={url}
-              target="_blank"
-              rel="noreferrer"
-              className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
-            >
-              <Image
-                src={url}
-                alt={`${item.title} ${idx + 1}`}
-                width={1200}
-                height={800}
-                className="w-full bg-white object-contain"
-              />
-              <span className="mt-2 block text-xs text-slate-500">원본 열기</span>
-            </a>
-          ))}
-        </div>
-      </section>
-
       {videoUrls.length ? (
         <section className="space-y-3">
           <h2 className="text-base font-semibold text-slate-900">
             동영상 ({videoUrls.length}개)
           </h2>
           <div className="grid gap-3 md:grid-cols-2">
-            {item.video_cold_url ? (
+            {coldVideo ? (
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="text-xs font-semibold text-slate-600">냉간시</div>
-                <video src={item.video_cold_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+                <video src={coldVideo} controls className="mt-2 w-full rounded-xl bg-slate-50" />
                 <a
-                  href={item.video_cold_url}
+                  href={coldVideo}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-block text-xs text-slate-500 underline"
@@ -101,12 +77,12 @@ export default async function DiagnosticDetailPage({
                 </a>
               </div>
             ) : null}
-            {item.video_hot_url ? (
+            {hotVideo ? (
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="text-xs font-semibold text-slate-600">열간시</div>
-                <video src={item.video_hot_url} controls className="mt-2 w-full rounded-xl bg-slate-50" />
+                <video src={hotVideo} controls className="mt-2 w-full rounded-xl bg-slate-50" />
                 <a
-                  href={item.video_hot_url}
+                  href={hotVideo}
                   target="_blank"
                   rel="noreferrer"
                   className="mt-2 inline-block text-xs text-slate-500 underline"
@@ -115,7 +91,7 @@ export default async function DiagnosticDetailPage({
                 </a>
               </div>
             ) : null}
-            {!item.video_cold_url && !item.video_hot_url && legacyVideo ? (
+            {!coldVideo && !hotVideo && legacyVideo ? (
               <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                 <div className="text-xs font-semibold text-slate-600">동영상</div>
                 <video src={legacyVideo} controls className="mt-2 w-full rounded-xl bg-slate-50" />
@@ -132,6 +108,34 @@ export default async function DiagnosticDetailPage({
           </div>
         </section>
       ) : null}
+
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-semibold text-slate-900">
+            사진 ({images.length}장)
+          </h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {images.map((url, idx) => (
+            <a
+              key={`${url}-${idx}`}
+              href={url}
+              target="_blank"
+              rel="noreferrer"
+              className="overflow-hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+            >
+              <Image
+                src={url}
+                alt={`${item.title} ${idx + 1}`}
+                width={1200}
+                height={800}
+                className="h-40 w-full bg-white object-contain"
+              />
+              <span className="mt-2 block text-xs text-slate-500">원본 열기</span>
+            </a>
+          ))}
+        </div>
+      </section>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
         <table className="min-w-full text-left text-sm">
