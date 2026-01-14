@@ -182,7 +182,7 @@ export async function POST(request: Request) {
         warnings: validation.warnings,
       });
     }
-    revalidateTag("diagnosis-trees");
+    revalidateTag("diagnosis-trees", "max");
     return NextResponse.json({
       imported: results.filter((item) => item.status === "saved").length,
       results,
@@ -212,7 +212,7 @@ export async function POST(request: Request) {
     });
   }
 
-  revalidateTag("diagnosis-trees");
+  revalidateTag("diagnosis-trees", "max");
   return NextResponse.json({
     imported: results.filter((item) => item.status === "saved").length,
     results,
@@ -254,6 +254,6 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  revalidateTag("diagnosis-trees");
+  revalidateTag("diagnosis-trees", "max");
   return NextResponse.json({ ok: true });
 }
