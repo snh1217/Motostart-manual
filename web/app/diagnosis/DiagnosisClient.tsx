@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
-import type { DiagnosisNode, DiagnosisTree } from "../../lib/types";
+import type { DiagnosisLink, DiagnosisNode, DiagnosisTree } from "../../lib/types";
 
 type DiagnosisClientProps = {
   selectedModel: string;
@@ -287,7 +287,7 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
                             관련 링크
                           </div>
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {currentNode.links.map((linkItem, index) => {
+                            {currentNode.links.map((linkItem: DiagnosisLink, index) => {
                               const isExternal = linkItem.urlOrRoute.startsWith("http");
                               return (
                                 <a
