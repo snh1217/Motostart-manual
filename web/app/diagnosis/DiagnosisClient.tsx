@@ -287,7 +287,7 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
                             관련 링크
                           </div>
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {currentNode.links.map((linkItem: DiagnosisLink, index) => {
+                            {currentNode.links.map((linkItem: DiagnosisLink, index: number) => {
                               const isExternal = linkItem.urlOrRoute.startsWith("http");
                               return (
                                 <a
