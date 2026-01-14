@@ -277,7 +277,7 @@ export default function DiagnosticsAdminForm({
       const processed = await preprocessImage(src);
       const worker = await createWorker("eng");
       await worker.setParameters({
-        tessedit_pageseg_mode: "6",
+        tessedit_pageseg_mode: 6,
         user_defined_dpi: "300",
         tessedit_char_whitelist:
           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./%:+- ",
