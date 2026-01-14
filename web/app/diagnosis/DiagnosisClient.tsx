@@ -276,7 +276,7 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
                           조치 가이드
                         </div>
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                          {currentNode.actions.map((action) => (
+                          {currentNode.actions.map((action: string) => (
                             <li key={action}>{action}</li>
                           ))}
                         </ul>
