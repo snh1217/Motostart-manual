@@ -1,0 +1,87 @@
+{
+  "treeId": "unsteady_cold_idle_v1",
+  "title": "Unsteady idle speed of cooling car",
+  "category": "Start",
+  "symptomTitle": "Unsteady cold idle",
+  "supportedModels": ["350D", "350GK", "368G"],
+  "startNodeId": "n1",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "question",
+      "text": "Is the cold start enrichment system operating?",
+      "yesNextId": "n2",
+      "noNextId": "r1"
+    },
+    {
+      "id": "r1",
+      "type": "result",
+      "text": "Inspect the cold start enrichment or choke system.",
+      "actions": ["Check enrichment actuator", "Inspect choke linkage"],
+      "links": []
+    },
+    {
+      "id": "n2",
+      "type": "question",
+      "text": "Is battery voltage above 12.4V at idle?",
+      "yesNextId": "n3",
+      "noNextId": "r2"
+    },
+    {
+      "id": "r2",
+      "type": "result",
+      "text": "Charge or replace the battery and recheck.",
+      "actions": ["Charge battery", "Inspect charging system"],
+      "links": []
+    },
+    {
+      "id": "n3",
+      "type": "question",
+      "text": "Any vacuum leaks on intake side?",
+      "yesNextId": "r3",
+      "noNextId": "n4"
+    },
+    {
+      "id": "r3",
+      "type": "result",
+      "text": "Repair intake vacuum leaks.",
+      "actions": ["Inspect intake gaskets", "Seal vacuum hoses"],
+      "links": []
+    },
+    {
+      "id": "n4",
+      "type": "question",
+      "text": "Are spark plug and ignition coil in good condition?",
+      "yesNextId": "n5",
+      "noNextId": "r4"
+    },
+    {
+      "id": "r4",
+      "type": "result",
+      "text": "Replace spark plug or ignition coil.",
+      "actions": ["Replace spark plug", "Inspect ignition coil"],
+      "links": []
+    },
+    {
+      "id": "n5",
+      "type": "question",
+      "text": "Is coolant temperature sensor reading normal?",
+      "yesNextId": "r5",
+      "noNextId": "r6"
+    },
+    {
+      "id": "r5",
+      "type": "result",
+      "text": "Idle is unstable; inspect injector and idle air control.",
+      "actions": ["Clean injector", "Check idle air control valve"],
+      "links": []
+    },
+    {
+      "id": "r6",
+      "type": "result",
+      "text": "Repair coolant temperature sensor circuit.",
+      "actions": ["Inspect sensor wiring", "Replace temperature sensor"],
+      "links": []
+    }
+  ]
+}

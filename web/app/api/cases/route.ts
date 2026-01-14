@@ -10,12 +10,20 @@ export const dynamic = "force-dynamic";
 type CaseRow = {
   id?: string;
   model: string;
-  system: string;
-  symptom: string;
-  action: string;
+  system?: string;
+  category?: string;
+  symptom?: string;
+  symptomTitle?: string;
+  title?: string;
+  description?: string;
+  fixSteps?: string;
+  action?: string;
   cause?: string;
   parts?: string;
   tags?: string;
+  references?: string;
+  diagnosisTreeId?: string;
+  diagnosisResultId?: string;
   ref_manual_file?: string;
   ref_manual_page?: number;
   ref_youtube?: string;
@@ -44,6 +52,8 @@ export async function GET(request: Request) {
   const modelParam = searchParams.get("model")?.trim() ?? "all";
   const systemParam = searchParams.get("system")?.trim() ?? "all";
   const q = searchParams.get("q")?.trim() ?? "";
+  const diagnosisTreeId = searchParams.get("diagnosisTreeId")?.trim() ?? "";
+  const diagnosisResultId = searchParams.get("diagnosisResultId")?.trim() ?? "";
   const model = modelParam === "all" ? null : modelParam;
   const system = systemParam === "all" ? null : systemParam;
 
@@ -51,9 +61,11 @@ export async function GET(request: Request) {
     let query = supabaseAdmin.from("cases").select("*");
     if (model) query = query.eq("model", model);
     if (system) query = query.eq("system", system);
+    if (diagnosisTreeId) query = query.eq("diagnosisTreeId", diagnosisTreeId);
+    if (diagnosisResultId) query = query.eq("diagnosisResultId", diagnosisResultId);
     if (q) {
       query = query.or(
-        `symptom.ilike.%${q}%,action.ilike.%${q}%,cause.ilike.%${q}%`
+        `symptom.ilike.%${q}%,action.ilike.%${q}%,cause.ilike.%${q}%,title.ilike.%${q}%,description.ilike.%${q}%,fixSteps.ilike.%${q}%`
       );
     }
     const { data, error } = await query.order("updated_at", { ascending: false });
@@ -63,18 +75,18 @@ export async function GET(request: Request) {
         { status: 500 }
       );
     }
-    return NextResponse.json(
-      { items: data ?? [] },
-      { headers: cacheHeaders }
-    );
+    return NextResponse.json({ items: (data ?? []) as CaseRow[] }, { headers: cacheHeaders });
   }
 
   const items = await readCasesFromFile();
   const filtered = items.filter((item) => {
     if (model && item.model !== model) return false;
     if (system && item.system !== system) return false;
+    if (diagnosisTreeId && item.diagnosisTreeId !== diagnosisTreeId) return false;
+    if (diagnosisResultId && item.diagnosisResultId !== diagnosisResultId) return false;
     if (q) {
-      const haystack = `${item.symptom} ${item.action} ${item.cause ?? ""}`.toLowerCase();
+      const haystack =
+        `${item.symptom ?? ""} ${item.symptomTitle ?? ""} ${item.title ?? ""} ${item.description ?? ""} ${item.fixSteps ?? ""} ${item.action ?? ""} ${item.cause ?? ""}`.toLowerCase();
       if (!haystack.includes(q.toLowerCase())) return false;
     }
     return true;
@@ -104,26 +116,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "invalid json" }, { status: 400 });
   }
 
-  if (!payload?.model || !payload?.system || !payload?.symptom || !payload?.action) {
+  const resolvedTitle = payload.title || payload.symptomTitle || payload.symptom;
+  const resolvedFixSteps = payload.fixSteps || payload.action;
+  if (!payload?.model || !resolvedTitle || !resolvedFixSteps) {
     return NextResponse.json(
-      { error: "model, system, symptom, action are required" },
+      { error: "model, title/symptom, fixSteps/action are required" },
       { status: 400 }
     );
   }
 
+  const normalized = {
+    model: payload.model,
+    system: payload.system ?? payload.category ?? null,
+    category: payload.category ?? payload.system ?? null,
+    symptom: payload.symptom ?? payload.symptomTitle ?? payload.title ?? null,
+    symptomTitle: payload.symptomTitle ?? payload.symptom ?? payload.title ?? null,
+    title: payload.title ?? payload.symptomTitle ?? payload.symptom ?? null,
+    description: payload.description ?? payload.symptom ?? null,
+    fixSteps: payload.fixSteps ?? payload.action ?? null,
+    action: payload.action ?? payload.fixSteps ?? null,
+    diagnosisTreeId: payload.diagnosisTreeId ?? null,
+    diagnosisResultId: payload.diagnosisResultId ?? null,
+    cause: payload.cause ?? null,
+    parts: payload.parts ?? null,
+    tags: payload.tags ?? null,
+    references: payload.references ?? null,
+    ref_manual_file: payload.ref_manual_file ?? null,
+    ref_manual_page: payload.ref_manual_page ?? null,
+    ref_youtube: payload.ref_youtube ?? null,
+  };
+
   if (hasSupabaseConfig && supabaseAdmin) {
-    const { error } = await supabaseAdmin.from("cases").insert({
-      model: payload.model,
-      system: payload.system,
-      symptom: payload.symptom,
-      action: payload.action,
-      cause: payload.cause ?? null,
-      parts: payload.parts ?? null,
-      tags: payload.tags ?? null,
-      ref_manual_file: payload.ref_manual_file ?? null,
-      ref_manual_page: payload.ref_manual_page ?? null,
-      ref_youtube: payload.ref_youtube ?? null,
-    });
+    const { error } = await supabaseAdmin.from("cases").insert(normalized);
     if (error) {
       return NextResponse.json(
         { error: error.message },
@@ -134,6 +158,7 @@ export async function POST(request: Request) {
     const existing = await readCasesFromFile();
     const nextItem = {
       ...payload,
+      ...normalized,
       id: payload.id ?? `case-${Date.now()}`,
       updated_at: new Date().toISOString().slice(0, 10),
     };

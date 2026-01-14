@@ -5,9 +5,16 @@ import path from "path";
 type CaseRow = {
   id: string;
   model: string;
-  system: string;
-  symptom: string;
-  action: string;
+  system?: string;
+  category?: string;
+  symptom?: string;
+  symptomTitle?: string;
+  title?: string;
+  description?: string;
+  fixSteps?: string;
+  action?: string;
+  diagnosisTreeId?: string;
+  diagnosisResultId?: string;
   photo_1?: string;
   photo_1_desc?: string;
   photo_2?: string;
@@ -59,6 +66,12 @@ export default async function CaseDetailPage({
     );
   }
 
+  const title = item.title || item.symptomTitle || item.symptom || "?•ë¹„?¬ë?";
+  const description = item.description || item.symptom || "";
+  const fixSteps = item.fixSteps || item.action || "";
+  const categoryLabel =
+    item.system ? systemLabels[item.system] ?? item.system : item.category ?? "-";
+
   const photos = [
     { src: item.photo_1, desc: item.photo_1_desc },
     { src: item.photo_2, desc: item.photo_2_desc },
@@ -78,15 +91,25 @@ export default async function CaseDetailPage({
             {item.model}
           </span>
           <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
-            {systemLabels[item.system] ?? item.system}
+            {categoryLabel}
           </span>
+          {item.diagnosisResultId ? (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+              ì§„ë‹¨ ì—°ê²°
+            </span>
+          ) : null}
         </div>
-        <h1 className="text-2xl font-semibold text-slate-900">{item.symptom}</h1>
+        <h1 className="text-2xl font-semibold text-slate-900">{title}</h1>
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold">??/??</h2>
+        <p className="mt-3 text-sm text-slate-700">{description || "-"}</p>
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <h2 className="text-base font-semibold">조치 내용</h2>
-        <p className="mt-3 text-sm text-slate-700">{item.action}</p>
+        <p className="mt-3 text-sm text-slate-700">{fixSteps || "-"}</p>
       </section>
 
       <section className="space-y-3">
@@ -100,7 +123,7 @@ export default async function CaseDetailPage({
               >
                 <img
                   src={photo.src}
-                  alt={item.symptom}
+                  alt={title}
                   className="h-full w-full object-cover"
                 />
                 {photo.desc ? (

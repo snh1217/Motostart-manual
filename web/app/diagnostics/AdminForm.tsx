@@ -273,15 +273,18 @@ export default function DiagnosticsAdminForm({
     try {
       setOcrLoadingIndex(index);
       setOcrMessage("텍스트 추출 중입니다...");
-      const { recognize } = await import("tesseract.js");
+      const { createWorker } = await import("tesseract.js");
       const processed = await preprocessImage(src);
-      const result = await recognize(processed, "eng", {
+      const worker = await createWorker("eng");
+      await worker.setParameters({
         tessedit_pageseg_mode: "6",
         user_defined_dpi: "300",
         tessedit_char_whitelist:
           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./%:+- ",
         preserve_interword_spaces: "1",
       });
+      const result = await worker.recognize(processed);
+      await worker.terminate();
       const text = result?.data?.text ?? "";
       if (!text.trim()) {
         setOcrMessage("추출된 텍스트가 없습니다.");

@@ -5,9 +5,10 @@ import UploadForm from "./UploadForm";
 
 type CasesAdminPanelProps = {
   readOnly: boolean;
+  selectedModel: string;
 };
 
-export default function CasesAdminPanel({ readOnly }: CasesAdminPanelProps) {
+export default function CasesAdminPanel({ readOnly, selectedModel }: CasesAdminPanelProps) {
   const [isAdmin, setIsAdmin] = useState(false);
 
   useEffect(() => {
@@ -45,6 +46,10 @@ export default function CasesAdminPanel({ readOnly }: CasesAdminPanelProps) {
             양식 다운로드(CSV)
           </a>
         </div>
+        <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600">
+          ??: model, title(or symptom), fixSteps(or action) / ??: category,
+          symptomTitle, diagnosisTreeId, diagnosisResultId, tags, references
+        </div>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -53,7 +58,7 @@ export default function CasesAdminPanel({ readOnly }: CasesAdminPanelProps) {
           CSV 또는 XLSX 파일을 업로드하세요.
         </p>
         <div className="mt-4">
-          <UploadForm readOnly={readOnly} />
+          <UploadForm readOnly={readOnly} selectedModel={selectedModel} />
         </div>
       </section>
     </>

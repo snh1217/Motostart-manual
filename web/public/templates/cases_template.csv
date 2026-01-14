@@ -1,4 +1,3 @@
-차종,고장분류,증상,조치,사진1,사진1설명,사진2,사진2설명,사진3,사진3설명,사진4,사진4설명,사진5,사진5설명
-350D,엔진,드레인볼트 토크값 확인 필요,매뉴얼 기준 23 N·m로 체결,,,,,,,,,,
-368G,차대,브레이크 레버 간격 과다,레버 간격 조정 후 점검,,,,,,,,,,
-125M,전장,시동 경고등 점등,배선 커넥터 접촉 상태 확인,,,,,,,,,,
+model,system,category,symptomTitle,diagnosisTreeId,diagnosisResultId,title,description,fixSteps,tags,references,parts,photo_1,photo_1_desc,photo_2,photo_2_desc,photo_3,photo_3_desc,photo_4,photo_4_desc,photo_5,photo_5_desc
+350D,engine,Engine,Poor acceleration,poor_acceleration_v1,r3,Throttle cable free play out of spec,Low acceleration after warm-up,Adjust throttle cable free play to spec,"engine,acceleration",https://example.com,Throttle cable,,,,,,,,,,
+368G,engine,Idle,High hot idle,high_hot_idle_v1,r4,Coolant temp sensor fault,Idle speed remains high after warm-up,Inspect wiring and replace coolant temperature sensor,"idle,sensor",,Coolant temperature sensor,,,,,,,,,,

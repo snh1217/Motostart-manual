@@ -1,0 +1,87 @@
+{
+  "treeId": "high_hot_idle_v1",
+  "title": "High idling speed of hot car",
+  "category": "Idle",
+  "symptomTitle": "High hot idle",
+  "supportedModels": ["350D", "350GK", "368G"],
+  "startNodeId": "n1",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "question",
+      "text": "Is idle speed adjustment screw set to spec?",
+      "yesNextId": "n2",
+      "noNextId": "r1"
+    },
+    {
+      "id": "r1",
+      "type": "result",
+      "text": "Adjust the idle speed screw to specification.",
+      "actions": ["Set idle speed to spec"],
+      "links": []
+    },
+    {
+      "id": "n2",
+      "type": "question",
+      "text": "Is throttle cable free play within spec?",
+      "yesNextId": "n3",
+      "noNextId": "r2"
+    },
+    {
+      "id": "r2",
+      "type": "result",
+      "text": "Adjust throttle cable free play.",
+      "actions": ["Adjust throttle cable"],
+      "links": []
+    },
+    {
+      "id": "n3",
+      "type": "question",
+      "text": "Are there intake air leaks?",
+      "yesNextId": "r3",
+      "noNextId": "n4"
+    },
+    {
+      "id": "r3",
+      "type": "result",
+      "text": "Repair intake leaks and recheck idle speed.",
+      "actions": ["Inspect intake boots", "Seal or replace leaking parts"],
+      "links": []
+    },
+    {
+      "id": "n4",
+      "type": "question",
+      "text": "Is coolant temperature sensor reading normal?",
+      "yesNextId": "n5",
+      "noNextId": "r4"
+    },
+    {
+      "id": "r4",
+      "type": "result",
+      "text": "Replace or repair coolant temperature sensor circuit.",
+      "actions": ["Inspect sensor wiring", "Replace coolant temp sensor"],
+      "links": []
+    },
+    {
+      "id": "n5",
+      "type": "question",
+      "text": "Has ECU idle adaptation been reset?",
+      "yesNextId": "r5",
+      "noNextId": "r6"
+    },
+    {
+      "id": "r5",
+      "type": "result",
+      "text": "Idle still high after reset; check ISC or throttle body.",
+      "actions": ["Inspect ISC valve", "Clean throttle body"],
+      "links": []
+    },
+    {
+      "id": "r6",
+      "type": "result",
+      "text": "Reset ECU idle adaptation and recheck.",
+      "actions": ["Reset ECU idle learning"],
+      "links": []
+    }
+  ]
+}

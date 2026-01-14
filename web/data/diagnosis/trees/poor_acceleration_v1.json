@@ -1,0 +1,101 @@
+{
+  "treeId": "poor_acceleration_v1",
+  "title": "Poor acceleration",
+  "category": "Engine",
+  "symptomTitle": "Poor acceleration",
+  "supportedModels": ["350D", "350GK", "368G"],
+  "startNodeId": "n1",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "question",
+      "text": "Is the air filter clean?",
+      "yesNextId": "n2",
+      "noNextId": "r1"
+    },
+    {
+      "id": "r1",
+      "type": "result",
+      "text": "Clean or replace the air filter.",
+      "actions": ["Inspect air filter", "Clean or replace air filter"],
+      "links": []
+    },
+    {
+      "id": "n2",
+      "type": "question",
+      "text": "Is fuel quality fresh and tank vent clear?",
+      "yesNextId": "n3",
+      "noNextId": "r2"
+    },
+    {
+      "id": "r2",
+      "type": "result",
+      "text": "Drain old fuel and clean tank vent.",
+      "actions": ["Drain fuel", "Refill with fresh fuel", "Clear tank vent"],
+      "links": []
+    },
+    {
+      "id": "n3",
+      "type": "question",
+      "text": "Is throttle cable free play within spec?",
+      "yesNextId": "n4",
+      "noNextId": "r3"
+    },
+    {
+      "id": "r3",
+      "type": "result",
+      "text": "Adjust throttle cable free play.",
+      "actions": ["Adjust throttle cable"],
+      "links": []
+    },
+    {
+      "id": "n4",
+      "type": "question",
+      "text": "Is the spark plug in good condition?",
+      "yesNextId": "n5",
+      "noNextId": "r4"
+    },
+    {
+      "id": "r4",
+      "type": "result",
+      "text": "Replace or gap the spark plug.",
+      "actions": ["Replace spark plug", "Set plug gap"],
+      "links": []
+    },
+    {
+      "id": "n5",
+      "type": "question",
+      "text": "Is fuel line and injector flow normal?",
+      "yesNextId": "n6",
+      "noNextId": "r5"
+    },
+    {
+      "id": "r5",
+      "type": "result",
+      "text": "Inspect fuel line and injector for blockage.",
+      "actions": ["Inspect fuel line", "Clean injector"],
+      "links": []
+    },
+    {
+      "id": "n6",
+      "type": "question",
+      "text": "Any ECU or sensor fault codes present?",
+      "yesNextId": "r6",
+      "noNextId": "r7"
+    },
+    {
+      "id": "r6",
+      "type": "result",
+      "text": "Diagnose ignition and ECU sensors.",
+      "actions": ["Check TPS and MAP sensors", "Inspect ignition timing"],
+      "links": []
+    },
+    {
+      "id": "r7",
+      "type": "result",
+      "text": "Proceed with advanced diagnostic inspection.",
+      "actions": ["Perform compression test", "Check exhaust restriction"],
+      "links": []
+    }
+  ]
+}

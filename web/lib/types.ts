@@ -112,3 +112,78 @@ export type PartEntry = {
   updated_at?: string;
   source?: "db" | "json";
 };
+
+export type CaseEntry = {
+  id: string;
+  model: string;
+  system?: string;
+  category?: string;
+  symptom?: string;
+  symptomTitle?: string;
+  title?: string;
+  description?: string;
+  fixSteps?: string;
+  action?: string;
+  cause?: string;
+  parts?: string;
+  tags?: string;
+  references?: string;
+  diagnosisTreeId?: string;
+  diagnosisResultId?: string;
+  photo_1?: string;
+  photo_1_desc?: string;
+  photo_2?: string;
+  photo_2_desc?: string;
+  photo_3?: string;
+  photo_3_desc?: string;
+  photo_4?: string;
+  photo_4_desc?: string;
+  photo_5?: string;
+  photo_5_desc?: string;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type DiagnosisLinkType = "manual" | "torque" | "parts" | "case";
+
+export type DiagnosisLink = {
+  type: DiagnosisLinkType;
+  label: string;
+  urlOrRoute: string;
+  meta?: Record<string, string>;
+};
+
+export type DiagnosisQuestionNode = {
+  id: string;
+  type: "question";
+  text: string;
+  yesNextId: string;
+  noNextId: string;
+};
+
+export type DiagnosisStepNode = {
+  id: string;
+  type: "step";
+  text: string;
+  nextId: string;
+};
+
+export type DiagnosisResultNode = {
+  id: string;
+  type: "result";
+  text: string;
+  actions: string[];
+  links?: DiagnosisLink[];
+};
+
+export type DiagnosisNode = DiagnosisQuestionNode | DiagnosisStepNode | DiagnosisResultNode;
+
+export type DiagnosisTree = {
+  treeId: string;
+  title: string;
+  category: string;
+  symptomTitle?: string;
+  supportedModels: string[];
+  startNodeId: string;
+  nodes: DiagnosisNode[];
+};

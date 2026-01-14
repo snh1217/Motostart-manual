@@ -11,9 +11,16 @@ import ModelSelector from "../ModelSelector";
 type CaseRow = {
   id: string;
   model: string;
-  system: string;
-  symptom: string;
-  action: string;
+  system?: string;
+  category?: string;
+  symptom?: string;
+  symptomTitle?: string;
+  title?: string;
+  description?: string;
+  fixSteps?: string;
+  action?: string;
+  diagnosisTreeId?: string;
+  diagnosisResultId?: string;
   photo_1?: string;
   photo_1_desc?: string;
   photo_2?: string;
@@ -40,10 +47,18 @@ const buildApiUrl = async (query: string) => {
   return host ? `${proto}://${host}/api/cases?${query}` : `/api/cases?${query}`;
 };
 
-const loadCases = cache(async (model: string, system: string): Promise<CaseRow[]> => {
+const loadCases = cache(
+  async (
+    model: string,
+    system: string,
+    diagnosisTreeId?: string,
+    diagnosisResultId?: string
+  ): Promise<CaseRow[]> => {
   const params = new URLSearchParams();
   if (model) params.set("model", model);
   if (system) params.set("system", system);
+  if (diagnosisTreeId) params.set("diagnosisTreeId", diagnosisTreeId);
+  if (diagnosisResultId) params.set("diagnosisResultId", diagnosisResultId);
   try {
     const apiUrl = await buildApiUrl(params.toString());
     const response = await fetch(apiUrl, { cache: "no-store" });
@@ -66,10 +81,17 @@ const loadCases = cache(async (model: string, system: string): Promise<CaseRow[]
   }
 });
 
-const buildQuery = (model: string, system: string) => {
+const buildQuery = (
+  model: string,
+  system: string,
+  diagnosisTreeId?: string,
+  diagnosisResultId?: string
+) => {
   const params = new URLSearchParams();
   params.set("model", model);
   params.set("system", system);
+  if (diagnosisTreeId) params.set("diagnosisTreeId", diagnosisTreeId);
+  if (diagnosisResultId) params.set("diagnosisResultId", diagnosisResultId);
   return `?${params.toString()}`;
 };
 
@@ -89,24 +111,34 @@ const loadModelOptions = cache(async (): Promise<string[]> => {
 export default async function CasesPage({
   searchParams,
 }: {
-  searchParams?: Promise<{ model?: string; system?: string }>;
+  searchParams?: Promise<{
+    model?: string;
+    system?: string;
+    diagnosisTreeId?: string;
+    diagnosisResultId?: string;
+  }>;
 }) {
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const model = resolvedSearchParams?.model ?? "all";
   const system = resolvedSearchParams?.system ?? "all";
+  const diagnosisTreeId = resolvedSearchParams?.diagnosisTreeId?.trim() ?? "";
+  const diagnosisResultId = resolvedSearchParams?.diagnosisResultId?.trim() ?? "";
   const isReadOnly = process.env.READ_ONLY_MODE === "1";
   const role = parseSessionValue((await cookies()).get(SESSION_COOKIE)?.value ?? null);
   const isAdmin = role === "admin";
 
   const modelOptions = await loadModelOptions();
-  const shouldPrefetch = model !== "all" || system !== "all";
-  const filteredCases = shouldPrefetch ? await loadCases(model, system) : [];
+  const hasDiagnosisFilter = Boolean(diagnosisTreeId || diagnosisResultId);
+  const shouldPrefetch = model !== "all" || system !== "all" || hasDiagnosisFilter;
+  const filteredCases = shouldPrefetch
+    ? await loadCases(model, system, diagnosisTreeId, diagnosisResultId)
+    : [];
   const selectorOptions = [
-    { id: "all", label: "전체", href: `/cases${buildQuery("all", system)}` },
+    { id: "all", label: "전체", href: `/cases${buildQuery("all", system, diagnosisTreeId, diagnosisResultId)}` },
     ...modelOptions.map((id) => ({
       id,
       label: id,
-      href: `/cases${buildQuery(id, system)}`,
+      href: `/cases${buildQuery(id, system, diagnosisTreeId, diagnosisResultId)}`,
     })),
   ];
 
@@ -124,7 +156,21 @@ export default async function CasesPage({
         ) : null}
       </header>
 
-      {isAdmin ? <CasesAdminPanel readOnly={isReadOnly} /> : null}
+      {hasDiagnosisFilter ? (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-600">
+          ì§„ë‹¨ ê²°ê³¼ë¡œ í•„í„°ë§ ì¤‘ìž…ë‹ˆ??.
+          <Link
+            href={`/cases${buildQuery(model, "all")}`}
+            className="ml-2 font-semibold text-slate-700 underline"
+          >
+            í•„í„° í•´ì œ
+          </Link>
+        </div>
+      ) : null}
+
+      {isAdmin ? (
+        <CasesAdminPanel readOnly={isReadOnly} selectedModel={model} />
+      ) : null}
 
       <section className="rounded-2xl border border-slate-200 bg-white p-6">
         <ModelSelector
@@ -136,7 +182,7 @@ export default async function CasesPage({
           {Object.entries(systemLabels).map(([value, label]) => (
             <Link
               key={value}
-              href={`/cases${buildQuery(model, value)}`}
+              href={`/cases${buildQuery(model, value, diagnosisTreeId, diagnosisResultId)}`}
               className={`-mb-px border-b-2 px-3 py-2 text-sm font-semibold ${
                 system === value
                   ? "border-slate-900 text-slate-900"
@@ -157,6 +203,11 @@ export default async function CasesPage({
                 item.photo_3_desc ||
                 item.photo_4_desc ||
                 item.photo_5_desc;
+              const title =
+                item.title || item.symptomTitle || item.symptom || "?ì •?˜ì§€?Šì€ ?¬ë?";
+              const summary = item.fixSteps || item.action || item.description || "";
+              const categoryLabel =
+                item.system ? systemLabels[item.system] ?? item.system : item.category ?? "-";
               return (
               <Link
                 key={item.id}
@@ -168,24 +219,31 @@ export default async function CasesPage({
                     {item.model}
                   </span>
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
-                    {systemLabels[item.system] ?? item.system}
+                    {categoryLabel}
                   </span>
+                  {item.diagnosisResultId ? (
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-700">
+                      ì§„ë‹¨ ì—°ê²°
+                    </span>
+                  ) : null}
                 </div>
                 <div className="mt-3 grid gap-4 lg:grid-cols-[1fr_140px]">
                   <div>
                     <h3 className="text-lg font-semibold text-slate-900">
-                      {item.symptom}
+                      {title}
                     </h3>
-                    <p className="mt-2 text-sm text-slate-600">
-                      {item.action.slice(0, 120)}
-                      {item.action.length > 120 ? "..." : ""}
-                    </p>
+                    {summary ? (
+                      <p className="mt-2 text-sm text-slate-600">
+                        {summary.slice(0, 120)}
+                        {summary.length > 120 ? "..." : ""}
+                      </p>
+                    ) : null}
                   </div>
                   {item.photo_1 ? (
                     <div className="h-28 w-full overflow-hidden rounded-xl border border-slate-200">
                       <img
                         src={item.photo_1}
-                        alt={item.symptom}
+                        alt={title}
                         className="h-full w-full object-cover"
                       />
                     </div>
