@@ -54,7 +54,8 @@ export default function DiagnosisTreeAdmin() {
           Authorization: `Bearer ${adminToken}`,
         },
       });
-      const data = await response.json();
+      const raw = await response.text();
+      const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
         throw new Error(data?.error ?? "목록을 불러오지 못했습니다.");
       }
@@ -85,7 +86,8 @@ export default function DiagnosisTreeAdmin() {
         },
         body: JSON.stringify({ treeId, isActive }),
       });
-      const data = await response.json();
+      const raw = await response.text();
+      const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
         throw new Error(data?.error ?? "활성화 변경 실패");
       }

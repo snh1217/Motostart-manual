@@ -63,8 +63,8 @@ const buildTemplateUrl = (
     symptomTitle: tree.symptomTitle ?? tree.title,
     diagnosisTreeId: tree.treeId,
     diagnosisResultId: node.id,
-    title: tree.title,
-    description: node.text,
+    title: tree.title_ko ?? tree.title ?? tree.title_en ?? "",
+    description: node.text_ko ?? node.text ?? node.text_en ?? "",
   });
   return `/api/cases/template?${params.toString()}`;
 };
@@ -97,11 +97,17 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
   const activeTree = activeTreeId
     ? availableTrees.find((tree) => tree.treeId === activeTreeId) ?? null
     : null;
+  const activeTreeTitle =
+    activeTree?.title_ko ?? activeTree?.title ?? activeTree?.title_en ?? "";
   const nodeMap = useMemo(
     () => (activeTree ? buildNodeMap(activeTree) : new Map()),
     [activeTree]
   );
   const currentNode = history.length ? nodeMap.get(history[history.length - 1]) : null;
+  const currentNodeText =
+    currentNode?.text_ko ?? currentNode?.text ?? currentNode?.text_en ?? "";
+  const currentActions =
+    currentNode?.actions_ko ?? currentNode?.actions ?? currentNode?.actions_en ?? [];
   const maxDepth = activeTree ? buildMaxDepth(activeTree) : 0;
   const answeredCount = history.filter((nodeId) => nodeMap.get(nodeId)?.type === "question")
     .length;
@@ -190,7 +196,9 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
               className="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition hover:border-slate-300"
             >
               <div className="text-xs font-semibold text-slate-500">{tree.category}</div>
-              <h3 className="mt-2 text-lg font-semibold text-slate-900">{tree.title}</h3>
+              <h3 className="mt-2 text-lg font-semibold text-slate-900">
+                {tree.title_ko ?? tree.title ?? tree.title_en}
+              </h3>
               {tree.symptomTitle ? (
                 <p className="mt-2 text-sm text-slate-600">{tree.symptomTitle}</p>
               ) : null}
@@ -205,7 +213,7 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-slate-500">{activeTree.category}</p>
-              <h2 className="text-xl font-semibold text-slate-900">{activeTree.title}</h2>
+              <h2 className="text-xl font-semibold text-slate-900">{activeTreeTitle}</h2>
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -241,7 +249,7 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
             {currentNode ? (
               <>
                 <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <p className="text-lg font-semibold text-slate-900">{currentNode.text}</p>
+                  <p className="text-lg font-semibold text-slate-900">{currentNodeText}</p>
                   {currentNode.type === "question" ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
@@ -276,9 +284,9 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
                           조치 가이드
                         </div>
                         <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                          {currentNode.actions.map((action: string) => (
-                            <li key={action}>{action}</li>
-                          ))}
+                      {currentActions.map((action: string) => (
+                        <li key={action}>{action}</li>
+                      ))}
                         </ul>
                       </div>
                       {currentNode.links?.length ? (

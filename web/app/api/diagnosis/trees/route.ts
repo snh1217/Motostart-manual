@@ -51,7 +51,9 @@ export async function GET(request: Request) {
       items = data.map((row) => {
         const tree = {
           treeId: row.tree_id as string,
-          title: (row.title_en ?? row.title_ko ?? row.tree_id) as string,
+          title: (row.title_ko ?? row.title_en ?? row.tree_id) as string,
+          title_ko: row.title_ko as string | undefined,
+          title_en: row.title_en as string | undefined,
           category: (row.category as string) ?? "General",
           supportedModels: (row.supported_models ?? []) as string[],
           startNodeId: row.start_node_id as string,
@@ -82,8 +84,8 @@ export async function GET(request: Request) {
       const validation = validateDiagnosisTree(tree);
       return {
         treeId: tree.treeId,
-        title: tree.title,
-        category: tree.category,
+          title: tree.title,
+          category: tree.category,
         supportedModels: tree.supportedModels,
         nodeCount: tree.nodes.length,
         version: 1,
@@ -152,7 +154,8 @@ export async function POST(request: Request) {
         .upsert(
           {
             tree_id: tree.treeId,
-            title_en: tree.title,
+            title_ko: tree.title_ko ?? null,
+            title_en: tree.title_en ?? tree.title ?? null,
             category: tree.category,
             supported_models: tree.supportedModels,
             start_node_id: tree.startNodeId,

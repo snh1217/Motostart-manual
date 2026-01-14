@@ -156,7 +156,9 @@ export type DiagnosisLink = {
 export type DiagnosisQuestionNode = {
   id: string;
   type: "question";
-  text: string;
+  text?: string;
+  text_ko?: string;
+  text_en?: string;
   yesNextId: string;
   noNextId: string;
 };
@@ -164,15 +166,21 @@ export type DiagnosisQuestionNode = {
 export type DiagnosisStepNode = {
   id: string;
   type: "step";
-  text: string;
+  text?: string;
+  text_ko?: string;
+  text_en?: string;
   nextId: string;
 };
 
 export type DiagnosisResultNode = {
   id: string;
   type: "result";
-  text: string;
-  actions: string[];
+  text?: string;
+  text_ko?: string;
+  text_en?: string;
+  actions?: string[];
+  actions_ko?: string[];
+  actions_en?: string[];
   links?: DiagnosisLink[];
 };
 
@@ -181,6 +189,8 @@ export type DiagnosisNode = DiagnosisQuestionNode | DiagnosisStepNode | Diagnosi
 export type DiagnosisTree = {
   treeId: string;
   title: string;
+  title_ko?: string;
+  title_en?: string;
   category: string;
   symptomTitle?: string;
   supportedModels: string[];

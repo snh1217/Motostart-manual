@@ -114,7 +114,11 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
       errors.push(`duplicate node id ${node.id}`);
     }
     nodeIds.add(node.id);
-    if (!node.type || !node.text) {
+    const hasText =
+      Boolean((node as { text?: string }).text?.trim()) ||
+      Boolean((node as { text_ko?: string }).text_ko?.trim()) ||
+      Boolean((node as { text_en?: string }).text_en?.trim());
+    if (!node.type || !hasText) {
       errors.push(`node ${node.id} missing type/text`);
     }
     if (!allowedTypes.has(node.type)) {
@@ -128,8 +132,14 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
     if (node.type === "step" && !(node as { nextId?: string }).nextId) {
       errors.push(`step node ${node.id} missing nextId`);
     }
-    if (node.type === "result" && !Array.isArray((node as { actions?: string[] }).actions)) {
-      errors.push(`result node ${node.id} missing actions`);
+    if (node.type === "result") {
+      const actions =
+        (node as { actions?: string[] }).actions ??
+        (node as { actions_ko?: string[] }).actions_ko ??
+        (node as { actions_en?: string[] }).actions_en;
+      if (!Array.isArray(actions) || actions.length === 0) {
+        errors.push(`result node ${node.id} missing actions`);
+      }
     }
   });
 
@@ -191,7 +201,9 @@ const mapDbTree = (row: Record<string, unknown>): DiagnosisTree | null => {
   if (!row.tree_id || !row.start_node_id || !nodes.length) return null;
   return {
     treeId: String(row.tree_id),
-    title: (row.title_en as string) || (row.title_ko as string) || String(row.tree_id),
+    title: (row.title_ko as string) || (row.title_en as string) || String(row.tree_id),
+    title_ko: row.title_ko as string | undefined,
+    title_en: row.title_en as string | undefined,
     category: String(row.category ?? "General"),
     supportedModels: Array.isArray(row.supported_models)
       ? (row.supported_models as string[])
