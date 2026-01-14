@@ -273,11 +273,11 @@ export default function DiagnosticsAdminForm({
     try {
       setOcrLoadingIndex(index);
       setOcrMessage("텍스트 추출 중입니다...");
-      const { createWorker } = await import("tesseract.js");
+      const { createWorker, PSM } = await import("tesseract.js");
       const processed = await preprocessImage(src);
       const worker = await createWorker("eng");
       await worker.setParameters({
-        tessedit_pageseg_mode: 6,
+        tessedit_pageseg_mode: PSM.SINGLE_BLOCK,
         user_defined_dpi: "300",
         tessedit_char_whitelist:
           "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_./%:+- ",
