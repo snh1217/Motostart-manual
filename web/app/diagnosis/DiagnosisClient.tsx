@@ -36,19 +36,15 @@ const buildMaxDepth = (tree: DiagnosisTree) => {
     if (node.type === "question") {
       const depth =
         1 + Math.max(dfs(node.yesNextId ?? ""), dfs(node.noNextId ?? ""));
-      visiting.delete(nodeId);
       memo.set(nodeId, depth);
       return depth;
     }
     if (node.type === "step") {
       const depth = 1 + dfs(node.nextId ?? "");
-      visiting.delete(nodeId);
       memo.set(nodeId, depth);
       return depth;
     }
-    visiting.delete(nodeId);
-    memo.set(nodeId, depth);
-    return depth;
+    return 1;
   };
 
   return dfs(tree.startNodeId);
