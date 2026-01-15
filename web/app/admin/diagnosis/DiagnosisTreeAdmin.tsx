@@ -27,6 +27,12 @@ type UploadResult = {
   }>;
 };
 
+
+const getErrorMessage = (payload: unknown, fallback: string) => {
+  if (!payload || typeof payload !== "object") return fallback;
+  const value = (payload as Record<string, unknown>).error;
+  return typeof value === "string" && value.trim() ? value : fallback;
+};
 export default function DiagnosisTreeAdmin() {
   const [adminToken, setAdminToken] = useState("");
   const [file, setFile] = useState<File | null>(null);
