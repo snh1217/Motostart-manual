@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 
@@ -63,11 +63,11 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(data?.error ?? "목록을 불러오지 못했습니다.");
+        throw new Error(getErrorMessage(data, "Failed to load list"));
       }
       setTrees((data.items ?? []) as TreeSummary[]);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "목록 조회 실패");
+      setMessage(error instanceof Error ? error.message : "Failed to load list.");
     } finally {
       setLoading(false);
     }
@@ -95,11 +95,11 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(data?.error ?? "활성화 변경 실패");
+        throw new Error(getErrorMessage(data, "Activation update failed"));
       }
       await loadTrees();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "활성화 변경 실패");
+      setMessage(error instanceof Error ? error.message : "Activation update failed.");
     } finally {
       setLoading(false);
     }
@@ -108,11 +108,11 @@ export default function DiagnosisTreeAdmin() {
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!adminToken.trim()) {
-      setMessage("관리자 코드를 입력해 주세요.");
+      setMessage("Enter the admin token.");
       return;
     }
     if (!file) {
-      setMessage("JSON 파일을 선택해 주세요.");
+      setMessage("Select a JSON file to upload.");
       return;
     }
 
@@ -134,15 +134,15 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(data?.error ?? "업로드 실패");
+        throw new Error(getErrorMessage(data, "Upload failed"));
       }
       setUploadResult(data as UploadResult);
-      setMessage("진단 트리 업로드가 완료되었습니다.");
+      setMessage("Upload completed.");
       setFile(null);
       (event.target as HTMLFormElement).reset();
       await loadTrees();
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "업로드 실패");
+      setMessage(error instanceof Error ? error.message : "Upload failed.");
     } finally {
       setLoading(false);
     }
@@ -155,7 +155,7 @@ export default function DiagnosisTreeAdmin() {
           type="password"
           value={adminToken}
           onChange={(event) => setAdminToken(event.target.value)}
-          placeholder="관리자 코드"
+          placeholder="Admin token"
           className="w-56 rounded-xl border border-slate-200 px-3 py-2 text-sm"
         />
         <button
@@ -164,7 +164,7 @@ export default function DiagnosisTreeAdmin() {
           disabled={loading || !adminToken.trim()}
           className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
         >
-          목록 새로고침
+          Refresh list
         </button>
       </div>
 
@@ -180,12 +180,12 @@ export default function DiagnosisTreeAdmin() {
           disabled={loading}
           className="rounded-xl bg-slate-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60"
         >
-          {loading ? "업로드 중..." : "JSON 업로드"}
+          {loading ? "Uploading..." : "Upload JSON"}
         </button>
       </form>
       <p className="text-[11px] text-slate-500">
-        업로드 시 같은 tree_id는 version이 증가합니다. 롤백은 이전 JSON을 다시 업로드해
-        복원하세요.
+        Uploading with the same tree_id increments the version. Upload a previous JSON to roll back.
+      
       </p>
 
       {message ? (
@@ -194,12 +194,12 @@ export default function DiagnosisTreeAdmin() {
 
       {uploadResult?.results?.length ? (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-600">
-          업로드 결과: {uploadResult.imported}건 저장
+          Upload result: {uploadResult.imported} items
         </div>
       ) : null}
 
       <div className="space-y-3">
-        <div className="text-sm font-semibold text-slate-700">현재 등록된 트리</div>
+        <div className="text-sm font-semibold text-slate-700">Active diagnosis trees</div>
         {trees.length ? (
           <div className="grid gap-3 md:grid-cols-2">
             {trees.map((tree) => (
@@ -260,18 +260,18 @@ export default function DiagnosisTreeAdmin() {
                       disabled={loading}
                       className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
                     >
-                      {tree.isActive ? "비활성화" : "활성화"}
+                      {tree.isActive ? "Deactivate" : "Activate"}
                     </button>
                   </div>
                 ) : null}
                 {tree.errors.length ? (
                   <div className="mt-2 text-rose-600">
-                    오류: {tree.errors.join(" / ")}
+                    Errors: {tree.errors.join(" / ")}
                   </div>
                 ) : null}
                 {tree.warnings.length ? (
                   <div className="mt-2 text-amber-600">
-                    경고: {tree.warnings.join(" / ")}
+                    Warnings: {tree.warnings.join(" / ")}
                   </div>
                 ) : null}
               </div>
@@ -279,10 +279,11 @@ export default function DiagnosisTreeAdmin() {
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-4 text-xs text-slate-500">
-            등록된 진단 트리가 없습니다.
+            No diagnosis trees uploaded.
           </div>
         )}
       </div>
     </section>
   );
 }
+
