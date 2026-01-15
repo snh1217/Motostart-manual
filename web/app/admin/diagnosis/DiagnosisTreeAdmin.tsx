@@ -125,7 +125,8 @@ export default function DiagnosisTreeAdmin() {
         },
         body: formData,
       });
-      const data = await response.json();
+      const raw = await response.text();
+      const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
         throw new Error(data?.error ?? "업로드 실패");
       }
