@@ -181,10 +181,13 @@ export async function POST(request: Request) {
       });
     }
 
+    const imported = Array.isArray(results)
+      ? results.filter((item) => item.status === "saved").length
+      : 0;
     revalidateTag("diagnosis-trees", "max");
     return NextResponse.json({
-      imported: results.filter((item) => item.status === "saved").length,
-      results,
+      imported,
+      results: Array.isArray(results) ? results : [],
     });
   } catch (error) {
     return NextResponse.json(
