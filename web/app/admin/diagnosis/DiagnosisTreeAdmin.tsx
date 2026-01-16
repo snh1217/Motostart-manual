@@ -30,8 +30,12 @@ type UploadResult = {
 
 const getErrorMessage = (payload: unknown, fallback: string) => {
   if (!payload || typeof payload !== "object") return fallback;
-  const value = (payload as Record<string, unknown>).error;
-  return typeof value === "string" && value.trim() ? value : fallback;
+  const record = payload as Record<string, unknown>;
+  const errorValue = record.error;
+  if (typeof errorValue === "string" && errorValue.trim()) return errorValue;
+  const messageValue = record.message;
+  if (typeof messageValue === "string" && messageValue.trim()) return messageValue;
+  return fallback;
 };
 export default function DiagnosisTreeAdmin() {
   const [adminToken, setAdminToken] = useState("");
@@ -63,7 +67,10 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(getErrorMessage(data, "Failed to load list"));
+        const message =
+          getErrorMessage(data, "") ||
+          (raw?.trim() ? raw.trim() : `Failed to load list (${response.status}).`);
+        throw new Error(message);
       }
       setTrees((data.items ?? []) as TreeSummary[]);
     } catch (error) {
@@ -95,7 +102,12 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(getErrorMessage(data, "Activation update failed"));
+        const message =
+          getErrorMessage(data, "") ||
+          (raw?.trim()
+            ? raw.trim()
+            : `Activation update failed (${response.status}).`);
+        throw new Error(message);
       }
       await loadTrees();
     } catch (error) {
@@ -134,7 +146,10 @@ export default function DiagnosisTreeAdmin() {
       const raw = await response.text();
       const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
       if (!response.ok) {
-        throw new Error(getErrorMessage(data, "Upload failed"));
+        const message =
+          getErrorMessage(data, "") ||
+          (raw?.trim() ? raw.trim() : `Upload failed (${response.status}).`);
+        throw new Error(message);
       }
       setUploadResult(data as UploadResult);
       setMessage("Upload completed.");
