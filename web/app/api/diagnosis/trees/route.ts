@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import path from "path";
 import { revalidateTag } from "next/cache";
@@ -35,10 +35,7 @@ const parsePayload = async (request: Request): Promise<DiagnosisTree[]> => {
 
 export async function GET(request: Request) {
   if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { error: "관리자 접근이 필요합니다." },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
   let items: Array<Record<string, unknown>> = [];
@@ -84,8 +81,8 @@ export async function GET(request: Request) {
       const validation = validateDiagnosisTree(tree);
       return {
         treeId: tree.treeId,
-          title: tree.title,
-          category: tree.category,
+        title: tree.title,
+        category: tree.category,
         supportedModels: tree.supportedModels,
         nodeCount: tree.nodes.length,
         version: 1,
@@ -104,31 +101,29 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   if (isReadOnlyMode()) {
-    return NextResponse.json(
-      { error: "읽기 전용 모드에서는 업로드할 수 없습니다." },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "READ_ONLY_MODE" }, { status: 403 });
   }
   if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { error: "관리자 접근이 필요합니다." },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
 
-  let payload: DiagnosisTree[] = [];
   try {
-    payload = await parsePayload(request);
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "JSON 파싱 실패" },
-      { status: 400 }
-    );
-  }
+    if (!hasSupabaseConfig || !supabaseAdmin) {
+      return NextResponse.json({ error: "SUPABASE_NOT_CONFIGURED" }, { status: 400 });
+    }
 
-  const results: Array<Record<string, unknown>> = [];
+    let payload: DiagnosisTree[] = [];
+    try {
+      payload = await parsePayload(request);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "Invalid JSON payload" },
+        { status: 400 }
+      );
+    }
 
-  if (hasSupabaseConfig && supabaseAdmin) {
+    const results: Array<Record<string, unknown>> = [];
+
     for (const tree of payload) {
       const validation = validateDiagnosisTree(tree);
       if (validation.errors.length) {
@@ -185,61 +180,29 @@ export async function POST(request: Request) {
         warnings: validation.warnings,
       });
     }
+
     revalidateTag("diagnosis-trees", "max");
     return NextResponse.json({
       imported: results.filter((item) => item.status === "saved").length,
       results,
     });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Upload failed" },
+      { status: 500 }
+    );
   }
-
-  await fs.mkdir(diagnosisTreesPath, { recursive: true });
-  for (const tree of payload) {
-    const validation = validateDiagnosisTree(tree);
-    if (validation.errors.length) {
-      results.push({
-        treeId: tree.treeId ?? "(unknown)",
-        status: "failed",
-        errors: validation.errors,
-        warnings: validation.warnings,
-      });
-      continue;
-    }
-
-    const filename = `${safeFileName(tree.treeId)}.json`;
-    const filePath = path.join(diagnosisTreesPath, filename);
-    await fs.writeFile(filePath, JSON.stringify(tree, null, 2), "utf8");
-    results.push({
-      treeId: tree.treeId,
-      status: "saved",
-      warnings: validation.warnings,
-    });
-  }
-
-  revalidateTag("diagnosis-trees", "max");
-  return NextResponse.json({
-    imported: results.filter((item) => item.status === "saved").length,
-    results,
-  });
 }
 
 export async function PATCH(request: Request) {
   if (isReadOnlyMode()) {
-    return NextResponse.json(
-      { error: "읽기 전용 모드에서는 변경할 수 없습니다." },
-      { status: 403 }
-    );
+    return NextResponse.json({ error: "READ_ONLY_MODE" }, { status: 403 });
   }
   if (!isAdminAuthorized(request)) {
-    return NextResponse.json(
-      { error: "관리자 접근이 필요합니다." },
-      { status: 401 }
-    );
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
   }
   if (!hasSupabaseConfig || !supabaseAdmin) {
-    return NextResponse.json(
-      { error: "SUPABASE_NOT_CONFIGURED" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "SUPABASE_NOT_CONFIGURED" }, { status: 400 });
   }
 
   const body = (await request.json()) as { treeId?: string; isActive?: boolean };
@@ -260,3 +223,7 @@ export async function PATCH(request: Request) {
   revalidateTag("diagnosis-trees", "max");
   return NextResponse.json({ ok: true });
 }
+
+
+
+
