@@ -34,69 +34,78 @@ const parsePayload = async (request: Request): Promise<DiagnosisTree[]> => {
 };
 
 export async function GET(request: Request) {
-  if (!isAdminAuthorized(request)) {
-    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
-  }
+  try {
+    if (!isAdminAuthorized(request)) {
+      return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+    }
 
-  let items: Array<Record<string, unknown>> = [];
-  if (hasSupabaseConfig && supabaseAdmin) {
-    const { data, error } = await supabaseAdmin
-      .from("diagnosis_trees")
-      .select("*")
-      .order("updated_at", { ascending: false });
-    if (!error && Array.isArray(data)) {
-      items = data.map((row) => {
-        const tree = {
-          treeId: row.tree_id as string,
-          title: (row.title_ko ?? row.title_en ?? row.tree_id) as string,
-          title_ko: row.title_ko as string | undefined,
-          title_en: row.title_en as string | undefined,
-          category: (row.category as string) ?? "General",
-          supportedModels: (row.supported_models ?? []) as string[],
-          startNodeId: row.start_node_id as string,
-          nodes: Array.isArray(row.nodes) ? (row.nodes as DiagnosisTree["nodes"]) : [],
-        };
-        const validation = validateDiagnosisTree(tree as DiagnosisTree);
+    let items: Array<Record<string, unknown>> = [];
+    if (hasSupabaseConfig && supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from("diagnosis_trees")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      if (!error && Array.isArray(data)) {
+        items = data.map((row) => {
+          const tree = {
+            treeId: row.tree_id as string,
+            title: (row.title_ko ?? row.title_en ?? row.tree_id) as string,
+            title_ko: row.title_ko as string | undefined,
+            title_en: row.title_en as string | undefined,
+            category: (row.category as string) ?? "General",
+            supportedModels: (row.supported_models ?? []) as string[],
+            startNodeId: row.start_node_id as string,
+            nodes: Array.isArray(row.nodes)
+              ? (row.nodes as DiagnosisTree["nodes"])
+              : [],
+          };
+          const validation = validateDiagnosisTree(tree as DiagnosisTree);
+          return {
+            treeId: tree.treeId,
+            title: tree.title,
+            category: tree.category || "General",
+            supportedModels: tree.supportedModels,
+            nodeCount: tree.nodes.length,
+            version: row.version ?? 1,
+            isActive: row.is_active ?? false,
+            updatedAt: row.updated_at ?? null,
+            updatedBy: row.updated_by ?? null,
+            source: "db",
+            errors: validation.errors,
+            warnings: validation.warnings,
+          };
+        });
+      }
+    }
+
+    if (!items.length) {
+      const trees = await loadDiagnosisTrees();
+      items = trees.map((tree) => {
+        const validation = validateDiagnosisTree(tree);
         return {
           treeId: tree.treeId,
           title: tree.title,
-          category: tree.category || "General",
+          category: tree.category,
           supportedModels: tree.supportedModels,
           nodeCount: tree.nodes.length,
-          version: row.version ?? 1,
-          isActive: row.is_active ?? false,
-          updatedAt: row.updated_at ?? null,
-          updatedBy: row.updated_by ?? null,
-          source: "db",
+          version: 1,
+          isActive: true,
+          updatedAt: null,
+          updatedBy: null,
+          source: "json",
           errors: validation.errors,
           warnings: validation.warnings,
         };
       });
     }
-  }
 
-  if (!items.length) {
-    const trees = await loadDiagnosisTrees();
-    items = trees.map((tree) => {
-      const validation = validateDiagnosisTree(tree);
-      return {
-        treeId: tree.treeId,
-        title: tree.title,
-        category: tree.category,
-        supportedModels: tree.supportedModels,
-        nodeCount: tree.nodes.length,
-        version: 1,
-        isActive: true,
-        updatedAt: null,
-        updatedBy: null,
-        source: "json",
-        errors: validation.errors,
-        warnings: validation.warnings,
-      };
-    });
+    return NextResponse.json({ items });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Failed to load list" },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ items });
 }
 
 export async function POST(request: Request) {
