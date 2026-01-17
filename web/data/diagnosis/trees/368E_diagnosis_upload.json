@@ -6,7 +6,9 @@
     "title_en": "Poor acceleration",
     "category": "Engine",
     "symptomTitle": "가속 불량 (Poor acceleration)",
-    "supportedModels": ["368E"],
+    "supportedModels": [
+      "368E"
+    ],
     "startNodeId": "n1",
     "nodes": [
       {
@@ -22,9 +24,16 @@
         "type": "result",
         "text_ko": "점화 시기 조정 필요",
         "text_en": "Adjust ignition timing",
-        "actions_ko": ["점화 시기 조정 (정비소 의뢰)"],
-        "actions_en": ["Adjust ignition timing at service"],
-        "links": []
+        "actions_ko": [
+          "점화 시기 조정 (정비소 의뢰)"
+        ],
+        "actions_en": [
+          "Adjust ignition timing at service"
+        ],
+        "links": [],
+        "actions": [
+          "Adjust ignition timing at service"
+        ]
       },
       {
         "id": "n2",
@@ -39,9 +48,19 @@
         "type": "result",
         "text_ko": "흡기 누설 수리/교체",
         "text_en": "Repair or replace intake leak",
-        "actions_ko": ["흡기 누설 부위 점검", "손상 부품 교체"],
-        "actions_en": ["Inspect intake leaks", "Replace damaged parts"],
-        "links": []
+        "actions_ko": [
+          "흡기 누설 부위 점검",
+          "손상 부품 교체"
+        ],
+        "actions_en": [
+          "Inspect intake leaks",
+          "Replace damaged parts"
+        ],
+        "links": [],
+        "actions": [
+          "Inspect intake leaks",
+          "Replace damaged parts"
+        ]
       },
       {
         "id": "n3",
@@ -56,9 +75,16 @@
         "type": "result",
         "text_ko": "에어 필터 청소/교체",
         "text_en": "Clean or replace air filter",
-        "actions_ko": ["에어 필터 청소 또는 교체"],
-        "actions_en": ["Clean or replace air filter"],
-        "links": []
+        "actions_ko": [
+          "에어 필터 청소 또는 교체"
+        ],
+        "actions_en": [
+          "Clean or replace air filter"
+        ],
+        "links": [],
+        "actions": [
+          "Clean or replace air filter"
+        ]
       },
       {
         "id": "n4",
@@ -73,9 +99,16 @@
         "type": "result",
         "text_ko": "3-in-1 센서 점검/교체",
         "text_en": "Inspect or replace three-in-one sensor",
-        "actions_ko": ["센서 점검 및 교체"],
-        "actions_en": ["Inspect and replace sensor"],
-        "links": []
+        "actions_ko": [
+          "센서 점검 및 교체"
+        ],
+        "actions_en": [
+          "Inspect and replace sensor"
+        ],
+        "links": [],
+        "actions": [
+          "Inspect and replace sensor"
+        ]
       },
       {
         "id": "n5",
@@ -90,18 +123,38 @@
         "type": "result",
         "text_ko": "연료 펌프/필터/연료량 점검",
         "text_en": "Check fuel pump, filter, fuel supply",
-        "actions_ko": ["연료 펌프 및 필터 스크린 점검", "연료량 및 품질 확인"],
-        "actions_en": ["Check fuel pump and filter screen", "Verify fuel supply"],
-        "links": []
+        "actions_ko": [
+          "연료 펌프 및 필터 스크린 점검",
+          "연료량 및 품질 확인"
+        ],
+        "actions_en": [
+          "Check fuel pump and filter screen",
+          "Verify fuel supply"
+        ],
+        "links": [],
+        "actions": [
+          "Check fuel pump and filter screen",
+          "Verify fuel supply"
+        ]
       },
       {
         "id": "r5",
         "type": "result",
         "text_ko": "인젝터 세척 및 배기/캐니스터/탱크 벤트 호스 점검",
         "text_en": "Clean injector and check exhaust/canister/vent hoses",
-        "actions_ko": ["인젝터 점검 및 세척", "배기 파이프/카본 캐니스터/탱크 벤트 호스 점검"],
-        "actions_en": ["Inspect and clean injector", "Check exhaust/canister/vent hoses"],
-        "links": []
+        "actions_ko": [
+          "인젝터 점검 및 세척",
+          "배기 파이프/카본 캐니스터/탱크 벤트 호스 점검"
+        ],
+        "actions_en": [
+          "Inspect and clean injector",
+          "Check exhaust/canister/vent hoses"
+        ],
+        "links": [],
+        "actions": [
+          "Inspect and clean injector",
+          "Check exhaust/canister/vent hoses"
+        ]
       }
     ]
   },
@@ -112,7 +165,9 @@
     "title_en": "High idling speed of hot car",
     "category": "Idle",
     "symptomTitle": "열간 공회전 높음 (High hot idle)",
-    "supportedModels": ["368E"],
+    "supportedModels": [
+      "368E"
+    ],
     "startNodeId": "n1",
     "nodes": [
       {
@@ -128,9 +183,19 @@
         "type": "result",
         "text_ko": "스로틀 케이블 유격 점검 및 스로틀 바디 청소",
         "text_en": "Check throttle cable free play and clean throttle body",
-        "actions_ko": ["스로틀 케이블 유격 조정", "스로틀 바디 청소"],
-        "actions_en": ["Adjust throttle cable free play", "Clean throttle body"],
-        "links": []
+        "actions_ko": [
+          "스로틀 케이블 유격 조정",
+          "스로틀 바디 청소"
+        ],
+        "actions_en": [
+          "Adjust throttle cable free play",
+          "Clean throttle body"
+        ],
+        "links": [],
+        "actions": [
+          "Adjust throttle cable free play",
+          "Clean throttle body"
+        ]
       },
       {
         "id": "n2",
@@ -145,9 +210,16 @@
         "type": "result",
         "text_ko": "흡기 매니폴드 교체",
         "text_en": "Replace intake manifold",
-        "actions_ko": ["흡기 매니폴드 교체"],
-        "actions_en": ["Replace intake manifold"],
-        "links": []
+        "actions_ko": [
+          "흡기 매니폴드 교체"
+        ],
+        "actions_en": [
+          "Replace intake manifold"
+        ],
+        "links": [],
+        "actions": [
+          "Replace intake manifold"
+        ]
       },
       {
         "id": "n3",
@@ -162,9 +234,16 @@
         "type": "result",
         "text_ko": "워터/오일 공용 센서 교체",
         "text_en": "Replace water-oil shared sensor",
-        "actions_ko": ["센서 교체"],
-        "actions_en": ["Replace sensor"],
-        "links": []
+        "actions_ko": [
+          "센서 교체"
+        ],
+        "actions_en": [
+          "Replace sensor"
+        ],
+        "links": [],
+        "actions": [
+          "Replace sensor"
+        ]
       },
       {
         "id": "n4",
@@ -179,9 +258,16 @@
         "type": "result",
         "text_ko": "배기 파이프 수리/교체",
         "text_en": "Repair or replace exhaust pipe",
-        "actions_ko": ["배기 파이프 수리 또는 교체"],
-        "actions_en": ["Repair or replace exhaust pipe"],
-        "links": []
+        "actions_ko": [
+          "배기 파이프 수리 또는 교체"
+        ],
+        "actions_en": [
+          "Repair or replace exhaust pipe"
+        ],
+        "links": [],
+        "actions": [
+          "Repair or replace exhaust pipe"
+        ]
       },
       {
         "id": "n5",
@@ -196,18 +282,32 @@
         "type": "result",
         "text_ko": "아이들 속도 제어 밸브 교체",
         "text_en": "Replace idle speed control valve",
-        "actions_ko": ["아이들 제어 밸브 교체"],
-        "actions_en": ["Replace idle speed control valve"],
-        "links": []
+        "actions_ko": [
+          "아이들 제어 밸브 교체"
+        ],
+        "actions_en": [
+          "Replace idle speed control valve"
+        ],
+        "links": [],
+        "actions": [
+          "Replace idle speed control valve"
+        ]
       },
       {
         "id": "r5",
         "type": "result",
         "text_ko": "배선 점검",
         "text_en": "Check wiring harness",
-        "actions_ko": ["배선 및 커넥터 점검"],
-        "actions_en": ["Inspect wiring and connectors"],
-        "links": []
+        "actions_ko": [
+          "배선 및 커넥터 점검"
+        ],
+        "actions_en": [
+          "Inspect wiring and connectors"
+        ],
+        "links": [],
+        "actions": [
+          "Inspect wiring and connectors"
+        ]
       }
     ]
   },
@@ -218,7 +318,9 @@
     "title_en": "Unsteady idle speed of cooling car",
     "category": "Start",
     "symptomTitle": "냉간 공회전 불안정 (Unsteady cold idle)",
-    "supportedModels": ["368E"],
+    "supportedModels": [
+      "368E"
+    ],
     "startNodeId": "n1",
     "nodes": [
       {
@@ -234,9 +336,16 @@
         "type": "result",
         "text_ko": "아이들 제어 밸브 오버홀/교체",
         "text_en": "Overhaul or replace idle speed control valve",
-        "actions_ko": ["아이들 제어 밸브 오버홀 또는 교체"],
-        "actions_en": ["Overhaul or replace idle speed control valve"],
-        "links": []
+        "actions_ko": [
+          "아이들 제어 밸브 오버홀 또는 교체"
+        ],
+        "actions_en": [
+          "Overhaul or replace idle speed control valve"
+        ],
+        "links": [],
+        "actions": [
+          "Overhaul or replace idle speed control valve"
+        ]
       },
       {
         "id": "n2",
@@ -251,18 +360,32 @@
         "type": "result",
         "text_ko": "워터/오일 공용 센서 교체",
         "text_en": "Replace water-oil shared sensor",
-        "actions_ko": ["센서 교체"],
-        "actions_en": ["Replace sensor"],
-        "links": []
+        "actions_ko": [
+          "센서 교체"
+        ],
+        "actions_en": [
+          "Replace sensor"
+        ],
+        "links": [],
+        "actions": [
+          "Replace sensor"
+        ]
       },
       {
         "id": "r2",
         "type": "result",
         "text_ko": "인젝터 점검/세척",
         "text_en": "Check or clean injector",
-        "actions_ko": ["인젝터 점검 및 세척"],
-        "actions_en": ["Inspect and clean injector"],
-        "links": []
+        "actions_ko": [
+          "인젝터 점검 및 세척"
+        ],
+        "actions_en": [
+          "Inspect and clean injector"
+        ],
+        "links": [],
+        "actions": [
+          "Inspect and clean injector"
+        ]
       }
     ]
   }
