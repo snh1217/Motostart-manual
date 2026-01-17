@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
@@ -97,22 +97,34 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
   const activeTree = activeTreeId
     ? availableTrees.find((tree) => tree.treeId === activeTreeId) ?? null
     : null;
-  const activeTreeTitle =
-    activeTree?.title_ko ?? activeTree?.title ?? activeTree?.title_en ?? "";
+  const activeTreeTitleEn = activeTree?.title_en ?? activeTree?.title ?? "";
+  const activeTreeTitleKo = activeTree?.title_ko ?? "";
   const nodeMap = useMemo(
     () => (activeTree ? buildNodeMap(activeTree) : new Map()),
     [activeTree]
   );
   const currentNode = history.length ? nodeMap.get(history[history.length - 1]) : null;
-  const currentNodeText =
-    currentNode?.text_ko ?? currentNode?.text ?? currentNode?.text_en ?? "";
-  const currentActions =
-    currentNode?.actions_ko ?? currentNode?.actions ?? currentNode?.actions_en ?? [];
+  const currentNodeTextEn =
+    currentNode?.text_en ?? currentNode?.text ?? currentNode?.text_ko ?? "";
+  const currentNodeTextKo = currentNode?.text_ko ?? "";
+  const currentActionsEn = Array.isArray(currentNode?.actions_en ?? currentNode?.actions)
+    ? ((currentNode?.actions_en ?? currentNode?.actions) as string[])
+    : [];
+  const currentActionsKo = Array.isArray(currentNode?.actions_ko)
+    ? (currentNode?.actions_ko as string[])
+    : [];
+  const actionPairs =
+    currentActionsEn.length > 0
+      ? currentActionsEn.map((action, index) => ({
+          en: action,
+          ko: currentActionsKo[index] ?? "",
+        }))
+      : currentActionsKo.map((action) => ({ en: action, ko: "" }));
   const maxDepth = activeTree ? buildMaxDepth(activeTree) : 0;
   const answeredCount = history.filter((nodeId) => nodeMap.get(nodeId)?.type === "question")
     .length;
   const breadcrumb = history
-    .map((nodeId) => nodeMap.get(nodeId)?.text)
+    .map((nodeId) => nodeMap.get(nodeId)?.text_en ?? nodeMap.get(nodeId)?.text)
     .filter((value): value is string => Boolean(value));
 
   const categoryTrees = selectedCategory
@@ -197,8 +209,11 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
             >
               <div className="text-xs font-semibold text-slate-500">{tree.category}</div>
               <h3 className="mt-2 text-lg font-semibold text-slate-900">
-                {tree.title_ko ?? tree.title ?? tree.title_en}
+                {tree.title_en ?? tree.title ?? tree.title_ko}
               </h3>
+              {tree.title_ko && tree.title_ko !== (tree.title_en ?? tree.title) ? (
+                <p className="mt-1 text-sm text-slate-600">{tree.title_ko}</p>
+              ) : null}
               {tree.symptomTitle ? (
                 <p className="mt-2 text-sm text-slate-600">{tree.symptomTitle}</p>
               ) : null}
@@ -213,7 +228,12 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="space-y-1">
               <p className="text-xs font-semibold text-slate-500">{activeTree.category}</p>
-              <h2 className="text-xl font-semibold text-slate-900">{activeTreeTitle}</h2>
+              <h2 className="text-xl font-semibold text-slate-900">
+                {activeTreeTitleEn}
+              </h2>
+              {activeTreeTitleKo && activeTreeTitleKo !== activeTreeTitleEn ? (
+                <p className="text-sm text-slate-600">{activeTreeTitleKo}</p>
+              ) : null}
             </div>
             <div className="flex flex-wrap gap-2">
               <button
@@ -249,7 +269,12 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
             {currentNode ? (
               <>
                 <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                  <p className="text-lg font-semibold text-slate-900">{currentNodeText}</p>
+                  <p className="text-lg font-semibold text-slate-900">
+                    {currentNodeTextEn}
+                  </p>
+                  {currentNodeTextKo && currentNodeTextKo !== currentNodeTextEn ? (
+                    <p className="mt-1 text-sm text-slate-600">{currentNodeTextKo}</p>
+                  ) : null}
                   {currentNode.type === "question" ? (
                     <div className="mt-4 flex flex-wrap gap-2">
                       <button
@@ -283,10 +308,15 @@ export default function DiagnosisClient({ selectedModel, trees }: DiagnosisClien
                         <div className="text-sm font-semibold text-slate-700">
                           조치 가이드
                         </div>
-                        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-slate-700">
-                      {currentActions.map((action: string) => (
-                        <li key={action}>{action}</li>
-                      ))}
+                        <ul className="mt-2 list-disc space-y-2 pl-5 text-sm text-slate-700">
+                          {actionPairs.map((item) => (
+                            <li key={`${item.en}-${item.ko}`}>
+                              <div>{item.en}</div>
+                              {item.ko && item.ko !== item.en ? (
+                                <div className="text-xs text-slate-500">{item.ko}</div>
+                              ) : null}
+                            </li>
+                          ))}
                         </ul>
                       </div>
                       {currentNode.links?.length ? (
