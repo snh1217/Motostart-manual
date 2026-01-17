@@ -16,6 +16,49 @@ export const runtime = "nodejs";
 const safeFileName = (treeId: string) =>
   treeId.replace(/[^a-zA-Z0-9_-]/g, "_");
 
+const toArray = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
+const toString = (value: unknown, fallback = ""): string =>
+  typeof value === "string" && value.trim() ? value : fallback;
+const toStringArray = (value: unknown): string[] =>
+  Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === "string")
+    : [];
+
+const mapTreeSummary = (row: Record<string, unknown>) => {
+  const treeId = toString(row.tree_id, "(unknown)");
+  const titleKo = toString(row.title_ko);
+  const titleEn = toString(row.title_en);
+  const title = titleKo || titleEn || treeId;
+  const category = toString(row.category, "General");
+  const supportedModels = toStringArray(row.supported_models);
+  const nodes = toArray(row.nodes) as DiagnosisTree["nodes"];
+  const tree: DiagnosisTree = {
+    treeId,
+    title,
+    title_ko: titleKo || undefined,
+    title_en: titleEn || undefined,
+    category,
+    supportedModels,
+    startNodeId: toString(row.start_node_id),
+    nodes,
+  };
+  const validation = validateDiagnosisTree(tree);
+  return {
+    treeId: tree.treeId,
+    title: tree.title,
+    category: tree.category || "General",
+    supportedModels: tree.supportedModels,
+    nodeCount: Array.isArray(tree.nodes) ? tree.nodes.length : 0,
+    version: typeof row.version === "number" ? row.version : 1,
+    isActive: Boolean(row.is_active),
+    updatedAt: (row.updated_at as string | null) ?? null,
+    updatedBy: (row.updated_by as string | null) ?? null,
+    source: "db",
+    errors: validation.errors,
+    warnings: validation.warnings,
+  };
+};
+
 const parsePayload = async (request: Request): Promise<DiagnosisTree[]> => {
   const contentType = request.headers.get("content-type") ?? "";
   if (contentType.includes("application/json")) {
@@ -46,35 +89,7 @@ export async function GET(request: Request) {
         .select("*")
         .order("updated_at", { ascending: false });
       if (!error && Array.isArray(data)) {
-        items = data.map((row) => {
-          const tree = {
-            treeId: row.tree_id as string,
-            title: (row.title_ko ?? row.title_en ?? row.tree_id) as string,
-            title_ko: row.title_ko as string | undefined,
-            title_en: row.title_en as string | undefined,
-            category: (row.category as string) ?? "General",
-            supportedModels: (row.supported_models ?? []) as string[],
-            startNodeId: row.start_node_id as string,
-            nodes: Array.isArray(row.nodes)
-              ? (row.nodes as DiagnosisTree["nodes"])
-              : [],
-          };
-          const validation = validateDiagnosisTree(tree as DiagnosisTree);
-          return {
-            treeId: tree.treeId,
-            title: tree.title,
-            category: tree.category || "General",
-            supportedModels: tree.supportedModels,
-            nodeCount: tree.nodes.length,
-            version: row.version ?? 1,
-            isActive: row.is_active ?? false,
-            updatedAt: row.updated_at ?? null,
-            updatedBy: row.updated_by ?? null,
-            source: "db",
-            errors: validation.errors,
-            warnings: validation.warnings,
-          };
-        });
+        items = data.map((row) => mapTreeSummary(row as Record<string, unknown>));
       }
     }
 
@@ -87,7 +102,7 @@ export async function GET(request: Request) {
           title: tree.title,
           category: tree.category,
           supportedModels: tree.supportedModels,
-          nodeCount: tree.nodes.length,
+          nodeCount: Array.isArray(tree.nodes) ? tree.nodes.length : 0,
           version: 1,
           isActive: true,
           updatedAt: null,
@@ -235,7 +250,3 @@ export async function PATCH(request: Request) {
   revalidateTag("diagnosis-trees", "max");
   return NextResponse.json({ ok: true });
 }
-
-
-
-
