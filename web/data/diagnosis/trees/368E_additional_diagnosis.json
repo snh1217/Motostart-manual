@@ -1,0 +1,518 @@
+[
+  {
+    "treeId": "368E_engine_no_start_no_sign_v1",
+    "title": "Engine does not start (starter motor runs, no ignition sign)",
+    "title_ko": "시동 불가(스타터 동작, 점화 징후 없음)",
+    "title_en": "Engine does not start (starter motor runs, no ignition sign)",
+    "category": "Start",
+    "supportedModels": ["368E"],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is there a strong spark at the spark plug?",
+        "text_ko": "스파크 플러그에 강한 스파크가 있습니까?",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is the air filter element blocked?",
+        "text_ko": "에어 필터 요소가 막혀 있습니까?",
+        "yesNextId": "r2",
+        "noNextId": "n3"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is the fuel pump operating?",
+        "text_ko": "연료 펌프가 작동합니까?",
+        "yesNextId": "n4",
+        "noNextId": "r3"
+      },
+      {
+        "id": "n4",
+        "type": "question",
+        "text_en": "Is the injector working normally?",
+        "text_ko": "인젝터가 정상적으로 동작합니까?",
+        "yesNextId": "n5",
+        "noNextId": "r4"
+      },
+      {
+        "id": "n5",
+        "type": "question",
+        "text_en": "Is fuel pressure normal?",
+        "text_ko": "연료 압력이 정상입니까?",
+        "yesNextId": "n6",
+        "noNextId": "r5"
+      },
+      {
+        "id": "n6",
+        "type": "question",
+        "text_en": "Is cylinder pressure normal?",
+        "text_ko": "실린더 압력이 정상입니까?",
+        "yesNextId": "r6",
+        "noNextId": "r7"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Check the ignition system (spark plug, coil, wiring).",
+        "text_ko": "점화 시스템(플러그, 코일, 배선)을 점검한다.",
+        "actions_en": ["Inspect spark plug gap and ignition coil wiring."],
+        "actions_ko": ["스파크 플러그 간극과 점화 코일 배선을 점검한다."],
+        "actions": ["Inspect spark plug gap and ignition coil wiring."]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Clean or replace the air filter element.",
+        "text_ko": "에어 필터 요소를 청소하거나 교체한다.",
+        "actions_en": ["Clean or replace the air filter element."],
+        "actions_ko": ["에어 필터 요소를 청소하거나 교체한다."],
+        "actions": ["Clean or replace the air filter element."]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Check the fuel pump and wiring.",
+        "text_ko": "연료 펌프 및 배선을 점검한다.",
+        "actions_en": ["Verify fuel pump operation and connectors."],
+        "actions_ko": ["연료 펌프 작동 및 커넥터를 확인한다."],
+        "actions": ["Verify fuel pump operation and connectors."]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Inspect the injector and its wiring.",
+        "text_ko": "인젝터 및 배선을 점검한다.",
+        "actions_en": ["Check injector sound and coil resistance."],
+        "actions_ko": ["인젝터 작동음과 코일 저항을 확인한다."],
+        "actions": ["Check injector sound and coil resistance."]
+      },
+      {
+        "id": "r5",
+        "type": "result",
+        "text_en": "Inspect the fuel pump, filter screen, and fuel supply.",
+        "text_ko": "연료 펌프, 필터 스크린, 연료 공급을 점검한다.",
+        "actions_en": ["Check fuel pump pressure and filter screen."],
+        "actions_ko": ["연료 펌프 압력과 필터 스크린을 확인한다."],
+        "actions": ["Check fuel pump pressure and filter screen."]
+      },
+      {
+        "id": "r6",
+        "type": "result",
+        "text_en": "Check the three-in-one sensor and water/oil shared sensor.",
+        "text_ko": "3-in-1 센서와 수온/오일 공용 센서를 점검한다.",
+        "actions_en": ["Inspect three-in-one sensor and water/oil shared sensor."],
+        "actions_ko": ["3-in-1 센서 및 수온/오일 공용 센서를 점검한다."],
+        "actions": ["Inspect three-in-one sensor and water/oil shared sensor."]
+      },
+      {
+        "id": "r7",
+        "type": "result",
+        "text_en": "Cylinder pressure is low.",
+        "text_ko": "실린더 압력이 낮다.",
+        "actions_en": ["Inspect mechanical condition and compression."],
+        "actions_ko": ["기계적 상태 및 압축을 점검한다."],
+        "actions": ["Inspect mechanical condition and compression."]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_engine_no_start_with_sign_v1",
+    "title": "Engine does not start (has ignition signs)",
+    "title_ko": "시동 불가(점화 징후 있음)",
+    "title_en": "Engine does not start (has ignition signs)",
+    "category": "Start",
+    "supportedModels": ["368E"],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is there a diagnostic fault code?",
+        "text_ko": "고장 코드가 있습니까?",
+        "yesNextId": "r1",
+        "noNextId": "n2"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Does the engine respond when the throttle is opened?",
+        "text_ko": "스로틀을 열면 엔진 반응이 있습니까?",
+        "yesNextId": "n3",
+        "noNextId": "n4"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is the idle speed control valve and wiring normal?",
+        "text_ko": "아이들 스피드 컨트롤 밸브와 배선이 정상입니까?",
+        "yesNextId": "n5",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n4",
+        "type": "question",
+        "text_en": "Are the air filter outlet pipe and hoses (tank vent, canister) blocked?",
+        "text_ko": "에어 필터 배출 파이프/호스(탱크 벤트, 캐니스터)가 막혀 있습니까?",
+        "yesNextId": "r3",
+        "noNextId": "n5"
+      },
+      {
+        "id": "n5",
+        "type": "question",
+        "text_en": "Is high-voltage spark normal?",
+        "text_ko": "고전압 스파크가 정상입니까?",
+        "yesNextId": "n6",
+        "noNextId": "r4"
+      },
+      {
+        "id": "n6",
+        "type": "question",
+        "text_en": "Is ignition timing normal?",
+        "text_ko": "점화 타이밍이 정상입니까?",
+        "yesNextId": "n7",
+        "noNextId": "r5"
+      },
+      {
+        "id": "n7",
+        "type": "question",
+        "text_en": "Is fuel sufficient and fuel system wiring intact?",
+        "text_ko": "연료가 충분하고 연료 시스템 배선이 정상입니까?",
+        "yesNextId": "r6",
+        "noNextId": "r7"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Check EFI parts according to the fault code.",
+        "text_ko": "고장 코드에 따라 EFI 부품을 점검한다.",
+        "actions_en": ["Inspect the indicated EFI components."],
+        "actions_ko": ["해당 EFI 부품을 점검한다."],
+        "actions": ["Inspect the indicated EFI components."]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Repair or replace the idle speed control valve and wiring.",
+        "text_ko": "아이들 스피드 컨트롤 밸브/배선을 수리 또는 교체한다.",
+        "actions_en": ["Inspect idle speed control valve and wiring."],
+        "actions_ko": ["아이들 스피드 컨트롤 밸브/배선을 점검한다."],
+        "actions": ["Inspect idle speed control valve and wiring."]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Clear blockages in intake and vent hoses.",
+        "text_ko": "흡기 및 벤트 호스 막힘을 제거한다.",
+        "actions_en": ["Check air filter outlet pipe and vent hoses."],
+        "actions_ko": ["에어 필터 배출 파이프와 벤트 호스를 점검한다."],
+        "actions": ["Check air filter outlet pipe and vent hoses."]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Inspect ignition coil and spark plug.",
+        "text_ko": "점화 코일과 스파크 플러그를 점검한다.",
+        "actions_en": ["Inspect ignition coil and spark plug condition."],
+        "actions_ko": ["점화 코일과 플러그 상태를 점검한다."],
+        "actions": ["Inspect ignition coil and spark plug condition."]
+      },
+      {
+        "id": "r5",
+        "type": "result",
+        "text_en": "Adjust ignition timing at service.",
+        "text_ko": "정비소에서 점화 타이밍을 조정한다.",
+        "actions_en": ["Adjust ignition timing with diagnostic tools."],
+        "actions_ko": ["진단 장비로 점화 타이밍을 조정한다."],
+        "actions": ["Adjust ignition timing with diagnostic tools."]
+      },
+      {
+        "id": "r6",
+        "type": "result",
+        "text_en": "Check three-in-one sensor and water/oil shared sensor.",
+        "text_ko": "3-in-1 센서와 수온/오일 공용 센서를 점검한다.",
+        "actions_en": ["Inspect sensors and wiring."],
+        "actions_ko": ["센서 및 배선을 점검한다."],
+        "actions": ["Inspect sensors and wiring."]
+      },
+      {
+        "id": "r7",
+        "type": "result",
+        "text_en": "Check fuel pump, fuse, and wiring.",
+        "text_ko": "연료 펌프, 퓨즈, 배선을 점검한다.",
+        "actions_en": ["Inspect fuel pump power and wiring continuity."],
+        "actions_ko": ["연료 펌프 전원과 배선 단선 여부를 점검한다."],
+        "actions": ["Inspect fuel pump power and wiring continuity."]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_unsteady_idle_flameout_v1",
+    "title": "Unsteady idling / flameout",
+    "title_ko": "아이들 불안정/시동 꺼짐",
+    "title_en": "Unsteady idling / flameout",
+    "category": "Idle",
+    "supportedModels": ["368E"],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is gasoline sufficient and clean (no water separation)?",
+        "text_ko": "연료가 충분하고 수분 분리 없이 깨끗합니까?",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Does fuel cutoff speed reach within 3 seconds at full neutral throttle?",
+        "text_ko": "중립에서 풀스로틀 시 3초 내 연료 차단 속도에 도달합니까?",
+        "yesNextId": "n3",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is high-pressure fuel pipe pressure 290-310 kPa?",
+        "text_ko": "고압 연료 파이프 압력이 290~310 kPa입니까?",
+        "yesNextId": "n4",
+        "noNextId": "r3"
+      },
+      {
+        "id": "n4",
+        "type": "question",
+        "text_en": "Is battery voltage above 13V when stopped?",
+        "text_ko": "정지 상태에서 배터리 전압이 13V 이상입니까?",
+        "yesNextId": "n5",
+        "noNextId": "r4"
+      },
+      {
+        "id": "n5",
+        "type": "question",
+        "text_en": "Is the dump switch wiring normal?",
+        "text_ko": "덤프 스위치 배선이 정상입니까?",
+        "yesNextId": "n6",
+        "noNextId": "r5"
+      },
+      {
+        "id": "n6",
+        "type": "question",
+        "text_en": "Is the ignition coil / high-voltage line connection normal?",
+        "text_ko": "점화 코일/고전압 라인 접속이 정상입니까?",
+        "yesNextId": "r6",
+        "noNextId": "r7"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Refuel with clean gasoline.",
+        "text_ko": "깨끗한 연료로 보충한다.",
+        "actions_en": ["Drain contaminated fuel and refill."],
+        "actions_ko": ["오염된 연료를 배출하고 재보충한다."],
+        "actions": ["Drain contaminated fuel and refill."]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Check fuel system and pressure.",
+        "text_ko": "연료 시스템 및 압력을 점검한다.",
+        "actions_en": ["Inspect fuel pressure and delivery."],
+        "actions_ko": ["연료 압력과 공급 상태를 점검한다."],
+        "actions": ["Inspect fuel pressure and delivery."]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Check fuel pump or filter.",
+        "text_ko": "연료 펌프/필터를 점검한다.",
+        "actions_en": ["Inspect fuel pump and filter screen."],
+        "actions_ko": ["연료 펌프와 필터 스크린을 점검한다."],
+        "actions": ["Inspect fuel pump and filter screen."]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Charge or replace the battery and check rectifier.",
+        "text_ko": "배터리를 충전/교체하고 레귤레이터를 점검한다.",
+        "actions_en": ["Check battery, rectifier, and magneto."],
+        "actions_ko": ["배터리, 레귤레이터, 마그네토를 점검한다."],
+        "actions": ["Check battery, rectifier, and magneto."]
+      },
+      {
+        "id": "r5",
+        "type": "result",
+        "text_en": "Replace the dump switch.",
+        "text_ko": "덤프 스위치를 교체한다.",
+        "actions_en": ["Replace dump switch and verify wiring."],
+        "actions_ko": ["덤프 스위치를 교체하고 배선을 확인한다."],
+        "actions": ["Replace dump switch and verify wiring."]
+      },
+      {
+        "id": "r6",
+        "type": "result",
+        "text_en": "Inspect spark plug and ignition coil.",
+        "text_ko": "스파크 플러그 및 점화 코일을 점검한다.",
+        "actions_en": ["Check spark plug condition and coil terminals."],
+        "actions_ko": ["플러그 상태와 코일 단자를 점검한다."],
+        "actions": ["Check spark plug condition and coil terminals."]
+      },
+      {
+        "id": "r7",
+        "type": "result",
+        "text_en": "Repair or replace the high-voltage line or ignition coil.",
+        "text_ko": "고전압 라인 또는 점화 코일을 수리/교체한다.",
+        "actions_en": ["Repair or replace high-voltage line."],
+        "actions_ko": ["고전압 라인을 수리 또는 교체한다."],
+        "actions": ["Repair or replace high-voltage line."]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_efi_fault_light_v1",
+    "title": "EFI fault light always on",
+    "title_ko": "EFI 경고등 항상 점등",
+    "title_en": "EFI fault light always on",
+    "category": "Electrical",
+    "supportedModels": ["368E"],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Are EFI sensor connectors loose?",
+        "text_ko": "EFI 센서 커넥터가 느슨합니까?",
+        "yesNextId": "r1",
+        "noNextId": "n2"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is there a fault code?",
+        "text_ko": "고장 코드가 있습니까?",
+        "yesNextId": "r2",
+        "noNextId": "n3"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is there a recent power outage or reset needed?",
+        "text_ko": "전원 차단/리셋이 필요합니까?",
+        "yesNextId": "r3",
+        "noNextId": "r4"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Reconnect EFI sensor connectors.",
+        "text_ko": "EFI 센서 커넥터를 재결합한다.",
+        "actions_en": ["Reseat EFI sensor connectors."],
+        "actions_ko": ["EFI 센서 커넥터를 다시 결합한다."],
+        "actions": ["Reseat EFI sensor connectors."]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Inspect EFI parts according to the fault code.",
+        "text_ko": "고장 코드에 따라 EFI 부품을 점검한다.",
+        "actions_en": ["Inspect the indicated EFI components and wiring."],
+        "actions_ko": ["해당 EFI 부품 및 배선을 점검한다."],
+        "actions": ["Inspect the indicated EFI components and wiring."]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Reset the EFI system.",
+        "text_ko": "EFI 시스템을 리셋한다.",
+        "actions_en": ["Perform EFI system reset procedure."],
+        "actions_ko": ["EFI 시스템 리셋 절차를 수행한다."],
+        "actions": ["Perform EFI system reset procedure."]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Check throttle body and sensor leakage.",
+        "text_ko": "스로틀 바디/센서 누설을 점검한다.",
+        "actions_en": ["Inspect throttle body leakage and TPS."],
+        "actions_ko": ["스로틀 바디 누설 및 TPS를 점검한다."],
+        "actions": ["Inspect throttle body leakage and TPS."]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_starter_motor_no_run_v1",
+    "title": "Starter motor does not run",
+    "title_ko": "스타터 모터 작동 불가",
+    "title_en": "Starter motor does not run",
+    "category": "Start",
+    "supportedModels": ["368E"],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is the EFI fault light on?",
+        "text_ko": "EFI 경고등이 켜져 있습니까?",
+        "yesNextId": "r1",
+        "noNextId": "n2"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Does the starting relay respond?",
+        "text_ko": "스타팅 릴레이가 반응합니까?",
+        "yesNextId": "n3",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Does the starter motor work when directly powered?",
+        "text_ko": "직결 전원 시 스타터 모터가 작동합니까?",
+        "yesNextId": "r3",
+        "noNextId": "r4"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Check flameout switch and related wiring.",
+        "text_ko": "킬 스위치 및 관련 배선을 점검한다.",
+        "actions_en": ["Inspect right handle flameout switch."],
+        "actions_ko": ["오른쪽 핸들 킬 스위치를 점검한다."],
+        "actions": ["Inspect right handle flameout switch."]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Replace the starting relay.",
+        "text_ko": "스타팅 릴레이를 교체한다.",
+        "actions_en": ["Replace starting relay."],
+        "actions_ko": ["스타팅 릴레이를 교체한다."],
+        "actions": ["Replace starting relay."]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Check brake switch or flameout switch.",
+        "text_ko": "브레이크 스위치 또는 킬 스위치를 점검한다.",
+        "actions_en": ["Inspect brake switch and flameout switch."],
+        "actions_ko": ["브레이크 스위치와 킬 스위치를 점검한다."],
+        "actions": ["Inspect brake switch and flameout switch."]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Replace or repair the starter motor and cable.",
+        "text_ko": "스타터 모터 및 케이블을 수리/교체한다.",
+        "actions_en": ["Repair starter motor cable or replace motor."],
+        "actions_ko": ["스타터 모터 케이블을 수리하거나 모터를 교체한다."],
+        "actions": ["Repair starter motor cable or replace motor."]
+      }
+    ]
+  }
+]
