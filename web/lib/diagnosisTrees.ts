@@ -176,15 +176,16 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
   return { errors, warnings };
 };
 
-const readTreeFile = async (filePath: string): Promise<DiagnosisTree | null> => {
+const readTreeFile = async (filePath: string): Promise<DiagnosisTree[]> => {
   try {
     const raw = await fs.readFile(filePath, "utf8");
     const sanitized = raw.replace(/^\uFEFF/, "");
     const parsed = JSON.parse(sanitized);
-    if (!parsed || typeof parsed !== "object") return null;
-    return parsed as DiagnosisTree;
+    if (!parsed || typeof parsed !== "object") return [];
+    if (Array.isArray(parsed)) return parsed as DiagnosisTree[];
+    return [parsed as DiagnosisTree];
   } catch {
-    return null;
+    return [];
   }
 };
 
@@ -195,7 +196,7 @@ export const loadDiagnosisTrees = async (): Promise<DiagnosisTree[]> => {
       .filter((entry) => entry.isFile() && entry.name.endsWith(".json"))
       .map((entry) => path.join(treesDir, entry.name));
     const items = await Promise.all(jsonFiles.map(readTreeFile));
-    return items.filter(Boolean) as DiagnosisTree[];
+    return items.flat().filter(Boolean) as DiagnosisTree[];
   } catch {
     return [];
   }
