@@ -16,7 +16,7 @@ const buildNodeMap = (tree: DiagnosisTree) => {
 };
 
 const supportsModel = (tree: DiagnosisTree, model: string) =>
-  tree.supportedModels.includes(model);
+  Array.isArray(tree.supportedModels) && tree.supportedModels.includes(model);
 
 const buildMaxDepth = (tree: DiagnosisTree) => {
   const nodeMap = buildNodeMap(tree);
