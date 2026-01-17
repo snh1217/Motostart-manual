@@ -27,13 +27,14 @@ const isResultNode = (
 const validateTreeLinks = (tree: DiagnosisTree): TreeValidation => {
   const errors: string[] = [];
   const warnings: string[] = [];
-  const ids = new Set(tree.nodes.map((node) => node.id));
+  const nodes = Array.isArray(tree.nodes) ? tree.nodes : [];
+  const ids = new Set(nodes.map((node) => node.id));
 
   if (!ids.has(tree.startNodeId)) {
     errors.push(`startNodeId ${tree.startNodeId} is missing`);
   }
 
-  tree.nodes.forEach((node) => {
+  nodes.forEach((node) => {
     if (isQuestionNode(node)) {
       if (!node.yesNextId || !ids.has(node.yesNextId)) {
         errors.push(`node ${node.id} yesNextId ${node.yesNextId} not found`);
@@ -57,8 +58,9 @@ const validateTreeLinks = (tree: DiagnosisTree): TreeValidation => {
 
 const detectCycles = (tree: DiagnosisTree): string[] => {
   const errors: string[] = [];
+  const nodes = Array.isArray(tree.nodes) ? tree.nodes : [];
   const adjacency = new Map<string, string[]>();
-  tree.nodes.forEach((node) => {
+  nodes.forEach((node) => {
     if (isQuestionNode(node)) {
       adjacency.set(node.id, [node.yesNextId, node.noNextId]);
     } else if (isStepNode(node)) {
@@ -91,6 +93,7 @@ const detectCycles = (tree: DiagnosisTree): string[] => {
 export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const nodes = Array.isArray(tree.nodes) ? tree.nodes : [];
 
   if (!tree.treeId || !tree.title || !tree.category) {
     errors.push("treeId, title, category are required");
@@ -103,13 +106,13 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
   }
 
   const nodeIds = new Set<string>();
-  const resultCount = tree.nodes.filter((node) => node.type === "result").length;
+  const resultCount = nodes.filter((node) => node.type === "result").length;
   if (resultCount === 0) {
     errors.push("at least one result node is required");
   }
 
   const allowedTypes = new Set(["question", "result", "step"]);
-  tree.nodes.forEach((node) => {
+  nodes.forEach((node) => {
     if (nodeIds.has(node.id)) {
       errors.push(`duplicate node id ${node.id}`);
     }
@@ -143,16 +146,18 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
     }
   });
 
-  const linkValidation = validateTreeLinks(tree);
-  errors.push(...linkValidation.errors);
-  warnings.push(...linkValidation.warnings);
-  errors.push(...detectCycles(tree));
+  if (nodes.length) {
+    const linkValidation = validateTreeLinks(tree);
+    errors.push(...linkValidation.errors);
+    warnings.push(...linkValidation.warnings);
+    errors.push(...detectCycles(tree));
+  }
 
   const reachable = new Set<string>();
   const visit = (nodeId: string) => {
     if (reachable.has(nodeId)) return;
     reachable.add(nodeId);
-    const node = tree.nodes.find((item) => item.id === nodeId);
+    const node = nodes.find((item) => item.id === nodeId);
     if (node && isQuestionNode(node)) {
       visit(node.yesNextId);
       visit(node.noNextId);
@@ -162,7 +167,7 @@ export const validateDiagnosisTree = (tree: DiagnosisTree): TreeValidation => {
     }
   };
   if (tree.startNodeId) visit(tree.startNodeId);
-  tree.nodes.forEach((node) => {
+  nodes.forEach((node) => {
     if (!reachable.has(node.id)) {
       warnings.push(`node ${node.id} is unreachable`);
     }
