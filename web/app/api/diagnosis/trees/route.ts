@@ -250,3 +250,33 @@ export async function PATCH(request: Request) {
   revalidateTag("diagnosis-trees", "max");
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(request: Request) {
+  if (isReadOnlyMode()) {
+    return NextResponse.json({ error: "READ_ONLY_MODE" }, { status: 403 });
+  }
+  if (!isAdminAuthorized(request)) {
+    return NextResponse.json({ error: "UNAUTHORIZED" }, { status: 401 });
+  }
+  if (!hasSupabaseConfig || !supabaseAdmin) {
+    return NextResponse.json({ error: "SUPABASE_NOT_CONFIGURED" }, { status: 400 });
+  }
+
+  const body = (await request.json()) as { treeId?: string };
+  const treeId = body.treeId?.trim();
+  if (!treeId) {
+    return NextResponse.json({ error: "treeId is required" }, { status: 400 });
+  }
+
+  const { error } = await supabaseAdmin
+    .from("diagnosis_trees")
+    .delete()
+    .eq("tree_id", treeId);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  revalidateTag("diagnosis-trees", "max");
+  return NextResponse.json({ ok: true });
+}

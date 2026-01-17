@@ -117,6 +117,42 @@ export default function DiagnosisTreeAdmin() {
     }
   };
 
+  const deleteTree = async (treeId: string) => {
+    if (!adminToken.trim()) return;
+    const confirmed = window.confirm(
+      `Delete tree ${treeId}? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setLoading(true);
+    setMessage("");
+    try {
+      const response = await fetch("/api/diagnosis/trees", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${adminToken}`,
+        },
+        body: JSON.stringify({ treeId }),
+      });
+      const raw = await response.text();
+      const data = raw ? (JSON.parse(raw) as Record<string, unknown>) : {};
+      if (!response.ok) {
+        const message =
+          getErrorMessage(data, "") ||
+          (raw?.trim()
+            ? raw.trim()
+            : `Delete failed (${response.status}).`);
+        throw new Error(message);
+      }
+      await loadTrees();
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Delete failed.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpload = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!adminToken.trim()) {
@@ -276,6 +312,14 @@ export default function DiagnosisTreeAdmin() {
                       className="rounded-full border border-slate-200 px-3 py-1 text-[11px] font-semibold text-slate-700 hover:border-slate-300 disabled:opacity-60"
                     >
                       {tree.isActive ? "Deactivate" : "Activate"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => deleteTree(tree.treeId)}
+                      disabled={loading}
+                      className="rounded-full border border-rose-200 px-3 py-1 text-[11px] font-semibold text-rose-700 hover:border-rose-300 disabled:opacity-60"
+                    >
+                      Delete
                     </button>
                   </div>
                 ) : null}
