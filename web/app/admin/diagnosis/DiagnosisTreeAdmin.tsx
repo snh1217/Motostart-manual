@@ -255,7 +255,7 @@ export default function DiagnosisTreeAdmin() {
                 </div>
                 <div className="mt-1">
                   <span className="font-semibold">Models:</span>{" "}
-                  {tree.supportedModels.join(", ")}
+                  {(tree.supportedModels ?? []).join(", ")}
                 </div>
                 {tree.updatedAt ? (
                   <div className="mt-1">
@@ -279,16 +279,16 @@ export default function DiagnosisTreeAdmin() {
                     </button>
                   </div>
                 ) : null}
-                {tree.errors.length ? (
-                  <div className="mt-2 text-rose-600">
-                    Errors: {tree.errors.join(" / ")}
-                  </div>
-                ) : null}
-                {tree.warnings.length ? (
-                  <div className="mt-2 text-amber-600">
-                    Warnings: {tree.warnings.join(" / ")}
-                  </div>
-                ) : null}
+                  {(tree.errors ?? []).length ? (
+                    <div className="mt-2 text-rose-600">
+                    Errors: {(tree.errors ?? []).join(" / ")}
+                    </div>
+                  ) : null}
+                  {(tree.warnings ?? []).length ? (
+                    <div className="mt-2 text-amber-600">
+                    Warnings: {(tree.warnings ?? []).join(" / ")}
+                    </div>
+                  ) : null}
               </div>
             ))}
           </div>
