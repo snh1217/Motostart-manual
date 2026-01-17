@@ -1012,5 +1012,444 @@
         ]
       }
     ]
+  },
+  {
+    "treeId": "368E_fuel_pump_issue_v1",
+    "title": "Fuel pump check",
+    "title_ko": "?? ?? ??",
+    "title_en": "Fuel pump check",
+    "category": "Fuel",
+    "supportedModels": [
+      "368E"
+    ],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is starting difficult or engine power weak?",
+        "text_ko": "??? ???? ??? ?????",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is fuel pump running when key is on?",
+        "text_ko": "? ON ? ?? ??? ??????",
+        "yesNextId": "n3",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is fuel pressure within spec?",
+        "text_ko": "?? ??? ??????",
+        "yesNextId": "r3",
+        "noNextId": "r4"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Symptoms do not match fuel pump issue.",
+        "text_ko": "??? ?? ?? ??? ???? ????.",
+        "actions_en": [
+          "Check other fuel system components."
+        ],
+        "actions_ko": [
+          "?? ?? ??? ????."
+        ],
+        "actions": [
+          "Check other fuel system components."
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Check fuel pump power and wiring.",
+        "text_ko": "?? ?? ?? ? ??? ????.",
+        "actions_en": [
+          "Inspect pump relay, fuse, and wiring."
+        ],
+        "actions_ko": [
+          "?? ???, ??, ??? ????."
+        ],
+        "actions": [
+          "Inspect pump relay, fuse, and wiring."
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Fuel pump appears normal.",
+        "text_ko": "?? ??? ???? ????.",
+        "actions_en": [
+          "Inspect injector and fuel filter."
+        ],
+        "actions_ko": [
+          "??? ? ?? ??? ????."
+        ],
+        "actions": [
+          "Inspect injector and fuel filter."
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Fuel pressure out of spec.",
+        "text_ko": "?? ??? ??? ?????.",
+        "actions_en": [
+          "Replace fuel pump or pressure regulator."
+        ],
+        "actions_ko": [
+          "?? ?? ?? ?????? ????."
+        ],
+        "actions": [
+          "Replace fuel pump or pressure regulator."
+        ]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_injector_issue_v1",
+    "title": "Fuel injector check",
+    "title_ko": "?? ??? ??",
+    "title_en": "Fuel injector check",
+    "category": "Fuel",
+    "supportedModels": [
+      "368E"
+    ],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is engine unstable or weak at idle?",
+        "text_ko": "????? ??? ?????? ?? ?????",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is injector clicking sound rhythmic?",
+        "text_ko": "??? ???? ???????",
+        "yesNextId": "n3",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is injector coil resistance within spec?",
+        "text_ko": "??? ?? ??? ??????",
+        "yesNextId": "r3",
+        "noNextId": "r4"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Symptoms do not match injector issue.",
+        "text_ko": "??? ??? ??? ???? ????.",
+        "actions_en": [
+          "Check other fuel components."
+        ],
+        "actions_ko": [
+          "?? ?? ??? ????."
+        ],
+        "actions": [
+          "Check other fuel components."
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Inspect injector and wiring.",
+        "text_ko": "??? ? ??? ????.",
+        "actions_en": [
+          "Check injector connector and wiring."
+        ],
+        "actions_ko": [
+          "??? ???? ??? ????."
+        ],
+        "actions": [
+          "Check injector connector and wiring."
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Injector appears normal.",
+        "text_ko": "???? ???? ????.",
+        "actions_en": [
+          "Inspect fuel pressure and air intake."
+        ],
+        "actions_ko": [
+          "?? ??? ??? ????."
+        ],
+        "actions": [
+          "Inspect fuel pressure and air intake."
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Replace the injector.",
+        "text_ko": "???? ????.",
+        "actions_en": [
+          "Replace injector if resistance is out of spec."
+        ],
+        "actions_ko": [
+          "??? ?? ??? ???? ????."
+        ],
+        "actions": [
+          "Replace injector if resistance is out of spec."
+        ]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_canister_valve_issue_v1",
+    "title": "Carbon canister valve check",
+    "title_ko": "?? ???? ?? ??",
+    "title_en": "Carbon canister valve check",
+    "category": "Fuel",
+    "supportedModels": [
+      "368E"
+    ],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is idle poor or air-fuel ratio incorrect?",
+        "text_ko": "???? ?????? ???? ??????",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is canister valve resistance within spec?",
+        "text_ko": "???? ?? ??? ??????",
+        "yesNextId": "r2",
+        "noNextId": "r3"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Symptoms do not match canister valve issue.",
+        "text_ko": "??? ???? ?? ??? ???? ????.",
+        "actions_en": [
+          "Check other intake components."
+        ],
+        "actions_ko": [
+          "?? ?? ??? ????."
+        ],
+        "actions": [
+          "Check other intake components."
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Canister valve appears normal.",
+        "text_ko": "???? ??? ???? ????.",
+        "actions_en": [
+          "Inspect hoses and wiring."
+        ],
+        "actions_ko": [
+          "?? ? ??? ????."
+        ],
+        "actions": [
+          "Inspect hoses and wiring."
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Replace canister solenoid valve.",
+        "text_ko": "???? ????? ??? ????.",
+        "actions_en": [
+          "Replace canister solenoid valve if out of spec."
+        ],
+        "actions_ko": [
+          "?? ??? ???? ????? ??? ????."
+        ],
+        "actions": [
+          "Replace canister solenoid valve if out of spec."
+        ]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_battery_charging_issue_v1",
+    "title": "Battery/charging issue",
+    "title_ko": "???/?? ??",
+    "title_en": "Battery/charging issue",
+    "category": "Electrical",
+    "supportedModels": [
+      "368E"
+    ],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is the battery weak or discharged?",
+        "text_ko": "???? ???? ????????",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Is charging voltage normal?",
+        "text_ko": "?? ??? ??????",
+        "yesNextId": "r2",
+        "noNextId": "r3"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "Battery condition appears normal.",
+        "text_ko": "??? ??? ???? ????.",
+        "actions_en": [
+          "Check starter and ignition circuits."
+        ],
+        "actions_ko": [
+          "??? ? ?? ??? ????."
+        ],
+        "actions": [
+          "Check starter and ignition circuits."
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Charge system appears normal.",
+        "text_ko": "?? ???? ?????.",
+        "actions_en": [
+          "Perform battery load test."
+        ],
+        "actions_ko": [
+          "??? ?? ???? ????."
+        ],
+        "actions": [
+          "Perform battery load test."
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Check rectifier and magneto.",
+        "text_ko": "?????/????? ????.",
+        "actions_en": [
+          "Inspect rectifier and stator output."
+        ],
+        "actions_ko": [
+          "?????? ???? ??? ????."
+        ],
+        "actions": [
+          "Inspect rectifier and stator output."
+        ]
+      }
+    ]
+  },
+  {
+    "treeId": "368E_abs_troubleshooting_v1",
+    "title": "ABS troubleshooting",
+    "title_ko": "ABS ??",
+    "title_en": "ABS troubleshooting",
+    "category": "Electrical",
+    "supportedModels": [
+      "368E"
+    ],
+    "startNodeId": "n1",
+    "nodes": [
+      {
+        "id": "n1",
+        "type": "question",
+        "text_en": "Is the ABS warning light on?",
+        "text_ko": "ABS ???? ?? ?????",
+        "yesNextId": "n2",
+        "noNextId": "r1"
+      },
+      {
+        "id": "n2",
+        "type": "question",
+        "text_en": "Are sensor cables and connectors intact?",
+        "text_ko": "?? ???/???? ??????",
+        "yesNextId": "n3",
+        "noNextId": "r2"
+      },
+      {
+        "id": "n3",
+        "type": "question",
+        "text_en": "Is battery voltage normal?",
+        "text_ko": "??? ??? ??????",
+        "yesNextId": "r3",
+        "noNextId": "r4"
+      },
+      {
+        "id": "r1",
+        "type": "result",
+        "text_en": "ABS appears normal.",
+        "text_ko": "ABS? ???? ????.",
+        "actions_en": [
+          "No action required."
+        ],
+        "actions_ko": [
+          "?? ???."
+        ],
+        "actions": [
+          "No action required."
+        ]
+      },
+      {
+        "id": "r2",
+        "type": "result",
+        "text_en": "Repair or reconnect ABS sensor wiring.",
+        "text_ko": "ABS ?? ??? ??/?????.",
+        "actions_en": [
+          "Inspect wheel sensor wiring and connectors."
+        ],
+        "actions_ko": [
+          "? ?? ??? ???? ????."
+        ],
+        "actions": [
+          "Inspect wheel sensor wiring and connectors."
+        ]
+      },
+      {
+        "id": "r3",
+        "type": "result",
+        "text_en": "Check ABS control wiring and ground points.",
+        "text_ko": "ABS ?? ?? ? ?? ??? ????.",
+        "actions_en": [
+          "Check ABS control wiring and grounds."
+        ],
+        "actions_ko": [
+          "ABS ?? ??? ??? ????."
+        ],
+        "actions": [
+          "Check ABS control wiring and grounds."
+        ]
+      },
+      {
+        "id": "r4",
+        "type": "result",
+        "text_en": "Charge or replace the battery.",
+        "text_ko": "???? ????? ????.",
+        "actions_en": [
+          "Charge or replace battery."
+        ],
+        "actions_ko": [
+          "???? ????? ????."
+        ],
+        "actions": [
+          "Charge or replace battery."
+        ]
+      }
+    ]
   }
 ]
